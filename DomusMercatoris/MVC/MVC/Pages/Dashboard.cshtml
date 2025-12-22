@@ -1,0 +1,43 @@
+@page
+@model DomusMercatorisDotnetMVC.Pages.DashboardModel
+@{
+    ViewData["PageTitle"] = "Dashboard";
+    Layout = "_LayoutAuth";
+}
+<div class="container py-4">
+    <h3 class="mb-3">My Company</h3>
+    <div class="row g-3">
+        <div class="col-12 col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                <div class="text-muted">Company Name</div>
+                <div class="fs-4 fw-bold">@Model.CompanyName</div>
+                    <div class="text-muted">Company ID</div>
+                    <div class="fs-4 fw-bold">@Model.CompanyId</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="text-muted">Total Products</div>
+                    <div class="fs-4 fw-bold">@Model.ProductCount</div>
+                    <div class="text-muted">Total Sales</div>
+                    <div class="fs-4 fw-bold"> Not active</div>
+                    <div class="mt-2"><a href="/Products" class="btn btn-sm btn-outline-primary">Manage Products</a></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="text-muted">Workers</div>
+                    <div class="fs-4 fw-bold">@Model.WorkerCount</div>
+                    <div class="text-muted">Menagers</div>
+                    <div class="fs-4 fw-bold">@Model.ManagerCount</div>
+                    <div class="mt-2"><a href="/Workers" class="btn btn-sm btn-outline-primary">Manage Workers</a></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

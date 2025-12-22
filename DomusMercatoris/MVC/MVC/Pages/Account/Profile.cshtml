@@ -1,0 +1,54 @@
+@page
+@model DomusMercatorisDotnetMVC.Pages.Account.ProfileModel
+@{
+    ViewData["PageTitle"] = "Profile";
+    Layout = "_LayoutAuth";
+}
+
+<div class="container py-4">
+    <h3>Profile</h3>
+    
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+
+    <div class="card">
+        <div class="card-body">
+            <div class="row mb-2">
+                <div class="col-sm-3">Full Name</div>
+                <div class="col-sm-9">@Model.FullName</div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-sm-3">Email</div>
+                <div class="col-sm-9">@Model.Email</div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-sm-3">Company Id</div>
+                <div class="col-sm-9">@Model.CompanyId</div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-sm-3">Company Name</div>
+                <div class="col-sm-9">@Model.CompanyName</div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-sm-3">Roles</div>
+                <div class="col-sm-9">@string.Join(", ", Model.Roles)</div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.Roles != null && Model.Roles.Any(r => r.Trim().Equals("Manager", StringComparison.OrdinalIgnoreCase)))
+    {
+        <div class="mt-5">
+            <form method="post">
+                @Html.AntiForgeryToken()
+                @Html.EditorFor(x => x.AiPanel)
+            </form>
+        </div>
+    }
+</div>

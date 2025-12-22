@@ -1,0 +1,423 @@
+@page
+@model DomusMercatorisDotnetMVC.Pages.AddProductModel
+@{
+    ViewData["PageTitle"] = "Add Product";
+    Layout = "_LayoutAuth";
+}
+
+<div class="container py-4">
+    <h3>Add Product</h3>
+    @if (ModelState.IsValid == false)
+    {
+        <div class="alert alert-danger">
+            <ul>
+                @foreach (Microsoft.AspNetCore.Mvc.ModelBinding.ModelStateEntry modelState in ModelState.Values)
+                {
+                    @foreach (var error in modelState.Errors)
+                    {
+                        <li>@error.ErrorMessage</li>
+                    }
+                }
+            </ul>
+        </div>
+    }
+    <form id="createProductForm" method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label for="Create_Product_Name" class="form-label">Name</label>
+                <input id="Create_Product_Name" name="Product.Name" value="@Model.Product.Name" class="form-control" placeholder="Product name" />
+                <small class="text-muted">Enter the product title.</small>
+            </div>
+            <div class="col-md-3">
+                <label for="Create_Product_Sku" class="form-label">SKU</label>
+                <input id="Create_Product_Sku" name="Product.Sku" value="@Model.Product.Sku" class="form-control" placeholder="Stock keeping unit" />
+                <small class="text-muted">Internal stock code.</small>
+            </div>
+            <div class="col-md-3">
+                <label for="Create_Product_Price" class="form-label">Price</label>
+                <input id="Create_Product_Price" name="Product.Price" value="@Model.Product.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)" type="number" step="0.01" class="form-control" placeholder="Unit price" />
+                <small class="text-muted">Use dot for decimals (e.g. 199.99).</small>
+            </div>
+            <div class="col-md-3 mt-3 mt-md-0">
+                <label for="Create_Product_Quantity" class="form-label">Quantity</label>
+                <input id="Create_Product_Quantity" name="Product.Quantity" value="@Model.Product.Quantity" type="number" min="0" step="1" class="form-control" placeholder="Units in stock" />
+                <small class="text-muted">Units available in stock.</small>
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="Create_Product_Description" class="form-label">Description</label>
+            <textarea id="Create_Product_Description" name="Product.Description" class="form-control" rows="4" placeholder="Short description">@Model.Product.Description</textarea>
+            <small class="text-muted">Key features and details.</small>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Categories</label>
+            <div class="category-selector">
+                <input type="text" id="catSearchCreate" class="form-control" placeholder="Type to search top category" autocomplete="off" />
+                <div id="catSuggestCreate" class="list-group mt-2"></div>
+                <div id="catPopupCreate" class="card mt-2" hidden>
+                    <div class="card-body">
+                        <div id="catPopupHeaderCreate" class="fw-semibold mb-2"></div>
+                        <div id="catPopupListCreate" class="d-flex flex-column gap-2"></div>
+                        <div class="d-flex justify-content-end gap-2 mt-3">
+                            <button type="button" class="btn btn-light btn-sm" id="catPopupCancelCreate">Cancel</button>
+                            <button type="button" class="btn btn-primary btn-sm" id="catPopupAddCreate">Add</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="selectedCatsCreate" class="d-flex flex-wrap gap-2 mt-2"></div>
+                <div id="catInputsCreate"></div>
+                <small class="text-muted d-block mt-1">Select a top category, then choose its subcategories.</small>
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="Create_Product_ImageFiles" class="form-label">Images</label>
+            <input id="Create_Product_ImageFiles" name="Product.ImageFiles" type="file" class="form-control" multiple />
+            <button type="button" id="btnGenerateAI" class="btn btn-outline-primary mt-2">
+                <i class="bi bi-stars"></i> Auto-Fill with Gemini AI
+            </button>
+            <div id="aiLoading" class="text-primary mt-2" style="display:none;">
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                Generating content from images...
+            </div>
+            <div id="aiError" class="text-danger mt-2" style="display:none;"></div>
+            <small class="text-muted">You can add up to 4 images in total and reorder by dragging.</small>
+        </div>
+        <div class="mb-3">
+            <div class="row g-3" id="newImages"></div>
+            <div id="createOrderInputs" hidden></div>
+        </div>
+        <button class="btn btn-primary">Save</button>
+    </form>
+</div>
+
+<script>
+(function(){
+    const cats = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Categories.Select(c => new { id = c.Id, name = c.Name, parentId = c.ParentId })));
+    const selected = new Set(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Product.CategoryIds ?? new List<int>())));
+    const search = document.getElementById('catSearchCreate');
+    const suggest = document.getElementById('catSuggestCreate');
+    const popup = document.getElementById('catPopupCreate');
+    const popupHeader = document.getElementById('catPopupHeaderCreate');
+    const popupList = document.getElementById('catPopupListCreate');
+    const popupCancel = document.getElementById('catPopupCancelCreate');
+    const popupAdd = document.getElementById('catPopupAddCreate');
+    const chips = document.getElementById('selectedCatsCreate');
+    const inputs = document.getElementById('catInputsCreate');
+    function renderChips(){
+        chips.innerHTML = '';
+        inputs.innerHTML = '';
+        const arr = cats.filter(c => selected.has(c.id)).sort((a,b)=>a.name.localeCompare(b.name));
+        arr.forEach(c=>{
+            const badge = document.createElement('span');
+            badge.className = 'badge rounded-pill text-bg-secondary';
+            badge.textContent = c.name;
+            const del = document.createElement('button');
+            del.type = 'button';
+            del.className = 'btn btn-link p-0 ms-2 chip-remove';
+            del.innerHTML = '<i class=\"bi bi-trash\"></i>';
+            del.title = 'Remove';
+            del.addEventListener('click', ()=>{ selected.delete(c.id); renderChips(); });
+            const wrap = document.createElement('span');
+            wrap.className = 'd-inline-flex align-items-center gap-1 chip-wrap';
+            wrap.appendChild(badge);
+            wrap.appendChild(del);
+            chips.appendChild(wrap);
+            const inp = document.createElement('input');
+            inp.type = 'hidden';
+            inp.name = 'Product.CategoryIds';
+            inp.value = String(c.id);
+            inputs.appendChild(inp);
+        });
+    }
+    function openPopupForParent(parent){
+        popupHeader.textContent = parent.name;
+        popupList.innerHTML = '';
+
+        // Always allow selecting the parent category itself
+        const pDiv = document.createElement('div');
+        pDiv.className = 'mb-2 pb-2 border-bottom';
+        const pLbl = document.createElement('label');
+        pLbl.className = 'form-check-label fw-bold';
+        const pCk = document.createElement('input');
+        pCk.type='checkbox';
+        pCk.className='form-check-input me-1';
+        pCk.value=String(parent.id);
+        pCk.checked = selected.has(parent.id);
+        pLbl.appendChild(pCk);
+        pLbl.appendChild(document.createTextNode(parent.name + ' (Main)'));
+        pDiv.appendChild(pLbl);
+        popupList.appendChild(pDiv);
+
+        // collect all descendants with depth
+        const byParent = new Map();
+        cats.forEach(c=>{
+            const k = c.parentId ?? 0;
+            if(!byParent.has(k)) byParent.set(k, []);
+            byParent.get(k).push(c);
+        });
+        function getDescendants(pid){
+            const res = [];
+            const stack = [{ id: pid, depth: 0 }];
+            while(stack.length){
+                const cur = stack.pop();
+                const arr = byParent.get(cur.id) || [];
+                arr.sort((a,b)=>a.name.localeCompare(b.name)).forEach(child=>{
+                    res.push({ id: child.id, name: child.name, depth: cur.depth+1 });
+                    stack.push({ id: child.id, depth: cur.depth+1 });
+                });
+            }
+            return res;
+        }
+        const descendants = getDescendants(parent.id);
+        if(descendants.length===0){
+            const none = document.createElement('div');
+            none.className = 'text-muted small fst-italic';
+            none.textContent = 'No subcategories available.';
+            popupList.appendChild(none);
+        }else{
+            descendants.forEach(ch=>{
+                const lbl = document.createElement('label');
+                lbl.className = 'form-check-label d-block';
+                const ck = document.createElement('input');
+                ck.type='checkbox';
+                ck.className='form-check-input me-1';
+                ck.value=String(ch.id);
+                ck.checked = selected.has(ch.id);
+                lbl.appendChild(ck);
+                const prefix = '•'.repeat(Math.max(0, ch.depth-1));
+                lbl.appendChild(document.createTextNode((prefix? prefix+' ' : '') + ch.name));
+                popupList.appendChild(lbl);
+            });
+        }
+        popup.hidden = false;
+        popupAdd.onclick = function(){
+            const cks = popupList.querySelectorAll('input[type=checkbox]');
+            // if(cks.length===0){ selected.add(parent.id); } // No longer needed as parent has a checkbox
+            cks.forEach(i=>{ 
+                if(i.checked) selected.add(parseInt(i.value)); 
+                else if (popupList.contains(i)) selected.delete(parseInt(i.value));
+            });
+            popup.hidden = true;
+            search.value = '';
+            suggest.innerHTML = '';
+            renderChips();
+        };
+        popupCancel.onclick = function(){ popup.hidden = true; };
+    }
+    function renderSuggest(){
+        const q = (search.value||'').toLowerCase().trim();
+        suggest.innerHTML = '';
+        
+        let parents = [];
+        if(!q) {
+            // If query is empty, show all top-level categories
+            parents = cats.filter(c=>!c.parentId).sort((a,b)=>a.name.localeCompare(b.name));
+        } else {
+            // If query exists, filter by name
+            parents = cats.filter(c=>!c.parentId && c.name && c.name.toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name)).slice(0,10);
+        }
+
+        parents.forEach(p=>{
+            const a = document.createElement('a');
+            a.href='#';
+            a.className='list-group-item list-group-item-action';
+            a.textContent = p.name;
+            a.addEventListener('click', function(ev){ ev.preventDefault(); openPopupForParent(p); });
+            suggest.appendChild(a);
+        });
+    }
+    search.addEventListener('input', renderSuggest);
+    search.addEventListener('focus', renderSuggest); // Show all on focus
+    renderChips();
+})();
+</script>
+
+<style>
+.chip-remove { color: #6c757d; }
+.chip-wrap:hover .chip-remove { color: #dc3545; }
+</style>
+
+<script>
+(function(){
+    const fileInput = document.getElementById('Create_Product_ImageFiles');
+    const list = document.getElementById('newImages');
+    const orderInputs = document.getElementById('createOrderInputs');
+    const form = document.forms[0];
+    if(!fileInput || !list || !orderInputs || !form) return;
+
+    let selectedFiles = [];
+
+    function refreshOrderInputs(){
+        orderInputs.innerHTML = '';
+        const tiles = list.querySelectorAll('.img-tile[data-token]');
+        tiles.forEach(tile => {
+            const t = tile.getAttribute('data-token');
+            if(!t) return;
+            const inp = document.createElement('input');
+            inp.type = 'hidden';
+            inp.name = 'Product.ImageOrder';
+            inp.value = t;
+            orderInputs.appendChild(inp);
+        });
+    }
+
+    function makeDraggable(tile){
+        tile.setAttribute('draggable','true');
+        tile.addEventListener('dragstart', (ev)=>{
+            ev.dataTransfer.setData('text/plain', JSON.stringify({ idx: Array.from(list.children).indexOf(tile.parentElement) }));
+        });
+    }
+
+    list.addEventListener('dragover', (ev)=>{ ev.preventDefault(); });
+    list.addEventListener('drop', (ev)=>{
+        ev.preventDefault();
+        const data = JSON.parse(ev.dataTransfer.getData('text/plain')||'{}');
+        const targetCol = ev.target.closest('.col-6, .col-md-3');
+        const cols = Array.from(list.children);
+        const from = data.idx;
+        const to = cols.indexOf(targetCol);
+        if(from>=0 && to>=0 && from!==to){
+            const moving = cols[from];
+            if(to === cols.length-1){ list.appendChild(moving); } else { list.insertBefore(moving, cols[to]); }
+            // reorder selectedFiles accordingly
+            const movedItem = selectedFiles.splice(from,1)[0];
+            selectedFiles.splice(to,0,movedItem);
+            // reindex tokens
+            selectedFiles.forEach((it, idx)=>{
+                const tile = it.tile;
+                tile.setAttribute('data-token', `new:${idx}`);
+                const btn = tile.querySelector('.delete-btn');
+                if(btn) btn.setAttribute('data-token', `new:${idx}`);
+            });
+            refreshOrderInputs();
+        }
+    });
+
+    list.addEventListener('click', function(e){
+        const btn = e.target.closest('.delete-btn');
+        if(!btn) return;
+        const token = btn.getAttribute('data-token');
+        if(!token) return;
+        const idx = parseInt(token.split(':')[1]);
+        if(!Number.isNaN(idx)){
+            selectedFiles.splice(idx,1);
+        }
+        const col = btn.closest('.col-6, .col-md-3');
+        if(col) col.remove();
+        // reindex
+        selectedFiles.forEach((it, i)=>{
+            const tile = it.tile;
+            tile.setAttribute('data-token', `new:${i}`);
+            const b = tile.querySelector('.delete-btn');
+            if(b) b.setAttribute('data-token', `new:${i}`);
+        });
+        refreshOrderInputs();
+    });
+
+    fileInput.addEventListener('change', function(){
+        const files = Array.from(fileInput.files||[]);
+        let available = Math.max(0, 4 - list.querySelectorAll('.img-tile').length);
+        for(const f of files){
+            if(available <= 0) break;
+            const url = URL.createObjectURL(f);
+            const col = document.createElement('div');
+            col.className = 'col-6 col-md-3';
+            col.innerHTML = `
+                <div class="img-tile position-relative" data-token="new:0">
+                    <img src="${url}" alt="image" class="w-100 h-100 object-fit-contain tile-img" />
+                    <button type="button" class="btn btn-danger btn-sm tile-delete delete-btn" data-token="new:0" title="Delete">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>`;
+            list.appendChild(col);
+            const tile = col.querySelector('.img-tile');
+            makeDraggable(tile);
+            selectedFiles.push({ file: f, tile });
+            available--;
+        }
+        // set tokens
+        selectedFiles.forEach((it, i)=>{
+            const tile = it.tile;
+            tile.setAttribute('data-token', `new:${i}`);
+            const b = tile.querySelector('.delete-btn');
+            if(b) b.setAttribute('data-token', `new:${i}`);
+        });
+        refreshOrderInputs();
+    });
+
+    form.addEventListener('submit', function(){
+        const price = document.getElementById('Create_Product_Price');
+        if(price && typeof price.value === 'string'){
+            price.value = price.value.replace(',', '.');
+        }
+        try{
+            const dt = new DataTransfer();
+            selectedFiles.forEach(it => { if(it && it.file) dt.items.add(it.file); });
+            fileInput.files = dt.files;
+        }catch{}
+        refreshOrderInputs();
+    });
+
+    const btnAI = document.getElementById('btnGenerateAI');
+    const loadingAI = document.getElementById('aiLoading');
+    const errorAI = document.getElementById('aiError');
+
+    btnAI.addEventListener('click', function() {
+        if (fileInput.files.length === 0) {
+            alert("Please select at least one image first.");
+            return;
+        }
+
+        loadingAI.style.display = 'block';
+        errorAI.style.display = 'none';
+        btnAI.disabled = true;
+
+        const formData = new FormData();
+        for (const file of fileInput.files) {
+            formData.append('files', file);
+        }
+
+        // Anti-forgery token is needed for POST requests in Razor Pages
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+        fetch('?handler=GenerateDescription', {
+            method: 'POST',
+            headers: {
+                'RequestVerificationToken': token
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            loadingAI.style.display = 'none';
+            btnAI.disabled = false;
+
+            if (data.success) {
+                try {
+                    const content = JSON.parse(data.data);
+                    if (content.name) {
+                        document.getElementById('Create_Product_Name').value = content.name;
+                    }
+                    if (content.description) {
+                        document.getElementById('Create_Product_Description').value = content.description;
+                    }
+                } catch (e) {
+                    errorAI.textContent = "Error parsing AI response.";
+                    errorAI.style.display = 'block';
+                }
+            } else {
+                errorAI.textContent = data.message;
+                errorAI.style.display = 'block';
+            }
+        })
+        .catch(err => {
+            loadingAI.style.display = 'none';
+            btnAI.disabled = false;
+            errorAI.textContent = "An error occurred while communicating with the server.";
+            errorAI.style.display = 'block';
+            console.error(err);
+        });
+    });
+})();
+</script>

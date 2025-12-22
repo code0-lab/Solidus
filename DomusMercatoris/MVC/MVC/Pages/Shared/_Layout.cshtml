@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["PageTitle"]</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/css/site.css?v=@DateTime.Now.Ticks">
+</head>
+<body>
+    <!-- Background Elements -->
+    <svg style="display: none;"> 
+        <filter id="architectural-concrete"> 
+            <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="4" seed="12" result="grain" /> 
+            <feTurbulence type="fractalNoise" baseFrequency="0.95" numOctaves="2" seed="42" result="pits" /> 
+            <feColorMatrix in="pits" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 5 -4" result="pit-dots"/> 
+            <feDiffuseLighting in="grain" lighting-color="#ffffff" surfaceScale="1.8" result="diffuse"> 
+                <feDistantLight azimuth="45" elevation="65" /> 
+            </feDiffuseLighting> 
+            <feComposite in="diffuse" in2="SourceGraphic" operator="arithmetic" k1="1.1" k2="0.3" k3="0" k4="0" result="final-grain"/> 
+            <feBlend in="pit-dots" in2="final-grain" mode="multiply" /> 
+        </filter> 
+    </svg> 
+
+    <div class="concrete-wall"> 
+        <div class="panel"> 
+            <div class="hole h-tl"></div><div class="hole h-tr"></div> 
+            <div class="hole h-bl"></div><div class="hole h-br"></div> 
+        </div> 
+        <div class="panel"> 
+            <div class="hole h-tl"></div><div class="hole h-tr"></div> 
+            <div class="hole h-bl"></div><div class="hole h-br"></div> 
+        </div> 
+        <div class="panel"> 
+            <div class="hole h-tl"></div><div class="hole h-tr"></div> 
+            <div class="hole h-bl"></div><div class="hole h-br"></div> 
+        </div> 
+        <div class="panel"> 
+            <div class="hole h-tl"></div><div class="hole h-tr"></div> 
+            <div class="hole h-bl"></div><div class="hole h-br"></div> 
+        </div> 
+    </div>
+
+    <div class="container">
+        @RenderBody()
+    </div>
+</body>
+</html>

@@ -1,0 +1,535 @@
+@page "/Product/Edit/{id:long}"
+@model DomusMercatorisDotnetMVC.Pages.EditProductModel
+@{
+    ViewData["PageTitle"] = "Edit Product";
+    Layout = "_LayoutAuth";
+}
+
+<div class="container py-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h3 class="mb-0">Edit Product</h3>
+        @if (Model.Existing != null)
+        {
+            <a href="/Product/@Model.Existing.Id" class="btn btn-outline-secondary">Back</a>
+        }
+    </div>
+
+    @if (Model.Existing?.Images != null && Model.Existing.Images.Count > 0)
+    {
+        <div class="mb-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="fw-bold">Existing Images</div>
+            </div>
+            <div class="row g-3 mt-1" id="existingImages">
+                @for (var i = 0; i < Model.Existing.Images.Count; i++)
+                {
+                    var img = Model.Existing.Images[i];
+                    <div class="col-6 col-md-3">
+                        <div class="img-tile position-relative" data-token="@img">
+                            <img src="@img" alt="image" class="w-100 h-100 object-fit-contain tile-img" />
+                            <button type="button" class="btn btn-danger btn-sm tile-delete delete-btn" data-token="@img" data-path="@img" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    @if (ModelState.IsValid == false)
+    {
+        <div class="alert alert-danger">
+            <ul>
+                @foreach (Microsoft.AspNetCore.Mvc.ModelBinding.ModelStateEntry modelState in ModelState.Values)
+                {
+                    @foreach (var error in modelState.Errors)
+                    {
+                        <li>@error.ErrorMessage</li>
+                    }
+                }
+            </ul>
+        </div>
+    }
+
+    <form method="post" enctype="multipart/form-data" novalidate>
+        @Html.AntiForgeryToken()
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label for="Product_Name" class="form-label">Name</label>
+                <input id="Product_Name" name="Product.Name" value="@(Model.Existing?.Name ?? Model.Product.Name)" class="form-control" placeholder="Product name" />
+                <small class="text-muted">Enter the product title.</small>
+            </div>
+            <div class="col-md-3">
+                <label for="Product_Sku" class="form-label">SKU</label>
+                <input id="Product_Sku" name="Product.Sku" value="@(Model.Existing?.Sku ?? Model.Product.Sku)" class="form-control" placeholder="Stock keeping unit" />
+                <small class="text-muted">Internal stock code.</small>
+            </div>
+            <div class="col-md-3">
+                <label for="Product_Price" class="form-label">Price</label>
+                <input id="Product_Price" name="Product.Price" value="@FormattableString.Invariant($"{(Model.Existing?.Price ?? Model.Product.Price):0.##}")" type="number" step="0.01" class="form-control" placeholder="Unit price" inputmode="decimal" lang="en" />
+                <small class="text-muted">Use dot for decimals (e.g. 199.99).</small>
+            </div>
+            <div class="col-md-3 mt-3 mt-md-0">
+                <label for="Product_Quantity" class="form-label">Quantity</label>
+                <input id="Product_Quantity" name="Product.Quantity" value="@(Model.Existing?.Quantity ?? Model.Product.Quantity)" type="number" min="0" step="1" class="form-control" placeholder="Units in stock" />
+                <small class="text-muted">Units available in stock.</small>
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="Product_Description" class="form-label">Description</label>
+            <textarea id="Product_Description" name="Product.Description" class="form-control" rows="4" placeholder="Short description">@(Model.Existing?.Description ?? Model.Product.Description)</textarea>
+            <small class="text-muted">Key features and details.</small>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Categories</label>
+            <div class="category-selector">
+                <input type="text" id="catSearchEdit" class="form-control" placeholder="Type to search top category" autocomplete="off" />
+                <div id="catSuggestEdit" class="list-group mt-2"></div>
+                <div id="catPopupEdit" class="card mt-2" hidden>
+                    <div class="card-body">
+                        <div id="catPopupHeaderEdit" class="fw-semibold mb-2"></div>
+                        <div id="catPopupListEdit" class="d-flex flex-column gap-2"></div>
+                        <div class="d-flex justify-content-end gap-2 mt-3">
+                            <button type="button" class="btn btn-light btn-sm" id="catPopupCancelEdit">Cancel</button>
+                            <button type="button" class="btn btn-primary btn-sm" id="catPopupAddEdit">Add</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="selectedCatsEdit" class="d-flex flex-wrap gap-2 mt-2"></div>
+                <div id="catInputsEdit"></div>
+                <small class="text-muted d-block mt-1">Select a top category, then choose its subcategories.</small>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="Product_ImageFiles" class="form-label">Add Images</label>
+            <input id="Product_ImageFiles" name="Product.ImageFiles" type="file" accept="image/*" class="form-control" aria-label="Add images" multiple />
+            <button type="button" id="btnGenerateAI" class="btn btn-outline-primary mt-2">
+                <i class="bi bi-stars"></i> Auto-Fill with Gemini AI
+            </button>
+            <div id="aiLoading" class="text-primary mt-2" style="display:none;">
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                Generating content from images...
+            </div>
+            <div id="aiError" class="text-danger mt-2" style="display:none;"></div>
+            <small class="text-muted d-block mt-1">You can add up to 4 images in total and reorder by dragging.</small>
+        </div>
+        <div id="orderInputs" hidden></div>
+
+        <button class="btn btn-primary">Save</button>
+    </form>
+</div>
+
+<style>
+    .img-tile { height: 160px; overflow: hidden; border-radius: .5rem; }
+    .tile-img { transition: filter .2s ease; }
+    .tile-delete { position: absolute; right: .5rem; top: .5rem; opacity: 0; transition: opacity .2s ease; }
+    .img-tile:hover .tile-img { filter: blur(3px); }
+    .img-tile:hover .tile-delete { opacity: 1; }
+    .object-fit-contain { object-fit: contain; }
+</style>
+
+    <script>
+    (function(){
+        const existing = document.getElementById('existingImages');
+        const fileInput = document.getElementById('Product_ImageFiles');
+        const form = document.forms[0];
+        const orderInputs = document.getElementById('orderInputs');
+        let selectedFiles = [];
+        if(!existing || !fileInput || !form) return;
+
+        function refreshOrderInputs(){
+            orderInputs.innerHTML = '';
+            const tiles = existing.querySelectorAll('.img-tile[data-token]');
+            const tokens = [];
+            tiles.forEach(tile => {
+                const t = tile.getAttribute('data-token');
+                if(t) tokens.push(t);
+            });
+            const max = Math.min(tokens.length, 4);
+            for(let i=0;i<max;i++){
+                const inp = document.createElement('input');
+                inp.type = 'hidden';
+                inp.name = 'Product.ImageOrder';
+                inp.value = tokens[i];
+                orderInputs.appendChild(inp);
+            }
+        }
+
+        function makeDraggable(card){
+            card.setAttribute('draggable','true');
+            card.addEventListener('dragstart', (ev)=>{
+                ev.dataTransfer.setData('text/plain', JSON.stringify({ idx: Array.from(existing.children).indexOf(card.parentElement) }));
+            });
+        }
+
+        existing.querySelectorAll('.img-tile').forEach(tile => {
+            makeDraggable(tile);
+        });
+        refreshOrderInputs();
+
+        existing.addEventListener('dragover',(ev)=>{ ev.preventDefault(); });
+        existing.addEventListener('drop',(ev)=>{
+            ev.preventDefault();
+            const data = JSON.parse(ev.dataTransfer.getData('text/plain')||'{}');
+            const targetCol = ev.target.closest('.col-6, .col-md-3');
+            const cols = Array.from(existing.children);
+            const from = data.idx;
+            const to = cols.indexOf(targetCol);
+            if(from>=0 && to>=0 && from!==to){
+                const moving = cols[from];
+                if(to === cols.length-1){ existing.appendChild(moving); } else { existing.insertBefore(moving, cols[to]); }
+                refreshOrderInputs();
+            }
+        });
+
+        function syncNewTokens(){
+            // reindex new tokens according to selectedFiles order
+            selectedFiles.forEach((item, idx)=>{
+                const tile = item.tile;
+                if(!tile) return;
+                tile.setAttribute('data-token', `new:${idx}`);
+                const btn = tile.querySelector('.delete-btn');
+                if(btn) btn.setAttribute('data-token', `new:${idx}`);
+            });
+            refreshOrderInputs();
+        }
+
+        existing.addEventListener('click', function(e){
+            const btn = e.target.closest('.delete-btn');
+            if(!btn) return;
+            const token = btn.getAttribute('data-token') || btn.getAttribute('data-path');
+            if(!token) return;
+            if(!confirm('Are you sure you want to delete this image?')) return;
+            if(token.startsWith('new:')){
+                const idx = parseInt(token.split(':')[1]);
+                if(!Number.isNaN(idx)){
+                    selectedFiles.splice(idx,1);
+                }
+                const col = btn.closest('.col-6, .col-md-3');
+                if(col) col.remove();
+                syncNewTokens();
+            } else {
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = 'Product.RemoveImages';
+                hidden.value = token;
+                form.appendChild(hidden);
+                const col = btn.closest('.col-6, .col-md-3');
+                if(col) col.remove();
+                refreshOrderInputs();
+            }
+        });
+
+        fileInput.addEventListener('change', function(){
+            const files = Array.from(fileInput.files||[]);
+            const currentCount = existing.querySelectorAll('.img-tile').length;
+            let available = Math.max(0, 4 - currentCount);
+            for(const f of files){
+                if(available <= 0) break;
+                const url = URL.createObjectURL(f);
+                const col = document.createElement('div');
+                col.className = 'col-6 col-md-3';
+                col.innerHTML = `
+                    <div class="img-tile position-relative" data-token="new:0">
+                        <img src="${url}" alt="image" class="w-100 h-100 object-fit-contain tile-img" />
+                        <button type="button" class="btn btn-danger btn-sm tile-delete delete-btn" data-token="new:0" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>`;
+                existing.appendChild(col);
+                const tile = col.querySelector('.img-tile');
+                makeDraggable(tile);
+                selectedFiles.push({ file: f, tile });
+                available--;
+            }
+            syncNewTokens();
+        });
+
+        form.addEventListener('submit', function(){
+            const price = document.getElementById('Product_Price');
+            if(price && typeof price.value === 'string'){
+                price.value = price.value.replace(',', '.');
+            }
+            try{
+                const dt = new DataTransfer();
+                selectedFiles.forEach(item => { if(item && item.file) dt.items.add(item.file); });
+                fileInput.files = dt.files;
+            }catch{}
+            refreshOrderInputs();
+        });
+    })();
+    </script>
+    <script>
+    (function(){
+        const btnAI = document.getElementById('btnGenerateAI');
+        const loadingAI = document.getElementById('aiLoading');
+        const errorAI = document.getElementById('aiError');
+        const fileInput = document.getElementById('Product_ImageFiles');
+        const existingContainer = document.getElementById('existingImages'); // For existing images if we want to support them in future
+
+        if(!btnAI) return;
+
+        btnAI.addEventListener('click', function() {
+            // Check if there are any new files selected
+            if (fileInput.files.length === 0) {
+                alert("Please select at least one new image first.");
+                return;
+            }
+
+            loadingAI.style.display = 'block';
+            errorAI.style.display = 'none';
+            btnAI.disabled = true;
+
+            const formData = new FormData();
+            for (const file of fileInput.files) {
+                formData.append('files', file);
+            }
+
+            // Anti-forgery token is needed for POST requests in Razor Pages
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            // Using the same handler as AddProduct, but we need to make sure EditProductModel has it or we route to a common API
+            // For now, let's assume we need to add the handler to EditProduct.cshtml.cs or use a shared endpoint.
+            // Since we are on EditProduct page, the handler must exist on this page's model.
+            fetch('?handler=GenerateDescription', {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': token
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingAI.style.display = 'none';
+                btnAI.disabled = false;
+
+                if (data.success) {
+                    try {
+                        const content = JSON.parse(data.data);
+                        if (content.name) {
+                            document.getElementById('Product_Name').value = content.name;
+                        }
+                        if (content.description) {
+                            document.getElementById('Product_Description').value = content.description;
+                        }
+                    } catch (e) {
+                        errorAI.textContent = "Error parsing AI response.";
+                        errorAI.style.display = 'block';
+                    }
+                } else {
+                    errorAI.textContent = data.message;
+                    errorAI.style.display = 'block';
+                }
+            })
+            .catch(err => {
+                loadingAI.style.display = 'none';
+                btnAI.disabled = false;
+                errorAI.textContent = "An error occurred while communicating with the server.";
+                errorAI.style.display = 'block';
+                console.error(err);
+            });
+        });
+    })();
+    </script>
+<script>
+(function(){
+    const cats = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Categories.Select(c => new { id = c.Id, name = c.Name, parentId = c.ParentId })));
+    const selected = new Set(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Product.CategoryIds ?? new List<int>())));
+    const search = document.getElementById('catSearchEdit');
+    const suggest = document.getElementById('catSuggestEdit');
+    const popup = document.getElementById('catPopupEdit');
+    const popupHeader = document.getElementById('catPopupHeaderEdit');
+    const popupList = document.getElementById('catPopupListEdit');
+    const popupCancel = document.getElementById('catPopupCancelEdit');
+    const popupAdd = document.getElementById('catPopupAddEdit');
+    const chips = document.getElementById('selectedCatsEdit');
+    const inputs = document.getElementById('catInputsEdit');
+    function renderChips(){
+        chips.innerHTML = '';
+        inputs.innerHTML = '';
+        const arr = cats.filter(c => selected.has(c.id)).sort((a,b)=>a.name.localeCompare(b.name));
+        arr.forEach(c=>{
+            const badge = document.createElement('span');
+            badge.className = 'badge rounded-pill text-bg-secondary';
+            badge.textContent = c.name;
+            const del = document.createElement('button');
+            del.type = 'button';
+            del.className = 'btn btn-link p-0 ms-2 chip-remove';
+            del.innerHTML = '<i class=\"bi bi-trash\"></i>';
+            del.title = 'Remove';
+            del.addEventListener('click', ()=>{ selected.delete(c.id); renderChips(); });
+            const wrap = document.createElement('span');
+            wrap.className = 'd-inline-flex align-items-center gap-1 chip-wrap';
+            wrap.appendChild(badge);
+            wrap.appendChild(del);
+            chips.appendChild(wrap);
+            const inp = document.createElement('input');
+            inp.type = 'hidden';
+            inp.name = 'Product.CategoryIds';
+            inp.value = String(c.id);
+            inputs.appendChild(inp);
+        });
+    }
+    function openPopupForParent(parent){
+        popupHeader.textContent = parent.name;
+        popupList.innerHTML = '';
+        
+        // Always allow selecting the parent category itself
+        const pDiv = document.createElement('div');
+        pDiv.className = 'mb-2 pb-2 border-bottom';
+        const pLbl = document.createElement('label');
+        pLbl.className = 'form-check-label fw-bold';
+        const pCk = document.createElement('input');
+        pCk.type='checkbox';
+        pCk.className='form-check-input me-1';
+        pCk.value=String(parent.id);
+        pCk.checked = selected.has(parent.id);
+        pLbl.appendChild(pCk);
+        pLbl.appendChild(document.createTextNode(parent.name + ' (Main)'));
+        pDiv.appendChild(pLbl);
+        popupList.appendChild(pDiv);
+
+        // collect all descendants with depth
+        const byParent = new Map();
+        cats.forEach(c=>{
+            const k = c.parentId ?? 0;
+            if(!byParent.has(k)) byParent.set(k, []);
+            byParent.get(k).push(c);
+        });
+        function getDescendants(pid){
+            const res = [];
+            const stack = [{ id: pid, depth: 0 }];
+            while(stack.length){
+                const cur = stack.pop();
+                const arr = byParent.get(cur.id) || [];
+                arr.sort((a,b)=>a.name.localeCompare(b.name)).forEach(child=>{
+                    res.push({ id: child.id, name: child.name, depth: cur.depth+1 });
+                    stack.push({ id: child.id, depth: cur.depth+1 });
+                });
+            }
+            return res;
+        }
+        const descendants = getDescendants(parent.id);
+        if(descendants.length===0){
+            // No subcategories, but we already added the main category checkbox above.
+            // Maybe add a text saying "No subcategories available"
+            const none = document.createElement('div');
+            none.className = 'text-muted small mt-2';
+            none.textContent = 'No subcategories available.';
+            popupList.appendChild(none);
+        }else{
+            descendants.forEach(ch=>{
+                const div = document.createElement('div');
+                div.className = 'form-check';
+                const lbl = document.createElement('label');
+                lbl.className = 'form-check-label';
+                const ck = document.createElement('input');
+                ck.type='checkbox';
+                ck.className='form-check-input me-1';
+                ck.value=String(ch.id);
+                ck.checked = selected.has(ch.id);
+                lbl.appendChild(ck);
+                const prefix = '•'.repeat(Math.max(0, ch.depth-1));
+                lbl.appendChild(document.createTextNode((prefix? prefix+' ' : '') + ch.name));
+                div.appendChild(lbl);
+                popupList.appendChild(div);
+            });
+        }
+        popup.hidden = false;
+        popupAdd.onclick = function(){
+            const cks = popupList.querySelectorAll('input[type=checkbox]');
+            cks.forEach(i=>{ if(i.checked) selected.add(parseInt(i.value)); else selected.delete(parseInt(i.value)); }); // Also handle uncheck
+            // Note: logic in AddProduct was: cks.forEach(i=>{ if(i.checked) selected.add(parseInt(i.value)); });
+            // But if user unchecks the main category in the popup, we should probably remove it?
+            // In AddProduct implementation: 
+            /*
+            popupAdd.onclick = function(){
+                const cks = popupList.querySelectorAll('input[type=checkbox]');
+                cks.forEach(i=>{ if(i.checked) selected.add(parseInt(i.value)); });
+                popup.hidden = true;
+                // ...
+            };
+            */
+            // It seems AddProduct logic was additive only? No, `selected` is a Set. 
+            // If I uncheck in the popup, it should be removed from `selected`?
+            // Wait, the popup is "Select subcategories".
+            // If I open the popup, I see current state.
+            // If I uncheck something, it should be removed.
+            
+            // Let's stick to AddProduct logic for consistency, but improve if needed.
+            // In AddProduct I did:
+            /*
+             popupAdd.onclick = function(){
+                const cks = popupList.querySelectorAll('input[type=checkbox]');
+                cks.forEach(i=>{ if(i.checked) selected.add(parseInt(i.value)); });
+                popup.hidden = true;
+                search.value = '';
+                suggest.innerHTML = '';
+                renderChips();
+            };
+            */
+            // If I uncheck a box in the popup that was previously checked (and in `selected`),
+            // the current logic `if(i.checked) selected.add(...)` does NOT remove it.
+            // This means unchecking in the popup does nothing?
+            // That seems like a bug in my previous AddProduct implementation too, unless the popup starts empty?
+            // No, `ck.checked = selected.has(ch.id);` initializes it.
+            // So if I uncheck it, `i.checked` is false. `selected.add` is skipped.
+            // But `selected` still has the ID!
+            // So I should fix this logic to:
+            /*
+            cks.forEach(i=>{ 
+                if(i.checked) selected.add(parseInt(i.value)); 
+                else selected.delete(parseInt(i.value));
+            });
+            */
+            // I will apply this fix here.
+
+            cks.forEach(i=>{ 
+                 if(i.checked) selected.add(parseInt(i.value)); 
+                 else if (popupList.contains(i)) selected.delete(parseInt(i.value)); // Only delete if it was presented in this popup? 
+                 // Actually, `cks` are only from `popupList`.
+                 // But wait, `selected` contains ALL selected categories, including those from other parents.
+                 // We should only touch IDs that are present in this popup.
+                 // Yes, `cks` are only from this popup.
+            });
+
+            popup.hidden = true;
+            search.value = '';
+            suggest.innerHTML = '';
+            renderChips();
+        };
+        popupCancel.onclick = function(){ popup.hidden = true; };
+    }
+    function renderSuggest(){
+        const q = (search.value||'').toLowerCase().trim();
+        suggest.innerHTML = '';
+        
+        let parents = [];
+        if(!q) {
+            // If query is empty, show all top-level categories
+            parents = cats.filter(c=>!c.parentId).sort((a,b)=>a.name.localeCompare(b.name));
+        } else {
+            // If query exists, filter by name
+            parents = cats.filter(c=>!c.parentId && c.name && c.name.toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name)).slice(0,10);
+        }
+
+        parents.forEach(p=>{
+            const a = document.createElement('a');
+            a.href='#';
+            a.className='list-group-item list-group-item-action';
+            a.textContent = p.name;
+            a.addEventListener('click', function(ev){ ev.preventDefault(); openPopupForParent(p); });
+            suggest.appendChild(a);
+        });
+    }
+    search.addEventListener('input', renderSuggest);
+    search.addEventListener('focus', renderSuggest); // Show all on focus
+    renderChips();
+})();
+</script>
+<style>
+.chip-remove { color: #6c757d; }
+.chip-wrap:hover .chip-remove { color: #dc3545; }
+</style>

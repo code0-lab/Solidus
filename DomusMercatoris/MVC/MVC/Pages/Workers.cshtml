@@ -1,0 +1,85 @@
+@page
+@model DomusMercatorisDotnetMVC.Pages.WorkersModel
+@{
+    ViewData["PageTitle"] = "Workers";
+    Layout = "_LayoutAuth";
+}
+
+<div class="container py-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h3 class="mb-0">Workers</h3>
+        @if (User.IsInRole("Manager"))
+        {
+            <a href="/AddWorker" class="btn btn-success" title="Add Worker">
+                <i class="bi bi-plus-lg"></i>
+            </a>
+        }
+    </div>
+    @if (ModelState.IsValid == false)
+    {
+        <div class="alert alert-danger">
+            <ul>
+                @foreach (Microsoft.AspNetCore.Mvc.ModelBinding.ModelStateEntry modelState in ModelState.Values)
+                {
+                    @foreach (var error in modelState.Errors)
+                    {
+                        <li>@error.ErrorMessage</li>
+                    }
+                }
+            </ul>
+        </div>
+    }
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Email</th>
+                    <th>Roles</th>
+                    @if (User.IsInRole("Manager"))
+                    {
+                        <th>Actions</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var w in Model.Workers)
+                {
+                    <tr>
+                        <td>
+                            @if (User.IsInRole("Manager"))
+                            {
+                                <form method="post" action="/Workers?handler=Update" class="d-flex gap-2">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="Edit.Id" value="@w.Id" />
+                                    <input name="Edit.FirstName" value="@w.FirstName" class="form-control" />
+                                    <input name="Edit.LastName" value="@w.LastName" class="form-control" />
+                                    <input name="Edit.Email" value="@w.Email" class="form-control" />
+                                    <button class="btn btn-sm btn-primary">Save</button>
+                                </form>
+                            }
+                            else
+                            {
+                                @w.FirstName
+                            }
+                        </td>
+                        <td>@w.LastName</td>
+                        <td>@w.Email</td>
+                        <td>@string.Join(", ", w.Roles ?? new List<string>())</td>
+                        @if (User.IsInRole("Manager"))
+                        {
+                            <td>
+                                <form method="post" action="/Workers?handler=Delete" onsubmit="return confirm('Delete user?')">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="DeleteId" value="@w.Id" />
+                                    <button class="btn btn-sm btn-danger">Delete</button>
+                                </form>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

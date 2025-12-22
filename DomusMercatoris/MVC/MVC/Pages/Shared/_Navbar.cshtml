@@ -1,0 +1,130 @@
+<nav class="navbar navbar-expand-lg brutalist-navbar">
+    <div class="container-fluid">
+        <a class="navbar-brand d-flex align-items-center gap-2" href="/Dashboard">
+            <i class="bi bi-square-fill"></i>
+            <span class="fw-bold text-uppercase tracking-wider">Domus Mercatoris</span>
+        </a>
+        <button class="navbar-toggler brutalist-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">          
+                @if (User.IsInRole("Manager"))
+                {
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-uppercase fw-bold" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" onclick="return false;">
+                            Company management
+                        </a>
+                        <ul class="dropdown-menu brutalist-dropdown">
+                            <li><a class="dropdown-item" href="/Workers">Manage the workforce</a></li>
+                            <li><a class="dropdown-item" href="/Customers">Manage Customers</a></li>
+                            <li class="dropend">
+                                <button type="button" class="dropdown-item dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Manage the products
+                                </button>
+                                <ul class="dropdown-menu brutalist-dropdown">
+                                    <li><a class="dropdown-item" href="/Products">Manage Products</a></li>
+                                    <li><a class="dropdown-item" href="/Categories">Manage Product Categories</a></li>
+                                </ul>
+                            </li>
+                            <li><hr class="dropdown-divider border-black"></li>
+                        </ul>
+                    </li>
+                }
+                @if (User.Identity != null && User.Identity.IsAuthenticated)
+                {
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-uppercase fw-bold" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Hi, @User.Identity.Name
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end brutalist-dropdown">
+                            <li><a class="dropdown-item" href="/Account/Profile">Profile</a></li>
+                            <li><hr class="dropdown-divider border-black"></li>
+                            <li><a class="dropdown-item" onclick="return logoutConfirm()" href="/Index?handler=Logout">Logout</a></li>
+                        </ul>
+                    </li>
+                }
+            </ul>
+            <div id="navSearchWidget" class="nav-search-widget ms-auto">
+                <button id="navSearchBtn" type="button" class="btn brutalist-btn-nav nav-search-button">
+                    <i class="bi bi-search"></i>
+                </button>
+                <input id="navSearchInput" type="text" class="form-control nav-search-input brutalist-search-input" placeholder="SEARCH..." />
+            </div>
+        </div>
+    </div>
+</nav>
+<script>
+    function logoutConfirm() {
+        const result = confirm("Are you sure you want to logout?");
+        if (result) {
+            return true;
+        }
+        return false;
+    }
+    
+    (function(){
+        var widget = document.getElementById('navSearchWidget');
+        var input = document.getElementById('navSearchInput');
+        var btn = document.getElementById('navSearchBtn');
+        function getSearchContext(){
+            var p = (window.location && window.location.pathname) ? window.location.pathname.toLowerCase() : '';
+            if(p.startsWith('/products')) return 'products';
+            if(p.startsWith('/workers')) return 'workers';
+            if(p.startsWith('/dashboard')) return 'dashboard';
+            if(p.startsWith('/product')) return 'products';
+            if(p.startsWith('/account')) return 'account';
+            if(p.startsWith('/search')) return 'global';
+            return 'global';
+        }
+        function applyPlaceholder(){
+            var ctx = getSearchContext();
+            var text = ctx === 'global' ? 'SEARCH...' : ('SEARCH IN ' + ctx.toUpperCase());
+            if(input) input.placeholder = text;
+        }
+        applyPlaceholder();
+        if(widget && input && btn){
+            btn.addEventListener('click', function(e){
+                e.preventDefault();
+                var open = widget.classList.contains('open');
+                if(!open){
+                    widget.classList.add('open');
+                    setTimeout(function(){ input.focus(); }, 30);
+                } else {
+                    var q = (input.value || '').trim();
+                    if(q.length === 0){
+                        widget.classList.remove('open');
+                    } else {
+                        var p = (window.location && window.location.pathname) ? window.location.pathname.toLowerCase() : '';
+                        var ctx = (function(){
+                            if(p.startsWith('/products')) return 'products';
+                            if(p.startsWith('/workers')) return 'workers';
+                            if(p.startsWith('/dashboard')) return 'dashboard';
+                            if(p.startsWith('/product')) return 'products';
+                            if(p.startsWith('/account')) return 'account';
+                            return 'global';
+                        })();
+                        window.location.href = '/Search?q=' + encodeURIComponent(q) + '&ctx=' + encodeURIComponent(ctx);
+                    }
+                }
+            });
+            input.addEventListener('keydown', function(e){
+                if(e.key === 'Enter'){
+                    e.preventDefault();
+                    var q = (input.value || '').trim();
+                    if(q.length === 0) return;
+                    var p = (window.location && window.location.pathname) ? window.location.pathname.toLowerCase() : '';
+                    var ctx = (function(){
+                        if(p.startsWith('/products')) return 'products';
+                        if(p.startsWith('/workers')) return 'workers';
+                        if(p.startsWith('/dashboard')) return 'dashboard';
+                        if(p.startsWith('/product')) return 'products';
+                        if(p.startsWith('/account')) return 'account';
+                        return 'global';
+                    })();
+                    window.location.href = '/Search?q=' + encodeURIComponent(q) + '&ctx=' + encodeURIComponent(ctx);
+                }
+            });
+        }
+    })();
+</script>

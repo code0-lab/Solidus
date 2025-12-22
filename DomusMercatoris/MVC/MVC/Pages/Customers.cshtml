@@ -1,0 +1,39 @@
+@page
+@model DomusMercatorisDotnetMVC.Pages.CustomersModel
+@{
+    ViewData["PageTitle"] = "Customers";
+    Layout = "_LayoutAuth";
+}
+
+<div class="container py-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h3 class="mb-0">Customers</h3>
+</div>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Email</th>
+                    <th>Roles</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var c in Model.Customers)
+                {
+                    <tr>
+                        <td>@c.FirstName</td>
+                        <td>@c.LastName</td>
+                        <td>@c.Email</td>
+                        <td>@string.Join(", ", c.Roles ?? new List<string>())</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (Model.Customers == null || Model.Customers.Count == 0)
+    {
+        <div class="alert alert-info">No customers found.</div>
+    }
+

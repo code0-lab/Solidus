@@ -1,0 +1,203 @@
+@page
+@model DomusMercatorisDotnetMVC.Pages.CategoriesModel
+@{
+    ViewData["PageTitle"] = "Categories";
+    Layout = "_LayoutAuth";
+}
+
+<div class="container py-5">
+    <h3 class="mb-4">Categories</h3>
+    @if (TempData["Message"] is string msg && !string.IsNullOrEmpty(msg))
+    {
+        <div class="alert alert-success">@msg</div>
+    }
+
+    <div class="row g-4">
+        <div class="col-12 col-lg-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="fw-bold mb-3">Add New Category</div>
+                    <form method="post">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <input name="Input.Name" value="@Model.Input.Name" class="form-control" required minlength="2" placeholder="Category name" />
+                            <span asp-validation-for="Input.Name" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea name="Input.Description" class="form-control" rows="3">@Model.Input.Description</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Parent Category (Optional)</label>
+                            @{ Func<DomusMercatorisDotnetMVC.Models.Category, int> depth = (DomusMercatorisDotnetMVC.Models.Category c) => {
+                                    var d = 0; var cur = c; var all = Model.Categories;
+                                    while (cur.ParentId.HasValue)
+                                    {
+                                        d++;
+                                        var p = all.FirstOrDefault(x => x.Id == cur.ParentId);
+                                        if (p == null) break; cur = p;
+                                    }
+                                    return d;
+                                }; }
+                            <select name="Input.ParentId" class="form-select">
+                                @if (!Model.Input.ParentId.HasValue)
+                                {
+                                    <option value="" selected>Top-level (no parent)</option>
+                                }
+                                else
+                                {
+                                    <option value="">Top-level (no parent)</option>
+                                }
+
+                                @foreach (var cat in Model.Categories.OrderBy(c => c.Name))
+                                {
+                                    var d = depth(cat);
+                                    var prefix = new string('-', Math.Max(0, d * 2));
+                                    var displayText = (prefix.Length > 0 ? prefix + " " : string.Empty) + (cat.Name ?? string.Empty);
+                                    
+                                    if (Model.Input.ParentId.HasValue && Model.Input.ParentId.Value == cat.Id)
+                                    {
+                                        <option value="@cat.Id" selected>@displayText</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@cat.Id">@displayText</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="fw-bold mb-3">Existing Categories</div>
+                    @if (Model.TreeRoots.Count == 0)
+                    {
+                        <div class="text-muted">No categories yet.</div>
+                    }
+                    else
+                    {
+                        <div class="mb-3">
+                            <ul class="list-group" id="rootList">
+                                @foreach (var r in Model.TreeRoots)
+                                {
+                                    var name = r.Item.Name ?? string.Empty;
+                                    var count = Model.ProductsByCategory.TryGetValue(r.Item.Id, out var list) ? list.Count : 0;
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <button type="button" class="btn btn-link text-decoration-none root-btn" data-id="@r.Item.Id">@name</button>
+                                        @if (count > 0) { <span class="badge bg-light text-dark">@count</span> }
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="fw-semibold mb-2">Category Tree</div>
+                                <div id="treeViewer" class="tree-container text-muted">Select a category to view its tree.</div>
+                                <div id="treeSource" hidden>@Html.Raw(Model.TreeHtml)</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.tree-container { padding: 8px; }
+.tree-root, .tree-root ul { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; justify-content: flex-start; padding: 0; margin: 0; list-style: none; }
+.tree-root ul { margin-left: 18px; }
+.tree-children { display: flex; flex-direction: row; flex-wrap: nowrap; gap: 12px; }
+.tree-root li { list-style: none; padding: 0; margin: 0; }
+.tree-node { position: relative; display: inline-block; padding: 8px 12px; padding-right: 44px; border: 1px solid #ced4da; border-radius: 8px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.04); font-weight: 600; transition: padding-right .15s ease; }
+.node-text { display: inline-block; transition: filter .15s ease; }
+.node-actions { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); display: inline-flex; gap: 6px; opacity: 0; transition: opacity .15s ease; }
+.node-actions { pointer-events: none; }
+.tree-node.active { padding-right: 92px; }
+.tree-node.active .node-text { filter: blur(1px); }
+.tree-node.active .node-actions { opacity: 1; pointer-events: auto; }
+.tree-node .btn { padding: .125rem .375rem; line-height: 1; font-size: .85rem; }
+.products-inline .badge { margin-right: 6px; }
+.tree-container { overflow-x: auto; }
+</style>
+<script>
+(function(){
+    function token(){
+        var el = document.querySelector('input[name="__RequestVerificationToken"]');
+        return el ? el.value : '';
+    }
+    function showTreeForRoot(id){
+        var src = document.getElementById('treeSource');
+        var viewer = document.getElementById('treeViewer');
+        if(!src || !viewer) return;
+        viewer.innerHTML = '';
+        var li = src.querySelector('.tree-li[data-node-id="'+id+'"]');
+        if(!li){
+            viewer.textContent = 'Category tree not available.';
+            return;
+        }
+        var ul = document.createElement('ul');
+        ul.className = 'tree-root';
+        ul.appendChild(li.cloneNode(true));
+        viewer.classList.remove('text-muted');
+        viewer.appendChild(ul);
+    }
+    document.addEventListener('click', function(e){
+        var btn = e.target.closest('.root-btn');
+        if(btn){
+            var id = btn.getAttribute('data-id');
+            if(id){ showTreeForRoot(id); }
+        }
+    });
+    document.addEventListener('click', function(e){
+        var node = e.target.closest('.tree-node');
+        if(node && !e.target.closest('.node-actions')){
+            var has = node.getAttribute('data-has-children');
+            if(has === 'true'){
+                var li = node.closest('li');
+                if(li){
+                    var lists = li.querySelectorAll('ul.tree-children');
+                    var anyHidden = false;
+                    lists.forEach(function(u){ if(u.hidden) anyHidden = true; });
+                    lists.forEach(function(u){ u.hidden = !anyHidden ? true : false; });
+                    if(anyHidden){
+                        node.classList.add('active');
+                    } else {
+                        node.classList.remove('active');
+                    }
+                }
+            } else {
+                node.classList.toggle('active');
+            }
+        }
+    });
+    document.addEventListener('click', function(e){
+        var btn = e.target.closest('.btn-cat-delete');
+        if(!btn) return;
+        var id = btn.getAttribute('data-id');
+        if(!id) return;
+        if(!confirm('Bu kategoriyi silmek istediğinizden emin misiniz?')) return;
+        var body = new URLSearchParams();
+        var t = token();
+        if(t) body.append('__RequestVerificationToken', t);
+        body.append('EditId', id);
+        fetch('/Categories?handler=Delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: body.toString()
+        }).then(function(res){
+            window.location.href = '/Categories';
+        }).catch(function(){
+            window.location.href = '/Categories';
+        });
+    });
+})();
+</script>

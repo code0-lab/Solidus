@@ -1,0 +1,71 @@
+@page
+@model DomusMercatorisDotnetMVC.Pages.SearchModel
+@{
+    ViewData["PageTitle"] = "Search";
+    Layout = "_LayoutAuth";
+}
+
+<div class="container py-5">
+    <h3 class="mb-4">Search</h3>
+
+    @if (!string.IsNullOrEmpty(Model.Query))
+    {
+        if (Model.Context == "products" || Model.Context == "global")
+        {
+            <div class="mt-4">
+                <div class="fw-bold mb-2">Products</div>
+                @if (Model.ProductResults.Count == 0)
+                {
+                    <div class="text-muted">No products found.</div>
+                }
+                else
+                {
+                    <div class="row g-3">
+                        @foreach (var p in Model.ProductResults)
+                        {
+                            <div class="col-12 col-md-6">
+                                <a class="d-block text-decoration-none" href="/Product/@p.Id">
+                                    <div class="card card-body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <div class="fw-bold">@p.Name</div>
+                                                <div class="small text-muted">@p.Sku</div>
+                                            </div>
+                                            <div class="small">@p.Price</div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        if (Model.Context == "workers" || Model.Context == "global")
+        {
+            <div class="mt-4">
+                <div class="fw-bold mb-2">Workers</div>
+                @if (Model.WorkerResults.Count == 0)
+                {
+                    <div class="text-muted">No workers found.</div>
+                }
+                else
+                {
+                    <div class="row g-3">
+                        @foreach (var u in Model.WorkerResults)
+                        {
+                            <div class="col-12 col-md-6">
+                                <a class="d-block text-decoration-none" href="/Workers">
+                                    <div class="card card-body">
+                                        <div class="fw-bold">@u.FirstName @u.LastName</div>
+                                        <div class="small text-muted">@u.Email</div>
+                                    </div>
+                                </a>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>

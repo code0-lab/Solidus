@@ -1,0 +1,481 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+:root {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --text: #000000;
+  --accent: #000000;
+  --border: #000000;
+}
+
+body {
+  padding-top: 0;
+  padding-bottom: 0;
+  background-color: #b0b3b5 !important; /* Concrete base color */
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
+  color: var(--bs-secondary-color);
+  text-align: end;
+}
+
+.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
+  text-align: start;
+}
+
+/* Brutalist Separator */
+.brutalist-separator {
+    border: 0;
+    height: 4px;
+    background-color: #000;
+    margin: 0 0 2rem 0;
+    opacity: 1;
+    box-shadow: 2px 2px 0 #999;
+}
+
+/* Brutalist Navbar Styles */
+.brutalist-navbar {
+    background-color: #fff;
+    border: 3px solid #000;
+    border-top: none; /* Merges with top of screen */
+    border-left: none; /* Full width feel */
+    border-right: none; /* Full width feel */
+    box-shadow: 0 4px 0 #000;
+    padding: 0 1rem;
+    margin-bottom: 2rem;
+}
+
+.brutalist-navbar .navbar-brand {
+    font-weight: 900;
+    letter-spacing: 1px;
+    color: #000;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+.brutalist-navbar .nav-link {
+    color: #000;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 0.5rem 1rem;
+    transition: all 0.2s;
+}
+
+.brutalist-navbar .nav-link:hover,
+.brutalist-navbar .nav-link:focus,
+.brutalist-navbar .nav-link.show {
+    background-color: #000;
+    color: #fff;
+}
+
+/* Brutalist Dropdown */
+.brutalist-dropdown {
+    border: 3px solid #000;
+    border-radius: 0;
+    box-shadow: 4px 4px 0 #000;
+    margin-top: 0.5rem;
+    padding: 0;
+    background-color: #fff;
+}
+
+.brutalist-dropdown .dropdown-item {
+    color: #000;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #000;
+}
+
+/* --- Concrete Background Styles (Ported from Login) --- */
+:root {
+  /* Mimari betonun soğuk gri tonları */ 
+  --concrete-base: #b0b3b5; 
+  --concrete-dark: #8e9194; 
+  --concrete-light: #ccd0d3; 
+  --joint-line: rgba(0, 0, 0, 0.3); 
+  --form-tie-color: rgba(0, 0, 0, 0.45); 
+}
+
+/* Ana Duvar Katmanı */ 
+.concrete-wall { 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100vw; 
+    height: 100vh; 
+    background-color: var(--concrete-base); 
+    background-image: 
+        /* 1. Katman: Büyük renk bulutlanmaları (Mottling) */ 
+        radial-gradient(circle at 15% 25%, rgba(0,0,0,0.08) 0%, transparent 45%), 
+        radial-gradient(circle at 85% 75%, rgba(255,255,255,0.1) 0%, transparent 50%), 
+        radial-gradient(circle at 50% 50%, rgba(0,0,0,0.05) 0%, transparent 70%), 
+        /* 2. Katman: Hafif yatay kalıp izleri */ 
+        linear-gradient(to bottom, transparent 99%, rgba(0,0,0,0.04) 99%), 
+        /* 3. Katman: Ana renk derinliği */ 
+        linear-gradient(160deg, var(--concrete-light) 0%, var(--concrete-base) 40%, var(--concrete-dark) 100%); 
+    background-size: 100% 100%, 100% 100%, 100% 100%, 100% 120px, 100% 100%; 
+    display: grid; 
+    grid-template-columns: repeat(2, 1fr); 
+    grid-template-rows: repeat(2, 1fr); 
+    filter: url(#architectural-concrete); 
+    z-index: 0; /* Base layer behind everything */
+} 
+
+/* Ensure content sits above the background */
+.container {
+    position: relative;
+    z-index: 1;
+}
+
+.footer {
+    position: relative;
+    z-index: 1;
+}
+
+/* Make Cards and Lists Transparent for Brutalist Concrete Look */
+.card {
+    background-color: transparent;
+    border: 3px solid #000;
+    border-radius: 0;
+    box-shadow: 4px 4px 0 #000;
+    color: #000;
+}
+
+.card-header, .card-footer {
+    background-color: transparent;
+    border-bottom: 3px solid #000;
+    border-top: 3px solid #000;
+    border-radius: 0 !important;
+}
+
+.list-group-item {
+    background-color: transparent;
+    border: 1px solid #000;
+    color: #000;
+}
+
+/* Ensure inputs are still readable on concrete */
+.form-control, .form-select {
+    background-color: #fff; /* Keep inputs white for contrast */
+    border: 2px solid #000;
+    border-radius: 0;
+    color: #000;
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: #fff;
+    box-shadow: 4px 4px 0 #000;
+    border-color: #000;
+}
+
+/* Panel Derzleri (V-Groove etkisi için) */ 
+.concrete-wall::after { 
+    content: ''; 
+    position: absolute; 
+    top: 0; left: 0; right: 0; bottom: 0; 
+    background-image: 
+        linear-gradient(to right, var(--joint-line) 1px, transparent 1px, transparent calc(100% - 1px), var(--joint-line) 1px), 
+        linear-gradient(to bottom, var(--joint-line) 1px, transparent 1px, transparent calc(100% - 1px), var(--joint-line) 1px); 
+    background-size: 50% 50%; 
+    pointer-events: none; 
+    /* Panel kenarlarında hafif gölge */ 
+    box-shadow: inset 0 0 150px rgba(0,0,0,0.05); 
+} 
+
+.concrete-wall .panel { 
+    position: relative; 
+    /* Panel içi hafif doku farkı */ 
+    background: radial-gradient(circle at center, rgba(255,255,255,0.02) 0%, transparent 80%); 
+} 
+
+/* Geliştirilmiş Kalıp Delikleri (Form Ties) */ 
+.concrete-wall .hole { 
+    position: absolute; 
+    width: 22px; 
+    height: 22px; 
+    background: var(--form-tie-color); 
+    border-radius: 50%; 
+    /* İç içe geçmiş gölgelerle derinlik ve plastik tıpa etkisi */ 
+    box-shadow: 
+        inset 4px 4px 6px rgba(0,0,0,0.7), 
+        inset -2px -2px 4px rgba(255,255,255,0.15), 
+        0 0 0 2px rgba(0,0,0,0.1), /* Dış çember izi */ 
+        1px 1px 2px rgba(255,255,255,0.2); 
+    z-index: 2; 
+} 
+
+.concrete-wall .h-tl { top: 80px; left: 80px; } 
+.concrete-wall .h-tr { top: 80px; right: 80px; } 
+.concrete-wall .h-bl { bottom: 80px; left: 80px; } 
+.concrete-wall .h-br { bottom: 80px; right: 80px; } 
+
+.brutalist-dropdown .dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.brutalist-dropdown .dropdown-item:hover,
+.brutalist-dropdown .dropdown-item:focus {
+    background-color: #000;
+    color: #fff;
+}
+
+.dropdown-menu .dropdown-divider.border-black {
+    border-top: 3px solid #000;
+    opacity: 1;
+    margin: 0;
+}
+
+/* Brutalist Toggler */
+.brutalist-toggler {
+    border: 3px solid #000;
+    border-radius: 0;
+    padding: 0.5rem;
+}
+
+.brutalist-toggler:focus {
+    box-shadow: none;
+    background-color: #000;
+}
+
+.brutalist-toggler .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(0, 0, 0, 1)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+.brutalist-toggler:focus .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 1)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* Search Widget */
+.brutalist-btn-nav {
+    border: 3px solid #000;
+    border-radius: 0;
+    background-color: #fff;
+    color: #000;
+    font-weight: bold;
+    box-shadow: 2px 2px 0 #000;
+    transition: all 0.2s;
+}
+
+.brutalist-btn-nav:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 4px 4px 0 #000;
+    background-color: #000;
+    color: #fff;
+}
+
+.brutalist-btn-nav:active {
+    transform: translate(0, 0);
+    box-shadow: none;
+}
+
+.brutalist-search-input {
+    border: 3px solid #000;
+    border-radius: 0;
+    background-color: #000;
+    color: #fff;
+    font-weight: bold;
+    box-shadow: 2px 2px 0 #000;
+}
+
+.brutalist-search-input::placeholder {
+    color: #ccc;
+    text-transform: uppercase;
+}
+
+.brutalist-search-input:focus {
+    outline: none;
+    box-shadow: 4px 4px 0 #000;
+}
+
+.nav-search-widget {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.nav-search-button {
+  width: 40px;
+  height: 40px;
+  /* border-radius: 20px; removed for brutalist */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.nav-search-input {
+  height: 40px;
+  /* border-radius: 20px; removed for brutalist */
+  padding-left: 12px;
+  padding-right: 12px;
+  width: 0;
+  opacity: 0;
+  /* border: 1px solid var(--border); removed */
+  /* background-color: var(--surface); removed */
+  /* color: var(--text); removed */
+  transition: width .3s ease, opacity .2s ease;
+}
+.nav-search-widget.open .nav-search-input {
+  width: 220px;
+  opacity: 1;
+}
+
+.footer {
+  border-top: 3px solid #000;
+  background-color: #fff;
+  color: #000;
+  z-index: 1025;
+}
+
+.footer a { color: var(--text); }
+.footer a:hover { color: var(--accent); }
+
+/* Brutalist Button Overrides */
+.btn {
+    border-radius: 0;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background-color: #000;
+    border-color: #000;
+    color: #fff;
+    box-shadow: 2px 2px 0 #999;
+}
+
+.btn-primary:hover, .btn-primary:focus, .btn-primary:active {
+    background-color: #fff;
+    border-color: #000;
+    color: #000;
+    box-shadow: 4px 4px 0 #000;
+    transform: translate(-2px, -2px);
+}
+
+.btn-outline-primary {
+    color: #000;
+    border-color: #000;
+    background-color: transparent;
+}
+
+.btn-outline-primary:hover, .btn-outline-primary:focus, .btn-outline-primary:active {
+    background-color: #000;
+    color: #fff;
+    border-color: #000;
+}
+
+.btn-danger {
+    box-shadow: 2px 2px 0 #000;
+}
+
+.btn-outline-secondary {
+    color: #000;
+    border-color: #ccc;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #eee;
+    color: #000;
+}
+
+/* Global Form Control Override for Brutalist Style */
+.form-control, .form-select {
+    background-color: #000;
+    color: #fff;
+    border: 3px solid #000;
+    border-radius: 0;
+    font-weight: bold;
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: #000;
+    color: #fff;
+    border-color: #000;
+    box-shadow: 4px 4px 0 #000;
+    outline: none;
+}
+
+.form-control::placeholder {
+    color: #aaa;
+}
+
+.form-control:disabled, .form-control[readonly] {
+    background-color: #333;
+    color: #999;
+    border-color: #333;
+}
+
+/* Global Autofill Fix */
+.form-control:-webkit-autofill,
+.form-control:-webkit-autofill:hover, 
+.form-control:-webkit-autofill:focus, 
+.form-control:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #000 inset !important;
+    -webkit-text-fill-color: #fff !important;
+    transition: background-color 5000s ease-in-out 0s;
+    caret-color: #fff;
+}
+
+/* Nested dropdown support for Bootstrap 5 */
+.dropdown-menu .dropend .dropdown-toggle::after { margin-left: .255em; }
+.dropdown-menu .dropend .dropdown-menu { margin-left: .5rem; }
+.dropdown-menu .dropdown-item.dropdown-toggle { display: flex; align-items: center; justify-content: space-between; }
+
+.product-card {
+    background-color: #000 !important;
+    color: #fff !important;
+    border: 3px solid #000;
+}
+
+.product-card .card-body {
+    background-color: #000;
+    color: #fff;
+}
+
+/* Brutalist Action Button (Black) */
+.brutalist-btn-black {
+    background-color: #000;
+    color: #fff;
+    border: 3px solid #000;
+    border-radius: 0;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.2);
+}
+
+.brutalist-btn-black:hover {
+    background-color: #333;
+    color: #fff;
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 rgba(0,0,0,0.3);
+}
+
+.brutalist-btn-black:active {
+    transform: translate(0, 0);
+    box-shadow: none;
+}
+
+.product-card .product-card-img-wrapper { position: relative; height: 220px; overflow: hidden; }
+.product-card .product-card-img { display:block; height: 100%; width: 100%; object-fit: cover; transition: filter .25s ease, transform .25s ease; position: relative; z-index:1; }
+.product-card .product-card-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.45); color: #fff; opacity: 0; transition: opacity .2s ease; z-index:2; pointer-events:none; }
+.product-card .product-card-overlay-content { text-align: center; max-width: 90%; }
+.product-card:hover .product-card-img { filter: blur(4px); transform: scale(1.06); }
+.product-card:hover .product-card-overlay { opacity: 1; }

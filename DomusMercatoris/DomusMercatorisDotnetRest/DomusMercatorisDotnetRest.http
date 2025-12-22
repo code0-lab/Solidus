@@ -1,0 +1,6 @@
+@DomusMercatorisDotnetRest_HostAddress = http://localhost:5280
+
+GET {{DomusMercatorisDotnetRest_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

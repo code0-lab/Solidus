@@ -1,0 +1,63 @@
+@page "/Category/{id:int}/Products"
+@model DomusMercatorisDotnetMVC.Pages.CategoryProductsModel
+@{
+    ViewData["PageTitle"] = "Products under that category";
+    Layout = "_LayoutAuth";
+}
+
+<div class="container py-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h3 class="mb-0">Products under that category</h3>
+        <a href="/Categories" class="btn btn-outline-secondary">Back</a>
+    </div>
+    @if (!string.IsNullOrEmpty(Model.CategoryName))
+    {
+        <div class="text-muted mb-3">Category: <span class="fw-semibold">@Model.CategoryName</span></div>
+    }
+    @if (ModelState.IsValid == false)
+    {
+        <div class="alert alert-danger">
+            <ul>
+                @foreach (Microsoft.AspNetCore.Mvc.ModelBinding.ModelStateEntry modelState in ModelState.Values)
+                {
+                    @foreach (var error in modelState.Errors)
+                    {
+                        <li>@error.ErrorMessage</li>
+                    }
+                }
+            </ul>
+        </div>
+    }
+    @if (Model.Items.Count == 0)
+    {
+        <div class="alert alert-info">No products found for this category.</div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var p in Model.Items)
+            {
+                <div class="col-12 col-sm-6 col-md-4">
+                    @await Html.PartialAsync("_ProductCard", p)
+                </div>
+            }
+        </div>
+        @if (Model.TotalPages > 1)
+        {
+            <nav class="mt-4" aria-label="Category products pagination">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item @(Model.PageNumber <= 1 ? "disabled" : "")">
+                        <a class="page-link" href="/Category/@Model.CategoryId/Products?page=@(Model.PageNumber - 1)" tabindex="-1" aria-disabled="@(Model.PageNumber <= 1)">Previous</a>
+                    </li>
+                    @for (var i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <li class="page-item @(Model.PageNumber == i ? "active" : "")"><a class="page-link" href="/Category/@Model.CategoryId/Products?page=@i">@i</a></li>
+                    }
+                    <li class="page-item @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")">
+                        <a class="page-link" href="/Category/@Model.CategoryId/Products?page=@(Model.PageNumber + 1)" aria-disabled="@(Model.PageNumber >= Model.TotalPages)">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        }
+    }
+</div>
