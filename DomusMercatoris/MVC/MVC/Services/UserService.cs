@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using AutoMapper;
 using DomusMercatorisDotnetMVC.Dto.UserDto;
 using DomusMercatorisDotnetMVC.Models;
@@ -24,7 +25,7 @@ namespace DomusMercatorisDotnetMVC.Services
 
         public User? UserLogin(string Email, string Password)
         {
-            var user =  _dbContext.Users.SingleOrDefault(u => u.Email == Email);
+            var user =  _dbContext.Users.Include(u => u.Ban).SingleOrDefault(u => u.Email == Email);
             if (user == null || !BCrypt.Net.BCrypt.Verify(Password, user.Password))
             {
                 return null;

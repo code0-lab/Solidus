@@ -1,85 +1,36 @@
-<header class="navbar">
-  <div class="brand">Domus Mercatoris</div>
-  <div class="nav-center">
-    <input class="search" type="search" placeholder="Ara" />
-  </div>
-  <nav class="nav-links">
-    <a href="#">Ürünler</a>
-    <a href="#">Koleksiyonlar</a>
-    <a href="#">Hakkında</a>
-  </nav>
-  <div class="nav-actions">
-    <button class="icon" aria-label="sepet">🛒</button>
-    <button class="icon" aria-label="profil">🙂</button>
-  </div>
-</header>
+<app-header></app-header>
 
-<section class="shop">
-  <div class="shop-header">
-    <h2>Shop</h2>
-    <div class="filter-wrapper">
-      <button class="icon filter-btn" (click)="toggleFilter()" aria-label="Filtrele">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-        </svg>
-      </button>
-      @if (isFilterOpen()) {
-        <div class="filter-menu">
-          <div class="filter-header">Kategoriler</div>
-          <ul>
-            <li [class.active]="selectedCategoryId() === null" (click)="selectCategory(null)">Tümü</li>
-            @for (c of categories(); track c.id) {
-              <li [class.active]="selectedCategoryId() === c.id" (click)="selectCategory(c.id)">{{ c.name }}</li>
-            }
-          </ul>
-        </div>
-      }
-    </div>
-  </div>
-  @if (products().length === 0) {
-    <p>Ürün bulunamadı.</p>
-  } @else {
-    <div class="shop-grid">
-      @for (p of products(); track p.id) {
-        <article class="product-card">
-          <div class="product-media" [style.background]="p.bg">
-            <img [src]="p.imageUrl" [alt]="p.name" />
-          </div>
-          <div class="product-info">
-            <div class="product-name">{{ p.name }}</div>
-            <div class="product-meta">
-              <span class="price">{{ p.priceText }}</span>
-              <span class="actions">
-                <button class="icon" aria-label="like">♡</button>
-                <button class="icon" aria-label="add-to-cart">🛒</button>
-              </span>
-            </div>
-          </div>
-        </article>
-      }
-    </div>
-  }
-</section>
+<app-auth-modal *ngIf="authService.isLoginOpen()"></app-auth-modal>
+
+<router-outlet></router-outlet>
 
 <footer class="footer">
   <div class="footer-grid">
     <div>
-      <div class="footer-title">Domus Mercatoris</div>
-      <p>Kaliteli ürünler ve seçkin koleksiyonlar.</p>
-    </div>
-    <div>
-      <div class="footer-title">Bağlantılar</div>
+      <h3 class="footer-title">About Us</h3>
       <ul class="footer-links">
-        <li><a href="#">Mağaza</a></li>
-        <li><a href="#">Koleksiyonlar</a></li>
-        <li><a href="#">Hakkımızda</a></li>
+        <li><a href="#">Who We Are</a></li>
+        <li><a href="#">Careers</a></li>
+        <li><a href="#">Blog</a></li>
       </ul>
     </div>
     <div>
-      <div class="footer-title">İletişim</div>
-      <p>info@domusmercatoris.com</p>
+      <h3 class="footer-title">Help</h3>
+      <ul class="footer-links">
+        <li><a href="#">FAQ</a></li>
+        <li><a href="#">Shipping & Delivery</a></li>
+        <li><a href="#">Returns Policy</a></li>
+      </ul>
+    </div>
+    <div>
+      <h3 class="footer-title">Contact</h3>
+      <ul class="footer-links">
+        <li><a href="#">Contact Us</a></li>
+        <li><a href="#">Stores</a></li>
+      </ul>
     </div>
   </div>
-  <div class="footer-bottom">© 2025 Domus Mercatoris</div>
-  </footer>
-
+  <div class="footer-bottom">
+    &copy; 2024 Solidus. All rights reserved.
+  </div>
+</footer>

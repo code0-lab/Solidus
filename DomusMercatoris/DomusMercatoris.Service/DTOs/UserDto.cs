@@ -10,5 +10,6 @@ namespace DomusMercatoris.Service.DTOs
         public string Email { get; set; } = string.Empty;
         public int CompanyId { get; set; }
         public List<string> Roles { get; set; } = new List<string>();
+        public BanDto? Ban { get; set; }
     }
 }

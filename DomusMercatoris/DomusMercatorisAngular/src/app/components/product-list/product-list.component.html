@@ -1,0 +1,14 @@
+<div class="product-grid">
+  @for (product of products; track product.id) {
+    <div class="product-card" (click)="selectProduct.emit(product)">
+      <div class="card-image" [style.background-color]="product.bg">
+        <img [src]="product.imageUrl" [alt]="product.name" loading="lazy">
+      </div>
+      <div class="card-content">
+        <span class="sku">{{ product.sku }}</span>
+        <h3>{{ product.name }}</h3>
+        <div class="price">{{ product.priceText }}</div>
+      </div>
+    </div>
+  }
+</div>

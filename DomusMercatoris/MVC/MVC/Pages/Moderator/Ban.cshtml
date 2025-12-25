@@ -1,0 +1,49 @@
+@page
+@model DomusMercatorisDotnetMVC.Pages.Moderator.BanModel
+@{
+    ViewData["Title"] = "Ban User";
+    Layout = "_LayoutAuth";
+}
+
+<div class="container py-4">
+    <h3>Manage Ban for @Model.TargetUser!.FirstName @Model.TargetUser!.LastName</h3>
+    <p class="text-muted">@Model.TargetUser!.Email</p>
+
+    @if (Model.TargetUser!.Ban != null && Model.TargetUser!.Ban.ObjectToBan)
+    {
+        <div class="alert alert-info">
+            <strong>User Appeal (İtiraz):</strong> @Model.TargetUser!.Ban!.Object
+        </div>
+    }
+
+    <form method="post" class="mt-4">
+        <input type="hidden" name="TargetUserId" value="@Model.TargetUserId" />
+        
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" asp-for="PermaBan" id="PermaBan">
+            <label class="form-check-label" for="PermaBan">
+                Permanent Ban
+            </label>
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="EndDate">Ban End Date (Leave empty if Permanent)</label>
+            <input type="datetime-local" class="form-control" asp-for="EndDate" />
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="Reason">Reason</label>
+            <textarea class="form-control" asp-for="Reason" rows="3"></textarea>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-danger">Save Ban</button>
+            <a asp-page="./Index" class="btn btn-secondary">Cancel</a>
+            
+            @if (Model.TargetUser!.Ban != null)
+            {
+                <button type="submit" asp-page-handler="Unban" asp-route-userId="@Model.TargetUserId" class="btn btn-success" formnovalidate>Remove Ban</button>
+            }
+        </div>
+    </form>
+</div>

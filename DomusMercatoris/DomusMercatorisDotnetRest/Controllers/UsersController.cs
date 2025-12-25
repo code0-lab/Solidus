@@ -100,7 +100,16 @@ namespace DomusMercatorisDotnetRest.Controllers
                 LastName = user.LastName,
                 Email = user.Email,
                 CompanyId = user.CompanyId,
-                Roles = user.Roles
+                Roles = user.Roles,
+                Ban = user.Ban == null ? null : new BanDto
+                {
+                    IsBaned = user.Ban.IsBaned,
+                    PermaBan = user.Ban.PermaBan,
+                    EndDate = user.Ban.EndDate,
+                    Reason = user.Ban.Reason,
+                    ObjectToBan = user.Ban.ObjectToBan,
+                    Object = user.Ban.Object
+                }
             };
         }
 

@@ -1,0 +1,74 @@
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+  padding: 10px;
+}
+
+@media (min-width: 768px) {
+  .product-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.product-card {
+  background: white;
+  border: 1px solid black;
+  box-shadow: 2px 2px 0 black;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  padding: 5px;
+}
+
+.product-card:active {
+  background: black;
+  color: white;
+}
+
+.product-card:active .sku,
+.product-card:active h3,
+.product-card:active .price {
+  color: white;
+}
+
+.card-image {
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid black;
+  background: white !important; /* Force white background for consistency */
+  margin-bottom: 5px;
+}
+
+.card-image img {
+  max-height: 140px;
+  max-width: 90%;
+  object-fit: contain;
+}
+
+.card-content {
+  padding: 5px;
+  text-align: center;
+}
+
+.sku {
+  color: #555;
+  font-size: 10px;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.card-content h3 {
+  font-weight: normal;
+  margin-bottom: 5px;
+  font-size: 12px;
+  margin-top: 0;
+  text-transform: none; /* Keep original case or make uppercase? Let's keep normal */
+}
+
+.price {
+  font-weight: bold;
+  font-size: 12px;
+}

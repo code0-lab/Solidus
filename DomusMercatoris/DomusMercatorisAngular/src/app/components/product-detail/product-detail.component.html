@@ -1,0 +1,92 @@
+<div class="modal-overlay" (click)="close()">
+  <div class="modal-content modal-product" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <button class="close-btn" (click)="close()">×</button>
+      <div class="modal-title-box">Product Detail</div>
+    </div>
+    
+    <div class="product-detail-content">
+      <div class="product-images" [style.background-color]="product.bg">
+        @if (product.imageUrls && product.imageUrls.length > 1) {
+          <button class="nav-btn prev" (click)="prevImage()">❮</button>
+          <img [src]="product.imageUrls[currentImageIndex()]" alt="Product Image">
+          <button class="nav-btn next" (click)="nextImage()">❯</button>
+          
+          <div class="image-indicators">
+            @for (img of product.imageUrls; track $index) {
+              <div 
+                class="indicator" 
+                [class.active]="$index === currentImageIndex()"
+                (click)="setImage($index)">
+              </div>
+            }
+          </div>
+        } @else {
+          <img [src]="product.imageUrl" alt="Product Image">
+        }
+      </div>
+
+      <div class="product-info">
+        <div class="tabs">
+          <button 
+            class="tab-btn" 
+            [class.active]="activeTab === 'details'"
+            (click)="activeTab = 'details'">
+            Details
+          </button>
+          <button 
+            class="tab-btn" 
+            [class.active]="activeTab === 'comments'"
+            (click)="activeTab = 'comments'">
+            Comments ({{ commentService.comments().length }})
+          </button>
+        </div>
+
+        @if (activeTab === 'details') {
+          <div class="tab-content">
+            <span class="product-sku">{{ product.sku }}</span>
+            <h1>{{ product.name }}</h1>
+            <div class="product-price">{{ product.priceText }}</div>
+            <p class="product-desc">
+              {{ product.description || 'No description available for this product.' }}
+            </p>
+            <button class="add-to-cart-btn">Add to Cart</button>
+          </div>
+        } @else {
+          <div class="tab-content comments-section">
+            <div class="comments-list">
+              @for (comment of commentService.comments(); track comment.id) {
+                <div class="comment-item">
+                  <div class="comment-header">
+                    <strong>{{ comment.userFullName }}</strong>
+                    <span class="date">{{ comment.createdAt | date:'dd.MM.yyyy' }}</span>
+                  </div>
+                  <p>{{ comment.text }}</p>
+                </div>
+              }
+              @if (commentService.comments().length === 0) {
+                <p class="no-comments">No comments yet.</p>
+              }
+            </div>
+
+            @if (authService.currentUser()) {
+              <div class="add-comment">
+                <textarea 
+                  [(ngModel)]="newCommentText" 
+                  placeholder="Write your comment..."
+                  rows="3">
+                </textarea>
+                <button class="submit-comment-btn" (click)="postComment()">Post Comment</button>
+              </div>
+            } @else {
+              <div class="login-prompt">
+                <p>You must be logged in to post a comment.</p>
+                <button class="login-btn" (click)="authService.toggleLogin()">Log In</button>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

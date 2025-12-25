@@ -1,0 +1,55 @@
+@page
+@model DomusMercatorisDotnetMVC.Pages.Moderator.IndexModel
+@{
+    ViewData["Title"] = "User Management";
+    Layout = "_LayoutAuth";
+}
+
+<div class="container py-4">
+    <h3>User Management (Moderator)</h3>
+    
+    <form method="get" class="mb-3 d-flex gap-2">
+        <input type="text" name="Search" value="@Model.Search" class="form-control" placeholder="Search by name or email..." />
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model.Users)
+                {
+                    var isBanned = user.Ban != null && user.Ban.IsBaned;
+                    <tr>
+                        <td>@user.Email</td>
+                        <td>@user.FirstName @user.LastName</td>
+                        <td>
+                            @if (isBanned)
+                            {
+                                <span class="badge bg-danger">Banned</span>
+                                @if (user.Ban!.PermaBan) { <span>(Perma)</span> }
+                                else { <span>(Until @user.Ban.EndDate?.ToString("g"))</span> }
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">Active</span>
+                            }
+                        </td>
+                        <td>
+                            <a asp-page="./Ban" asp-route-userId="@user.Id" class="btn btn-sm btn-warning">
+                                @(isBanned ? "Edit Ban" : "Ban User")
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

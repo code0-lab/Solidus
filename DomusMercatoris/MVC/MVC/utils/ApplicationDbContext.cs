@@ -17,6 +17,8 @@ namespace DomusMercatorisDotnetMVC.Utils
         public DbSet<Company> Companies { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<CommentModel> Comments { get; set; }
+        public DbSet<Ban> Bans { get; set; }
+        public DbSet<Complaint> Complaints { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -1,0 +1,66 @@
+<section class="shop">
+  <div class="shop-header">
+    <h2>Shop</h2>
+    <div class="filter-wrapper">
+      <button class="icon filter-btn" (click)="toggleFilter()" aria-label="Filter">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+        </svg>
+      </button>
+      @if (isFilterOpen()) {
+        <div class="filter-menu">
+          <div class="filter-header">Categories</div>
+          <ul>
+            <li [class.active]="productService.selectedCategory() === null" (click)="selectCategory(null)">All</li>
+            @for (c of productService.categories(); track c.id) {
+              <li [class.active]="productService.selectedCategory() === c.id" (click)="selectCategory(c.id)">{{ c.name }}</li>
+            }
+          </ul>
+        </div>
+      }
+    </div>
+  </div>
+
+  @if (productService.products().length === 0) {
+    <p>No products found.</p>
+  } @else {
+    <app-product-list 
+      [products]="paginatedProducts()" 
+      (selectProduct)="onSelectProduct($event)">
+    </app-product-list>
+
+    @if (totalPages() > 1) {
+      <div class="pagination">
+        <button 
+          class="page-btn prev" 
+          [disabled]="currentPage() === 1"
+          (click)="changePage(currentPage() - 1)">
+          ❮
+        </button>
+        
+        @for (page of pages(); track page) {
+          <button 
+            class="page-btn number" 
+            [class.active]="currentPage() === page"
+            (click)="changePage(page)">
+            {{ page }}
+          </button>
+        }
+
+        <button 
+          class="page-btn next" 
+          [disabled]="currentPage() === totalPages()"
+          (click)="changePage(currentPage() + 1)">
+          ❯
+        </button>
+      </div>
+    }
+  }
+</section>
+
+@if (selectedProduct()) {
+  <app-product-detail 
+    [product]="selectedProduct()!" 
+    (onClose)="closeProductDetail()">
+  </app-product-detail>
+}

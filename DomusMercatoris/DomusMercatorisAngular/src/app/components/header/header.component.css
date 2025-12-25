@@ -1,0 +1,85 @@
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  background: white;
+  padding: 0 10px;
+  height: 24px;
+  border-bottom: 1px solid black;
+  box-shadow: none;
+  font-family: var(--sys-font-family);
+}
+
+.brand {
+  font-weight: bold;
+  padding: 0 10px;
+  margin-right: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+
+.nav-center {
+  flex-grow: 1;
+  display: flex;
+  justify-content: flex-end; /* Push search to right or keep hidden? Let's keep it visible but styled */
+  margin-right: 10px;
+}
+
+.search {
+  height: 18px;
+  border: 1px solid black;
+  border-radius: 0;
+  padding: 0 4px;
+  font-size: 12px;
+  width: 150px;
+  font-family: var(--sys-font-family);
+}
+
+.nav-links {
+  display: flex;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: black;
+  background: transparent;
+  padding: 2px 10px;
+  border-radius: 0;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.nav-links a:hover {
+  background: black;
+  color: white;
+}
+
+.nav-actions {
+  display: flex;
+  gap: 5px;
+  margin-left: 10px;
+}
+
+.icon {
+  min-width: 20px;
+  height: 20px;
+  font-size: 12px;
+  line-height: 18px;
+  padding: 0 5px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.icon:active {
+  background: black;
+  color: white;
+}

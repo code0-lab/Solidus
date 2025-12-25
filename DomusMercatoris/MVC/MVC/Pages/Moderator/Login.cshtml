@@ -1,0 +1,274 @@
+@page
+@model DomusMercatorisDotnetMVC.Pages.Moderator.LoginModel
+@{
+    ViewData["PageTitle"] = "Moderator Login";
+    Layout = "_Layout";
+}
+
+<style>
+    :root { 
+        /* Mimari betonun soğuk gri tonları */ 
+        --concrete-base: #b0b3b5; 
+        --concrete-dark: #8e9194; 
+        --concrete-light: #ccd0d3; 
+        --joint-line: rgba(0, 0, 0, 0.3); 
+        --form-tie-color: rgba(0, 0, 0, 0.45); 
+        --moderator-accent: #8b0000; /* Dark Red for Moderator indication */
+    } 
+
+    /* Ana Duvar Katmanı */ 
+    .concrete-wall { 
+        position: fixed; 
+        top: 0; 
+        left: 0; 
+        width: 100vw; 
+        height: 100vh; 
+        background-color: var(--concrete-base); 
+        background-image: 
+            radial-gradient(circle at 15% 25%, rgba(0,0,0,0.08) 0%, transparent 45%), 
+            radial-gradient(circle at 85% 75%, rgba(255,255,255,0.1) 0%, transparent 50%), 
+            radial-gradient(circle at 50% 50%, rgba(0,0,0,0.05) 0%, transparent 70%), 
+            linear-gradient(to bottom, transparent 99%, rgba(0,0,0,0.04) 99%), 
+            linear-gradient(160deg, var(--concrete-light) 0%, var(--concrete-base) 40%, var(--concrete-dark) 100%); 
+        background-size: 100% 100%, 100% 100%, 100% 100%, 100% 120px, 100% 100%; 
+        display: grid; 
+        grid-template-columns: repeat(2, 1fr); 
+        grid-template-rows: repeat(2, 1fr); 
+        filter: url(#architectural-concrete); 
+        z-index: 0;
+    } 
+
+    .concrete-wall::after { 
+        content: ''; 
+        position: absolute; 
+        top: 0; left: 0; right: 0; bottom: 0; 
+        background-image: 
+            linear-gradient(to right, var(--joint-line) 1px, transparent 1px, transparent calc(100% - 1px), var(--joint-line) 1px), 
+            linear-gradient(to bottom, var(--joint-line) 1px, transparent 1px, transparent calc(100% - 1px), var(--joint-line) 1px); 
+        background-size: 50% 50%; 
+        pointer-events: none; 
+        box-shadow: inset 0 0 150px rgba(0,0,0,0.05); 
+    } 
+
+    .panel { 
+        position: relative; 
+        background: radial-gradient(circle at center, rgba(255,255,255,0.02) 0%, transparent 80%); 
+    } 
+
+    .hole { 
+        position: absolute; 
+        width: 22px; 
+        height: 22px; 
+        background: var(--form-tie-color); 
+        border-radius: 50%; 
+        box-shadow: 
+            inset 4px 4px 6px rgba(0,0,0,0.7), 
+            inset -2px -2px 4px rgba(255,255,255,0.15), 
+            0 0 0 2px rgba(0,0,0,0.1), 
+            1px 1px 2px rgba(255,255,255,0.2); 
+        z-index: 2; 
+    } 
+
+    .h-tl { top: 80px; left: 80px; } 
+    .h-tr { top: 80px; right: 80px; } 
+    .h-bl { bottom: 80px; left: 80px; } 
+    .h-br { bottom: 80px; right: 80px; } 
+
+    .brutalist-container {
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        color: #000;
+        background-color: transparent;
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        z-index: 10;
+    }
+
+    .brutalist-box {
+        background-color: #000;
+        color: #fff;
+        padding: 3rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        height: 100%;
+        min-height: 400px;
+        border-right: 5px solid var(--moderator-accent);
+    }
+
+    .brutalist-box h3 {
+        font-weight: 300;
+        letter-spacing: 0.2em;
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        color: var(--moderator-accent);
+    }
+
+    .brutalist-box h1 {
+        font-weight: 700;
+        font-size: 3.5rem; /* Slightly smaller to fit MODERATOR */
+        line-height: 1;
+        margin-bottom: 2rem;
+        text-transform: uppercase;
+    }
+
+    .brutalist-box p {
+        font-weight: 300;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-top: auto;
+    }
+
+    .brutalist-form-section {
+        padding: 3rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        height: 100%;
+        background-color: rgba(255,255,255,0.9); /* Slightly lighter background for form */
+    }
+
+    .brutalist-divider {
+        border-left: 1px solid #000;
+        height: 300px; 
+        margin: 0 2rem;
+        display: none; 
+    }
+
+    @@media (min-width: 768px) {
+        .brutalist-divider {
+            display: block;
+        }
+    }
+
+    .brutalist-header {
+        font-size: 2rem;
+        text-transform: uppercase;
+        margin-bottom: 3rem;
+        font-weight: 400;
+        letter-spacing: 0.05em;
+        color: var(--moderator-accent);
+    }
+
+    .brutalist-input {
+        border: 1px solid #333;
+        background-color: #000;
+        color: #fff;
+        border-radius: 0;
+        padding: 1rem;
+        margin-bottom: 2rem;
+        width: 100%;
+        outline: none;
+        font-size: 1rem;
+    }
+
+    .brutalist-input::placeholder {
+        color: #888;
+    }
+
+    .brutalist-input:focus {
+        border-color: var(--moderator-accent);
+    }
+
+    .brutalist-btn {
+        background: none;
+        border: none;
+        border-bottom: 1px solid #000;
+        color: #000;
+        padding: 0.5rem 0;
+        text-transform: uppercase;
+        font-weight: 600;
+        cursor: pointer;
+        align-self: flex-end;
+        margin-top: 1rem;
+        transition: all 0.2s;
+    }
+
+    .brutalist-btn:hover {
+        border-bottom: 2px solid var(--moderator-accent);
+        color: var(--moderator-accent);
+        font-weight: 700;
+    }
+
+    .brutalist-link {
+        margin-top: 4rem;
+        text-align: center;
+        text-decoration: underline;
+        color: #000;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+        cursor: pointer;
+    }
+</style>
+
+<svg style="display: none;"> 
+    <filter id="architectural-concrete"> 
+        <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="4" seed="12" result="grain" /> 
+        <feTurbulence type="fractalNoise" baseFrequency="0.95" numOctaves="2" seed="42" result="pits" /> 
+        <feColorMatrix in="pits" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 5 -4" result="pit-dots"/> 
+        <feDiffuseLighting in="grain" lighting-color="#ffffff" surfaceScale="1.8" result="diffuse"> 
+            <feDistantLight azimuth="45" elevation="65" /> 
+        </feDiffuseLighting> 
+        <feComposite in="diffuse" in2="SourceGraphic" operator="arithmetic" k1="1.1" k2="0.3" k3="0" k4="0" result="final-grain"/> 
+        <feBlend in="pit-dots" in2="final-grain" mode="multiply" /> 
+    </filter> 
+</svg> 
+
+<div class="concrete-wall"> 
+    <div class="panel"> <div class="hole h-tl"></div><div class="hole h-tr"></div> <div class="hole h-bl"></div><div class="hole h-br"></div> </div> 
+    <div class="panel"> <div class="hole h-tl"></div><div class="hole h-tr"></div> <div class="hole h-bl"></div><div class="hole h-br"></div> </div> 
+    <div class="panel"> <div class="hole h-tl"></div><div class="hole h-tr"></div> <div class="hole h-bl"></div><div class="hole h-br"></div> </div> 
+    <div class="panel"> <div class="hole h-tl"></div><div class="hole h-tr"></div> <div class="hole h-bl"></div><div class="hole h-br"></div> </div> 
+</div> 
+
+<div class="brutalist-container">
+    <div class="row w-100" style="max-width: 1000px;">
+        <!-- Left Side: Black Box -->
+        <div class="col-md-6 p-0">
+            <div class="brutalist-box">
+                <h3>Restricted Access</h3>
+                <h1>MODERATOR</h1>
+                <p>System Administration & Control</p>
+            </div>
+        </div>
+
+        <!-- Vertical Divider -->
+        <div class="col-auto d-none d-md-flex align-items-center p-0">
+            <div class="brutalist-divider"></div>
+        </div>
+
+        <!-- Right Side: Login Form -->
+        <div class="col-md px-0">
+            <div class="brutalist-form-section">
+                <h2 class="brutalist-header">SECURE LOGIN</h2>
+
+                @if (ModelState.IsValid == false)
+                {
+                    <div class="text-danger mb-4">
+                        <ul class="list-unstyled">
+                            @foreach (Microsoft.AspNetCore.Mvc.ModelBinding.ModelStateEntry modelState in ModelState.Values)
+                            {
+                                @foreach (var error in modelState.Errors)
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            }
+                        </ul>
+                    </div>
+                }
+
+                <form method="post">
+                    <input type="email" asp-for="Email" class="brutalist-input" placeholder="MODERATOR EMAIL" required autocomplete="email" />
+                    <input type="password" asp-for="Password" class="brutalist-input" placeholder="PASSWORD" required autocomplete="current-password" />
+                    
+                    <button type="submit" class="brutalist-btn">AUTHENTICATE</button>
+                </form>
+
+                <a href="/Index" class="brutalist-link">Return to User Login</a>
+            </div>
+        </div>
+    </div>
+</div>

@@ -12,6 +12,11 @@ namespace DomusMercatoris.Core.Entities
         [StringLength(150)]
         public string Name { get; set; } = string.Empty;
 
+        public bool IsBaned { get; set; } = false;
+        public bool IsActive { get; set; } = true;
+        public string? GeminiApiKey { get; set; }
+        public bool IsAiModerationEnabled { get; set; } = false;
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public List<User> Users { get; set; } = new List<User>();

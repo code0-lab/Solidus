@@ -18,14 +18,25 @@ namespace DomusMercatorisDotnetRest.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ProductDto>>> GetAll()
+        public async Task<ActionResult<PaginatedResult<ProductDto>>> GetAll([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 9)
         {
-            var list = await _db.Products
-                .Include(p => p.Categories)
+            var query = _db.Products.Include(p => p.Categories).AsQueryable();
+
+            var totalCount = await query.CountAsync();
+            var list = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
             
             var dtoList = list.Select(MapToDto).ToList();
-            return Ok(dtoList);
+
+            return Ok(new PaginatedResult<ProductDto>
+            {
+                Items = dtoList,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = totalCount
+            });
         }
 
         [HttpGet("{id:long}")]
@@ -40,15 +51,28 @@ namespace DomusMercatorisDotnetRest.Controllers
         }
 
         [HttpGet("by-category/{categoryId:int}")]
-        public async Task<ActionResult<IEnumerable<ProductDto>>> GetByCategory(int categoryId)
+        public async Task<ActionResult<PaginatedResult<ProductDto>>> GetByCategory(int categoryId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 9)
         {
-            var list = await _db.Products
+            var query = _db.Products
                 .Include(p => p.Categories)
                 .Where(p => p.Categories.Any(c => c.Id == categoryId))
+                .AsQueryable();
+
+            var totalCount = await query.CountAsync();
+            var list = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
             
             var dtoList = list.Select(MapToDto).ToList();
-            return Ok(dtoList);
+
+            return Ok(new PaginatedResult<ProductDto>
+            {
+                Items = dtoList,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = totalCount
+            });
         }
 
         private static ProductDto MapToDto(Product product)

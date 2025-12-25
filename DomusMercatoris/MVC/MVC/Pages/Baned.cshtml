@@ -1,0 +1,57 @@
+@page
+@model DomusMercatorisDotnetMVC.Pages.BanedModel
+@{
+    ViewData["Title"] = "Banned";
+    Layout = "_LayoutAuth";
+}
+
+<div class="container mt-5 text-center">
+    <div class="alert alert-danger">
+        <h1>Account Banned</h1>
+        @if (Model.BanInfo.PermaBan)
+        {
+            <p class="lead">Your account has been permanently banned.</p>
+        }
+        else
+        {
+            <p class="lead">Your account is banned until @Model.BanInfo.EndDate?.ToString("g")</p>
+            <p>Remaining Time: @Model.RemainingTime</p>
+        }
+        @if (!string.IsNullOrEmpty(Model.BanInfo.Reason))
+        {
+             <p><strong>Reason:</strong> @Model.BanInfo.Reason</p>
+        }
+    </div>
+
+    @if (Model.Message != null)
+    {
+        <div class="alert alert-success">@Model.Message</div>
+    }
+
+    <div class="card mt-4">
+        <div class="card-header">
+            Appeal Ban (İtiraz)
+        </div>
+        <div class="card-body">
+            @if (Model.BanInfo.ObjectToBan)
+            {
+                <p>You have already submitted an appeal.</p>
+                <p><strong>Your Appeal:</strong> @Model.BanInfo.Object</p>
+            }
+            else
+            {
+                <form method="post">
+                    <div class="form-group">
+                        <label for="objection">Why should we unban you?</label>
+                        <textarea class="form-control" id="objection" name="objection" rows="4" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-2">Submit Appeal</button>
+                </form>
+            }
+        </div>
+    </div>
+    
+    <div class="mt-3">
+        <a asp-page="/Index" asp-page-handler="Logout" class="btn btn-secondary">Logout</a>
+    </div>
+</div>

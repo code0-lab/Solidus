@@ -117,12 +117,29 @@ app.UseHttpsRedirection();
 
 app.UseCors("AllowAngular");
 
+// Serve static files from local Resources (e.g. placeholder)
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(
         Path.Combine(builder.Environment.ContentRootPath, "Resources")),
     RequestPath = "/Resources"
 });
+
+// Serve uploaded files directly from the MVC project's wwwroot/uploads directory
+// This avoids copying files and ensures the API serves the single source of truth
+var mvcUploadsPath = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, "../MVC/MVC/wwwroot/uploads"));
+if (Directory.Exists(mvcUploadsPath))
+{
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(mvcUploadsPath),
+        RequestPath = "/uploads"
+    });
+}
+else 
+{
+    Console.WriteLine($"WARNING: MVC Uploads directory not found at: {mvcUploadsPath}");
+}
 
 app.UseAuthentication();
 app.UseAuthorization();

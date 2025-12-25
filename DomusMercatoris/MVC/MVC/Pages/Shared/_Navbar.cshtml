@@ -31,6 +31,12 @@
                         </ul>
                     </li>
                 }
+                @if (User.IsInRole("Moderator"))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link text-uppercase fw-bold" href="/Moderator/Index">User Management</a>
+                    </li>
+                }
                 @if (User.Identity != null && User.Identity.IsAuthenticated)
                 {
                     <li class="nav-item dropdown">

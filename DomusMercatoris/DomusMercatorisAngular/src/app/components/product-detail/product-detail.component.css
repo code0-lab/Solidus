@@ -1,0 +1,353 @@
+.modal-product {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  max-height: 90vh;
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid black;
+  box-shadow: 2px 2px 0 black;
+}
+
+@media (min-width: 768px) {
+  .modal-product {
+    height: 500px;
+  }
+}
+
+.product-detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  flex: 1;
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .product-detail-content {
+    flex-direction: row;
+    height: 100%;
+  }
+}
+
+.product-images {
+  flex: 1;
+  border: 1px solid black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: white;
+  min-height: 200px;
+}
+
+.carousel-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.main-image {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+}
+
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: white;
+  border: 1px solid black;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 1px 1px 0 black;
+  font-size: 12px;
+  z-index: 2;
+  font-family: var(--sys-font-family);
+}
+
+.carousel-btn:active {
+  background: black;
+  color: white;
+  box-shadow: inset 1px 1px 0 white;
+}
+
+.carousel-btn.prev {
+  left: 5px;
+}
+
+.carousel-btn.next {
+  right: 5px;
+}
+
+.carousel-indicators {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+  z-index: 2;
+}
+
+.indicator {
+  width: 8px;
+  height: 8px;
+  border: 1px solid black;
+  background: white;
+  cursor: pointer;
+}
+
+.indicator.active {
+  background: black;
+}
+
+.product-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid black;
+  margin-bottom: 10px;
+}
+
+.tab-btn {
+  background: white;
+  border: 1px solid black;
+  border-bottom: none;
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  color: black;
+  margin-right: -1px; /* Overlap borders */
+  font-family: var(--sys-font-family);
+}
+
+.tab-btn.active {
+  font-weight: bold;
+  background: white;
+  position: relative;
+  top: 1px; /* Cover bottom border */
+  border-top: 2px solid black;
+}
+
+.tab-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 0;
+}
+
+.product-sku {
+  color: #555;
+  font-size: 10px;
+  display: block;
+  margin-bottom: 5px;
+}
+
+h1 {
+  font-size: 18px;
+  margin: 0 0 10px;
+  font-weight: bold;
+}
+
+.product-price {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.product-desc {
+  line-height: 1.4;
+  color: black;
+  margin-bottom: 20px;
+  font-size: 13px;
+}
+
+.add-to-cart-btn {
+  background: white;
+  color: black;
+  border: 2px solid black;
+  padding: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  width: 100%;
+  box-shadow: 2px 2px 0 black;
+  font-family: var(--sys-font-family);
+  font-weight: bold;
+}
+
+.add-to-cart-btn:active {
+  background: black;
+  color: white;
+  box-shadow: none;
+  transform: translate(2px, 2px);
+}
+
+/* Comments Section Styles */
+.comments-section {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.comments-list {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 10px;
+  padding-right: 5px;
+  border: 1px solid black;
+  padding: 5px;
+  background: white;
+}
+
+.comment-item {
+  background: white;
+  padding: 5px;
+  border-bottom: 1px dotted black;
+  margin-bottom: 5px;
+}
+
+.comment-item:last-child {
+  border-bottom: none;
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2px;
+  font-size: 12px;
+}
+
+.comment-header strong {
+  color: black;
+}
+
+.comment-header .date {
+  color: #555;
+}
+
+.comment-item p {
+  margin: 0;
+  color: black;
+  line-height: 1.3;
+  font-size: 13px;
+}
+
+.no-comments {
+  color: #555;
+  text-align: center;
+  margin-top: 20px;
+  font-style: italic;
+}
+
+.add-comment {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 10px;
+}
+
+.add-comment textarea {
+  width: 100%;
+  padding: 5px;
+  border: 1px solid black;
+  resize: none;
+  height: 60px;
+  font-family: var(--sys-font-family);
+  font-size: 13px;
+  box-shadow: inset 1px 1px 0 #ccc;
+}
+
+.add-comment textarea:focus {
+  outline: none;
+  background: white;
+}
+
+.submit-comment-btn {
+  align-self: flex-end;
+  background: white;
+  color: black;
+  border: 1px solid black;
+  padding: 5px 15px;
+  cursor: pointer;
+  font-weight: bold;
+  box-shadow: 2px 2px 0 black;
+  font-family: var(--sys-font-family);
+}
+
+.submit-comment-btn:active {
+  background: black;
+  color: white;
+  box-shadow: none;
+  transform: translate(2px, 2px);
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: white;
+  border-left: 1px solid black;
+}
+
+::-webkit-scrollbar-thumb {
+  background: white;
+  border: 1px solid black;
+  box-shadow: inset 1px 1px 0 white, inset -1px -1px 0 black;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #eee;
+}
+
+/* Login Prompt */
+.login-prompt {
+  text-align: center;
+  padding: 20px;
+  background: white;
+  border: 1px dashed black;
+  margin-top: auto;
+}
+
+.login-prompt p {
+  color: black;
+  margin-bottom: 10px;
+}
+
+.login-btn {
+  background: white;
+  color: black;
+  border: 1px solid black;
+  padding: 5px 15px;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 black;
+  font-family: var(--sys-font-family);
+}
+
+.login-btn:active {
+  background: black;
+  color: white;
+  box-shadow: none;
+  transform: translate(2px, 2px);
+}

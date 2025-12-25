@@ -16,6 +16,8 @@ namespace DomusMercatoris.Data
         public DbSet<Company> Companies { get; set; } = null!;
         public DbSet<Category> Categories { get; set; } = null!;
         public DbSet<Comment> Comments { get; set; } = null!;
+        public DbSet<Ban> Bans { get; set; } = null!;
+        public DbSet<Complaint> Complaints { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -49,6 +51,12 @@ namespace DomusMercatoris.Data
                     .WithMany(c => c.Users)
                     .HasForeignKey(u => u.CompanyId)
                     .OnDelete(DeleteBehavior.Restrict);
+                
+                // Configure Ban relationship explicitly
+                entity.HasOne(u => u.Ban)
+                    .WithOne(b => b.User)
+                    .HasForeignKey<Ban>(b => b.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             // Value Converter for List<string> (Product Images)

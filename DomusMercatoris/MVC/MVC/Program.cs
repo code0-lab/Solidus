@@ -71,6 +71,8 @@ app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseMiddleware<BanEnforcementMiddleware>();
+
 app.MapStaticAssets();
 app.MapRazorPages().WithStaticAssets();
 

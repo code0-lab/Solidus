@@ -54,12 +54,22 @@ namespace DomusMercatorisDotnetMVC.Pages
                     claims.Add(new Claim(ClaimTypes.Role, r));
                 }
                 claims.Add(new Claim("CompanyId", user.CompanyId.ToString()));
+                if (user.Ban != null && user.Ban.IsBaned)
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, "Baned"));
+                }
+
                 var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                 var principal = new ClaimsPrincipal(identity);
                 await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
                 
                 HttpContext.Session.SetString("Email", user.Email);
                 HttpContext.Session.SetString("Role", string.Join(",", roles));
+
+                if (user.Ban != null && user.Ban.IsBaned)
+                {
+                    return RedirectToPage("/Baned");
+                }
 
                 return RedirectToPage("/Dashboard");
             } else {
