@@ -9,10 +9,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\DomusMercatoris.Core\DomusMercatoris.Core.csproj" />
+    <ProjectReference Include="..\..\DomusMercatoris.Data\DomusMercatoris.Data.csproj" />
+    <ProjectReference Include="..\..\DomusMercatoris.Service\DomusMercatoris.Service.csproj" />
   </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="13.0.1" />
+    <PackageReference Include="AutoMapper" Version="16.0.0" />
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="Google.Cloud.AIPlatform.V1" Version="3.59.0" />
     <PackageReference Include="HtmlSanitizer" Version="9.0.889" />

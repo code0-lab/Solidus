@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using DomusMercatorisDotnetMVC.Utils;
-using DomusMercatorisDotnetMVC.Models;
+using DomusMercatoris.Data;
+using DomusMercatoris.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 
@@ -11,8 +11,8 @@ namespace DomusMercatorisDotnetMVC.Pages
     [Authorize(Roles = "Manager,User")]
     public class CategoryProductsModel : PageModel
     {
-        private readonly ApplicationDbContext _db;
-        public CategoryProductsModel(ApplicationDbContext db)
+        private readonly DomusDbContext _db;
+        public CategoryProductsModel(DomusDbContext db)
         {
             _db = db;
         }

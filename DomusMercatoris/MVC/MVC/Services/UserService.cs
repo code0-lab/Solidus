@@ -4,19 +4,20 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
 using DomusMercatorisDotnetMVC.Dto.UserDto;
-using DomusMercatorisDotnetMVC.Models;
-using DomusMercatorisDotnetMVC.Utils;
+using DomusMercatoris.Core.Entities;
+using DomusMercatoris.Data;
+using DomusMercatoris.Service.Services;
 
 namespace DomusMercatorisDotnetMVC.Services
 {
     public class UserService
     {
 
-        private readonly ApplicationDbContext _dbContext;
+        private readonly DomusDbContext _dbContext;
         private readonly IMapper _mapper;
         private readonly EncryptionService _encryptionService;
 
-        public UserService(ApplicationDbContext dbContext, IMapper mapper, EncryptionService encryptionService)
+        public UserService(DomusDbContext dbContext, IMapper mapper, EncryptionService encryptionService)
         {
             _dbContext = dbContext;
             _mapper = mapper;

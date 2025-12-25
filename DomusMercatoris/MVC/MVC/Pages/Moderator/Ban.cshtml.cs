@@ -4,17 +4,17 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using DomusMercatorisDotnetMVC.Models;
-using DomusMercatorisDotnetMVC.Utils;
+using DomusMercatoris.Core.Entities;
+using DomusMercatoris.Data;
 
 namespace DomusMercatorisDotnetMVC.Pages.Moderator
 {
     [Authorize(Roles = "Moderator")]
     public class BanModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
+        private readonly DomusDbContext _context;
 
-        public BanModel(ApplicationDbContext context)
+        public BanModel(DomusDbContext context)
         {
             _context = context;
         }

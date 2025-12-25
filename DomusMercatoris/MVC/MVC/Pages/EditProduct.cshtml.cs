@@ -2,9 +2,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using DomusMercatorisDotnetMVC.Services;
-using DomusMercatorisDotnetMVC.Models;
+using DomusMercatoris.Core.Entities;
 using DomusMercatorisDotnetMVC.Dto.ProductDto;
-using DomusMercatorisDotnetMVC.Utils;
+using DomusMercatoris.Data;
 using System.Linq;
 
 namespace DomusMercatorisDotnetMVC.Pages
@@ -13,12 +13,12 @@ namespace DomusMercatorisDotnetMVC.Pages
     public class EditProductModel : PageModel
     {
         private readonly ProductService _productService;
-        private readonly ApplicationDbContext _db;
+        private readonly DomusDbContext _db;
 
         private readonly GeminiService _geminiService;
         private readonly UserService _userService;
 
-        public EditProductModel(ProductService productService, ApplicationDbContext db, GeminiService geminiService, UserService userService)
+        public EditProductModel(ProductService productService, DomusDbContext db, GeminiService geminiService, UserService userService)
         {
             _productService = productService;
             _db = db;

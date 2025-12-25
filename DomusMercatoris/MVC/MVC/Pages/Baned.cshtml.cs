@@ -5,8 +5,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using DomusMercatorisDotnetMVC.Models;
-using DomusMercatorisDotnetMVC.Utils;
+using DomusMercatoris.Core.Entities;
+using DomusMercatoris.Data;
 
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -16,9 +16,9 @@ namespace DomusMercatorisDotnetMVC.Pages
     [Authorize]
     public class BanedModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
+        private readonly DomusDbContext _context;
 
-        public BanedModel(ApplicationDbContext context)
+        public BanedModel(DomusDbContext context)
         {
             _context = context;
         }

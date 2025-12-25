@@ -1,5 +1,5 @@
 using AutoMapper;
-using DomusMercatorisDotnetMVC.Models;
+using DomusMercatoris.Core.Entities;
 using DomusMercatorisDotnetMVC.Dto.ProductDto;
 using DomusMercatorisDotnetMVC.Dto.UserDto;
 using CommentDtos = DomusMercatorisDotnetMVC.Dto.CommentsDto;
@@ -13,10 +13,12 @@ namespace DomusMercatorisDotnetMVC.Dto.Mappings
             CreateMap<UserRegisterDto, User>();
             CreateMap<ProductCreateDto, Product>();
             
-            CreateMap<CommentModel, CommentDtos.CommentsDto>()
-                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User != null ? $"{src.User.FirstName} {src.User.LastName}" : "Unknown"));
+            CreateMap<Comment, CommentDtos.CommentsDto>()
+                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User != null ? $"{src.User.FirstName} {src.User.LastName}" : "Unknown"))
+                .ForMember(dest => dest.Comment, opt => opt.MapFrom(src => src.Text));
             
-            CreateMap<CommentDtos.CreateCommentDto, CommentModel>();
+            CreateMap<CommentDtos.CreateCommentDto, Comment>()
+                .ForMember(dest => dest.Text, opt => opt.MapFrom(src => src.Comment));
         }
     }
 }

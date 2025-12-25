@@ -5,17 +5,17 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using DomusMercatorisDotnetMVC.Models;
-using DomusMercatorisDotnetMVC.Utils;
+using DomusMercatoris.Core.Entities;
+using DomusMercatoris.Data;
 
 namespace DomusMercatorisDotnetMVC.Pages.Moderator
 {
     [Authorize(Roles = "Moderator")]
     public class IndexModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
+        private readonly DomusDbContext _context;
 
-        public IndexModel(ApplicationDbContext context)
+        public IndexModel(DomusDbContext context)
         {
             _context = context;
         }

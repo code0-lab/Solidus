@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using DomusMercatorisDotnetMVC.Dto.Mappings;
 using DomusMercatorisDotnetMVC.Middleware;
 using DomusMercatorisDotnetMVC.Services;
-using DomusMercatorisDotnetMVC.Utils;
+using DomusMercatoris.Service.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,14 +19,14 @@ builder.Services.AddDataProtection()
 
 // DbContext
 var dbConn = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<ApplicationDbContext>(option =>
+builder.Services.AddDbContext<DomusMercatoris.Data.DomusDbContext>(option =>
 {
     option.UseSqlServer(dbConn);
     option.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
 });
 
 // AutoMapper
-builder.Services.AddAutoMapper(typeof(AppProfile));
+builder.Services.AddAutoMapper(cfg => cfg.AddProfile<AppProfile>());
 
 // Add services to the container.
 builder.Services.AddRazorPages();
@@ -36,7 +36,7 @@ builder.Services.AddSingleton<EncryptionService>();
 builder.Services.AddSingleton<AsyncLogService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<ProductService>();
-builder.Services.AddScoped<CommentService>();
+builder.Services.AddScoped<DomusMercatorisDotnetMVC.Services.CommentService>();
 builder.Services.AddHttpClient<GeminiService>();
 builder.Services.AddScoped<GeminiService>();
 builder.Services.AddHttpClient<GeminiCommentService>();
@@ -91,7 +91,7 @@ using (var scope0 = app.Services.CreateScope())
 
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var db = scope.ServiceProvider.GetRequiredService<DomusMercatoris.Data.DomusDbContext>();
     var provider = db.Database.ProviderName;
     if (provider != null && provider.Contains("Sqlite", StringComparison.OrdinalIgnoreCase))
     {

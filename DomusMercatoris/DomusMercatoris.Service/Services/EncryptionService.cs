@@ -1,7 +1,8 @@
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.Extensions.Configuration;
 
-namespace DomusMercatorisDotnetMVC.Utils
+namespace DomusMercatoris.Service.Services
 {
     public class EncryptionService
     {

@@ -6,8 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using DomusMercatorisDotnetMVC.Dto.ProductDto;
 using DomusMercatorisDotnetMVC.Services;
-using DomusMercatorisDotnetMVC.Utils;
-using DomusMercatorisDotnetMVC.Models;
+using DomusMercatoris.Data;
+using DomusMercatoris.Core.Entities;
 using System.Linq;
 
 namespace DomusMercatorisDotnetMVC.Pages
@@ -19,12 +19,12 @@ namespace DomusMercatorisDotnetMVC.Pages
         public ProductCreateDto Product { get; set; } = new();
 
         private readonly ProductService _productService;
-        private readonly ApplicationDbContext _db;
+        private readonly DomusDbContext _db;
         private readonly GeminiService _geminiService;
         private readonly UserService _userService;
 
         public List<Category> Categories { get; set; } = new();
-        public AddProductModel(ProductService productService, ApplicationDbContext db, GeminiService geminiService, UserService userService)
+        public AddProductModel(ProductService productService, DomusDbContext db, GeminiService geminiService, UserService userService)
         {
             _productService = productService;
             _db = db;

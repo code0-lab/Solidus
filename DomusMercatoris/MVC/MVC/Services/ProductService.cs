@@ -1,7 +1,8 @@
 using System;
 using DomusMercatorisDotnetMVC.Dto.ProductDto;
-using DomusMercatorisDotnetMVC.Models;
-using DomusMercatorisDotnetMVC.Utils;
+using DomusMercatoris.Core.Entities;
+using DomusMercatoris.Service.Services;
+using DomusMercatoris.Data;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -11,11 +12,11 @@ namespace DomusMercatorisDotnetMVC.Services
 {
     public class ProductService
     {
-        private readonly ApplicationDbContext _db;
+        private readonly DomusDbContext _db;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IWebHostEnvironment _env;
 
-        public ProductService(ApplicationDbContext db, IHttpContextAccessor httpContextAccessor, IWebHostEnvironment env)
+        public ProductService(DomusDbContext db, IHttpContextAccessor httpContextAccessor, IWebHostEnvironment env)
         {
             _db = db;
             _httpContextAccessor = httpContextAccessor;

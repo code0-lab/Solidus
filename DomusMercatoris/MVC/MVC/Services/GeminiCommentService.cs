@@ -1,8 +1,6 @@
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using DomusMercatorisDotnetMVC.Models;
-using DomusMercatorisDotnetMVC.Utils;
 using Microsoft.EntityFrameworkCore;
 
 namespace DomusMercatorisDotnetMVC.Services
