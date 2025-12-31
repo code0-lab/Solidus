@@ -26,7 +26,11 @@ builder.Services.AddDbContext<DomusMercatoris.Data.DomusDbContext>(option =>
 });
 
 // AutoMapper
-builder.Services.AddAutoMapper(cfg => cfg.AddProfile<AppProfile>());
+builder.Services.AddAutoMapper(cfg => 
+{
+    cfg.AddProfile<AppProfile>();
+    cfg.AddProfile<DomusMercatoris.Service.Mappings.MappingProfile>();
+});
 
 // Add services to the container.
 builder.Services.AddRazorPages();
@@ -36,6 +40,9 @@ builder.Services.AddSingleton<EncryptionService>();
 builder.Services.AddSingleton<AsyncLogService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<ProductService>();
+builder.Services.AddScoped<BrandService>();
+builder.Services.AddScoped<VariantProductService>();
+builder.Services.AddScoped<CargoService>();
 builder.Services.AddScoped<DomusMercatorisDotnetMVC.Services.CommentService>();
 builder.Services.AddHttpClient<GeminiService>();
 builder.Services.AddScoped<GeminiService>();

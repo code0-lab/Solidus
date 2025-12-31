@@ -305,7 +305,26 @@
                     
                     <input name="Email" type="email" class="brutalist-input" placeholder="Your email">
                     
-                    <input name="Password" type="password" class="brutalist-input" placeholder="Your password">
+                    <div class="position-relative">
+                    <input name="Password" type="password" class="brutalist-input" placeholder="Your password" id="userPassword" style="padding-right: 40px;">
+                    <i class="bi bi-eye position-absolute top-50 end-0 translate-middle-y me-3" id="toggleUserPassword" style="cursor: pointer; z-index: 10; color: #fff;"></i>
+                </div>
+
+                <script>
+                    document.getElementById('toggleUserPassword').addEventListener('click', function () {
+                        const passwordInput = document.getElementById('userPassword');
+                        const icon = this;
+                        if (passwordInput.type === 'password') {
+                            passwordInput.type = 'text';
+                            icon.classList.remove('bi-eye');
+                            icon.classList.add('bi-eye-slash');
+                        } else {
+                            passwordInput.type = 'password';
+                            icon.classList.remove('bi-eye-slash');
+                            icon.classList.add('bi-eye');
+                        }
+                    });
+                </script>
 
                     <button class="brutalist-btn" type="submit">Sign In</button>
                 </form>

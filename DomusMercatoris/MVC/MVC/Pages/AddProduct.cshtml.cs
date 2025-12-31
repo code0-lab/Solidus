@@ -9,6 +9,8 @@ using DomusMercatorisDotnetMVC.Services;
 using DomusMercatoris.Data;
 using DomusMercatoris.Core.Entities;
 using System.Linq;
+using DomusMercatoris.Service.Services;
+using DomusMercatoris.Service.DTOs;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
@@ -22,14 +24,18 @@ namespace DomusMercatorisDotnetMVC.Pages
         private readonly DomusDbContext _db;
         private readonly GeminiService _geminiService;
         private readonly UserService _userService;
+        private readonly BrandService _brandService;
 
         public List<Category> Categories { get; set; } = new();
-        public AddProductModel(ProductService productService, DomusDbContext db, GeminiService geminiService, UserService userService)
+        public List<BrandDto> Brands { get; set; } = new();
+
+        public AddProductModel(ProductService productService, DomusDbContext db, GeminiService geminiService, UserService userService, BrandService brandService)
         {
             _productService = productService;
             _db = db;
             _geminiService = geminiService;
             _userService = userService;
+            _brandService = brandService;
         }
 
         public async Task<IActionResult> OnPostGenerateDescription(List<IFormFile> files)
@@ -67,7 +73,7 @@ namespace DomusMercatorisDotnetMVC.Pages
             return new JsonResult(new { success = true, data = result });
         }
 
-        public void OnGet()
+        public async Task OnGet()
         {
             var comp = User.FindFirst("CompanyId")?.Value;
             int companyId = 0;
@@ -90,19 +96,27 @@ namespace DomusMercatorisDotnetMVC.Pages
                     .OrderBy(c => c.ParentId.HasValue)
                     .ThenBy(c => c.Name)
                     .ToList();
+                
+                Brands = await _brandService.GetBrandsByCompanyAsync(companyId);
             }
         }
 
-        public IActionResult OnPost()
+        public async Task<IActionResult> OnPost(string action)
         {
             if (!ModelState.IsValid)
             {
-                OnGet();
+                await OnGet();
                 return Page();
             }
-            _productService.Create(Product);
-            TempData["Message"] = "Product added.";
-            return RedirectToPage("/Dashboard");
+
+            var product = _productService.Create(Product);
+            
+            if (action == "save-add-variants")
+            {
+                return RedirectToPage("/ManageVariants", new { productId = product.Id });
+            }
+
+            return RedirectToPage("/Products");
         }
     }
 }

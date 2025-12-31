@@ -11,6 +11,22 @@
   }
 }
 
+@media (max-width: 360px) {
+  .product-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .card-image {
+    height: 120px;
+  }
+  .card-content h3 {
+    font-size: 11px;
+  }
+  .price {
+    font-size: 11px;
+  }
+}
+
 .product-card {
   background: white;
   border: 1px solid black;

@@ -18,6 +18,11 @@ namespace DomusMercatoris.Data
         public DbSet<Comment> Comments { get; set; } = null!;
         public DbSet<Ban> Bans { get; set; } = null!;
         public DbSet<Complaint> Complaints { get; set; } = null!;
+        public DbSet<Brand> Brands { get; set; } = null!;
+        public DbSet<VariantProduct> VariantProducts { get; set; } = null!;
+        public DbSet<CargoTracking> CargoTrackings { get; set; } = null!;
+        public DbSet<Sale> Sales { get; set; } = null!;
+        public DbSet<SaleProduct> SaleProducts { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -89,6 +94,16 @@ namespace DomusMercatoris.Data
                 entity.HasMany(p => p.Categories)
                     .WithMany(c => c.Products)
                     .UsingEntity(j => j.ToTable("ProductCategories"));
+
+                entity.HasOne(p => p.Brand)
+                    .WithMany(b => b.Products)
+                    .HasForeignKey(p => p.BrandId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasMany(p => p.Variants)
+                    .WithOne(v => v.Product)
+                    .HasForeignKey(v => v.ProductId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<Category>(entity =>
@@ -103,6 +118,67 @@ namespace DomusMercatoris.Data
                     .HasForeignKey(c => c.ParentId)
                     .OnDelete(DeleteBehavior.Restrict);
                 entity.HasIndex(c => c.ParentId);
+            });
+
+            modelBuilder.Entity<Brand>(entity =>
+            {
+                entity.HasIndex(b => b.CompanyId);
+                entity.HasOne(b => b.Company)
+                    .WithMany(c => c.Brands)
+                    .HasForeignKey(b => b.CompanyId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<CargoTracking>(entity =>
+            {
+                entity.HasIndex(t => t.TrackingNumber).IsUnique();
+                entity.HasOne(t => t.User)
+                    .WithMany() // Assuming User doesn't have a specific collection for cargos yet
+                    .HasForeignKey(t => t.UserId)
+                    .OnDelete(DeleteBehavior.SetNull);
+                entity.HasOne(t => t.FleetingUser)
+                    .WithMany()
+                    .HasForeignKey(t => t.FleetingUserId)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            modelBuilder.Entity<Sale>(entity =>
+            {
+                entity.HasIndex(s => new { s.CompanyId, s.CreatedAt });
+                entity.Property(s => s.TotalPrice).HasColumnType("decimal(18,2)");
+                entity.HasOne(s => s.Company)
+                    .WithMany()
+                    .HasForeignKey(s => s.CompanyId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(s => s.User)
+                    .WithMany()
+                    .HasForeignKey(s => s.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(s => s.CargoTracking)
+                    .WithMany()
+                    .HasForeignKey(s => s.CargoTrackingId)
+                    .OnDelete(DeleteBehavior.SetNull);
+                entity.HasOne(s => s.FleetingUser)
+                    .WithMany()
+                    .HasForeignKey(s => s.FleetingUserId)
+                    .OnDelete(DeleteBehavior.SetNull);
+                entity.HasMany(s => s.SaleProducts)
+                    .WithOne(sp => sp.Sale)
+                    .HasForeignKey(sp => sp.SaleId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<SaleProduct>(entity =>
+            {
+                entity.Property(sp => sp.UnitPrice).HasColumnType("decimal(18,2)");
+                entity.HasOne(sp => sp.Product)
+                    .WithMany()
+                    .HasForeignKey(sp => sp.ProductId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(sp => sp.VariantProduct)
+                    .WithMany()
+                    .HasForeignKey(sp => sp.VariantProductId)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
         }
     }

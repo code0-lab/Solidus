@@ -17,7 +17,7 @@ namespace DomusMercatoris.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.0")
+                .HasAnnotation("ProductVersion", "9.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -86,6 +86,83 @@ namespace DomusMercatoris.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("Bans");
+                });
+
+            modelBuilder.Entity("DomusMercatoris.Core.Entities.Brand", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId");
+
+                    b.ToTable("Brands");
+                });
+
+            modelBuilder.Entity("DomusMercatoris.Core.Entities.CargoTracking", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CarrierName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeliveredDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("EstimatedDeliveryDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ShippedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TrackingNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<long?>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TrackingNumber")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("CargoTrackings");
                 });
 
             modelBuilder.Entity("DomusMercatoris.Core.Entities.Category", b =>
@@ -236,6 +313,9 @@ namespace DomusMercatoris.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
+                    b.Property<int?>("BrandId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("CategoryId")
                         .HasColumnType("int");
 
@@ -274,6 +354,8 @@ namespace DomusMercatoris.Data.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BrandId");
 
                     b.HasIndex("CompanyId", "CreatedAt");
 
@@ -324,6 +406,38 @@ namespace DomusMercatoris.Data.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("DomusMercatoris.Core.Entities.VariantProduct", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("CoverImage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsCustomizable")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<long>("ProductId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("VariantProducts");
+                });
+
             modelBuilder.Entity("CategoryProduct", b =>
                 {
                     b.HasOne("DomusMercatoris.Core.Entities.Category", null)
@@ -352,6 +466,27 @@ namespace DomusMercatoris.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Company");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DomusMercatoris.Core.Entities.Brand", b =>
+                {
+                    b.HasOne("DomusMercatoris.Core.Entities.Company", "Company")
+                        .WithMany("Brands")
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Company");
+                });
+
+            modelBuilder.Entity("DomusMercatoris.Core.Entities.CargoTracking", b =>
+                {
+                    b.HasOne("DomusMercatoris.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("User");
                 });
@@ -414,11 +549,18 @@ namespace DomusMercatoris.Data.Migrations
 
             modelBuilder.Entity("DomusMercatoris.Core.Entities.Product", b =>
                 {
+                    b.HasOne("DomusMercatoris.Core.Entities.Brand", "Brand")
+                        .WithMany("Products")
+                        .HasForeignKey("BrandId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("DomusMercatoris.Core.Entities.Company", "Company")
                         .WithMany("Products")
                         .HasForeignKey("CompanyId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Brand");
 
                     b.Navigation("Company");
                 });
@@ -434,6 +576,22 @@ namespace DomusMercatoris.Data.Migrations
                     b.Navigation("Company");
                 });
 
+            modelBuilder.Entity("DomusMercatoris.Core.Entities.VariantProduct", b =>
+                {
+                    b.HasOne("DomusMercatoris.Core.Entities.Product", "Product")
+                        .WithMany("Variants")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("DomusMercatoris.Core.Entities.Brand", b =>
+                {
+                    b.Navigation("Products");
+                });
+
             modelBuilder.Entity("DomusMercatoris.Core.Entities.Category", b =>
                 {
                     b.Navigation("Children");
@@ -441,6 +599,8 @@ namespace DomusMercatoris.Data.Migrations
 
             modelBuilder.Entity("DomusMercatoris.Core.Entities.Company", b =>
                 {
+                    b.Navigation("Brands");
+
                     b.Navigation("Categories");
 
                     b.Navigation("Products");
@@ -451,6 +611,8 @@ namespace DomusMercatoris.Data.Migrations
             modelBuilder.Entity("DomusMercatoris.Core.Entities.Product", b =>
                 {
                     b.Navigation("Comments");
+
+                    b.Navigation("Variants");
                 });
 
             modelBuilder.Entity("DomusMercatoris.Core.Entities.User", b =>

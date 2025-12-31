@@ -42,6 +42,12 @@ body {
   text-align: start;
 }
 
+/* Modal Backdrop Blur */
+.modal-backdrop {
+    backdrop-filter: blur(5px);
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent dark */
+}
+
 /* Brutalist Separator */
 .brutalist-separator {
     border: 0;

@@ -28,20 +28,23 @@
         <div class="col-md-6">
             @if (Model.Product != null)
             {
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                    <h3 class="mb-0">@Model.Product.Name</h3>
-                    <div class="d-flex gap-2">
-                        <a href="/Product/Edit/@Model.Product.Id" class="btn btn-warning" title="Edit" aria-label="Edit"><i class="bi bi-pencil-square"></i></a>
-                        <form id="deleteDetailForm" method="post" action="/Product/@Model.Product.Id?handler=Delete" onsubmit="return confirm('Are you sure you want to delete this product?');">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-danger" title="Delete" aria-label="Delete"><i class="bi bi-trash"></i></button>
-                        </form>
+                <div class="d-flex align-items-start justify-content-between mb-2">
+                    <h3 class="mb-0" id="productName">@Model.Product.Name</h3>
+                    <div class="d-flex flex-column align-items-end gap-2">
+                        <div class="d-flex gap-2">
+                            <a href="/Product/Edit/@Model.Product.Id" class="btn btn-warning" title="Edit" aria-label="Edit"><i class="bi bi-pencil-square"></i></a>
+                            <form id="deleteDetailForm" method="post" action="/Product/@Model.Product.Id?handler=Delete" onsubmit="return confirm('Are you sure you want to delete this product?');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-danger" title="Delete" aria-label="Delete"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </div>
+                        <a asp-page="/ManageVariants" asp-route-productId="@Model.Product.Id" class="btn btn-sm btn-info">Variants</a>
                     </div>
                 </div>
-                <div class="text-muted mb-2">@Model.Product.Sku</div>
-                <div class="fs-5 fw-bold mb-3">@Model.Product.Price</div>
-                <div class="mb-3">Quantity: @Model.Product.Quantity</div>
-                <p>@Model.Product.Description</p>
+                <div class="text-muted mb-2" id="productSku">@Model.Product.Sku</div>
+                <div class="fs-5 fw-bold mb-3" id="productPrice">@Model.Product.Price.ToString("C2")</div>
+                <div class="mb-3" id="productQuantity">Quantity: @Model.Product.Quantity</div>
+                <p id="productDescription">@Model.Product.Description</p>
             }
         </div>
     </div>
@@ -50,7 +53,59 @@
     (function(){
         var m = document.getElementById('mainImg');
         var t = document.getElementById('thumbs');
+        
+        // Base product info
+        var baseProduct = {
+            name: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Product?.Name ?? "")),
+            sku: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Product?.Sku ?? "")),
+            price: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Product?.Price.ToString("C2") ?? "")), 
+            quantity: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Product?.Quantity ?? 0)),
+            description: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Product?.Description ?? ""))
+        };
+
+        // Variants with formatted price
+        var variants = @Html.Raw(System.Text.Json.JsonSerializer.Serialize((Model.Variants ?? new List<DomusMercatoris.Service.DTOs.VariantProductDto>()).Select(v => new {
+            v.Color,
+            v.Price,
+            FormattedPrice = v.Price.ToString("C2"),
+            v.Quantity,
+            v.CoverImage,
+            Images = v.Images 
+        })));
+
         var imgs = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Product?.Images ?? new List<string>()));
+
+        // Elements
+        var elName = document.getElementById('productName');
+        var elSku = document.getElementById('productSku');
+        var elPrice = document.getElementById('productPrice');
+        var elQty = document.getElementById('productQuantity');
+
+        function updateDetails(imgUrl) {
+            // Find variant with this cover image
+            // Only check CoverImage to avoid false positives with inherited images
+            var variant = variants.find(function(v) { 
+                return v.CoverImage && v.CoverImage === imgUrl;
+            });
+            
+            if (variant) {
+                // Update with variant info
+                if(elName) elName.innerText = baseProduct.name + ' (' + variant.Color + ')';
+                // Variant might not have SKU, so we keep base SKU or hide it? 
+                // User didn't specify, keeping base SKU is safer or maybe just ignore it.
+                // if(elSku) elSku.innerText = variant.Sku; 
+                
+                if(elPrice) elPrice.innerText = variant.FormattedPrice;
+                if(elQty && variant.Quantity !== undefined) elQty.innerText = 'Quantity: ' + variant.Quantity;
+            } else {
+                // Revert to base
+                if(elName) elName.innerText = baseProduct.name;
+                if(elSku) elSku.innerText = baseProduct.sku;
+                if(elPrice) elPrice.innerText = baseProduct.price;
+                if(elQty) elQty.innerText = 'Quantity: ' + baseProduct.quantity;
+            }
+        }
+
         function buildThumbs(current){
             if(!t) return;
             t.innerHTML = '';
@@ -68,7 +123,19 @@
                 t.appendChild(el);
             });
         }
-        window.showImg = function(u){ if(m){ m.src = u; buildThumbs(u); } };
-        if(m){ buildThumbs(m.getAttribute('src')); }
+        window.showImg = function(u){ 
+            if(m){ 
+                m.src = u; 
+                buildThumbs(u); 
+                updateDetails(u);
+            } 
+        };
+        
+        // Initial check
+        if(m){ 
+            var currentSrc = m.getAttribute('src');
+            buildThumbs(currentSrc); 
+            // updateDetails(currentSrc); // Don't auto-switch on load
+        }
     })();
 </script>

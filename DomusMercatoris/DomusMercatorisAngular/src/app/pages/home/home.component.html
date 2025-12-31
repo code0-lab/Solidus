@@ -16,6 +16,13 @@
               <li [class.active]="productService.selectedCategory() === c.id" (click)="selectCategory(c.id)">{{ c.name }}</li>
             }
           </ul>
+          <div class="filter-header mt-3" style="margin-top: 1rem; border-top: 1px solid #eee; padding-top: 0.5rem;">Companies</div>
+          <ul>
+            <li [class.active]="productService.selectedCompany() === null" (click)="selectCompany(null)">All</li>
+            @for (c of productService.companies(); track c.companyId) {
+              <li [class.active]="productService.selectedCompany() === c.companyId" (click)="selectCompany(c.companyId)">{{ c.name }}</li>
+            }
+          </ul>
         </div>
       }
     </div>

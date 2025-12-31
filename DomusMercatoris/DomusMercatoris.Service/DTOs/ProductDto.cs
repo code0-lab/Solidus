@@ -11,6 +11,9 @@ namespace DomusMercatoris.Service.DTOs
         public decimal Price { get; set; }
         public int Quantity { get; set; }
         public List<string> Images { get; set; } = new List<string>();
+        public int? BrandId { get; set; }
+        public string? BrandName { get; set; }
         public List<CategoryDto> Categories { get; set; } = new List<CategoryDto>();
+        public List<VariantProductDto> Variants { get; set; } = new List<VariantProductDto>();
     }
 }

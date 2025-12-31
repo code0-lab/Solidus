@@ -314,7 +314,26 @@
 
                     <input name="UserRegisterDto.Email" value="@Model.UserRegisterDto.Email" type="email" class="brutalist-input" placeholder="Email Address">
                     
-                    <input name="UserRegisterDto.Password" type="password" value="@Model.UserRegisterDto.Password" class="brutalist-input" placeholder="Password">
+                    <div class="position-relative">
+                        <input name="UserRegisterDto.Password" type="password" value="@Model.UserRegisterDto.Password" class="brutalist-input" placeholder="Password" id="registerPassword" style="padding-right: 40px;">
+                        <i class="bi bi-eye position-absolute top-50 end-0 translate-middle-y me-3" id="toggleRegisterPassword" style="cursor: pointer; z-index: 10; color: #fff;"></i>
+                    </div>
+
+                    <script>
+                        document.getElementById('toggleRegisterPassword').addEventListener('click', function () {
+                            const passwordInput = document.getElementById('registerPassword');
+                            const icon = this;
+                            if (passwordInput.type === 'password') {
+                                passwordInput.type = 'text';
+                                icon.classList.remove('bi-eye');
+                                icon.classList.add('bi-eye-slash');
+                            } else {
+                                passwordInput.type = 'password';
+                                icon.classList.remove('bi-eye-slash');
+                                icon.classList.add('bi-eye');
+                            }
+                        });
+                    </script>
                     
                     <input name="UserRegisterDto.CompanyName" value="@Model.UserRegisterDto.CompanyName" class="brutalist-input" placeholder="Company Name">
 

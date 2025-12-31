@@ -12,7 +12,6 @@ namespace DomusMercatoris.Core.Entities
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public long Id { get; set; }
-        
         public Ban? Ban { get; set; }
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
@@ -23,5 +22,7 @@ namespace DomusMercatoris.Core.Entities
         public List<string> Roles { get; set; } = new List<string>();
         public ICollection<Comment> Comments { get; set; } = new List<Comment>();
         public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public string Address { get; set; } = null;
+        public string Phone { get; set; } = null;
     }
 }

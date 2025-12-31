@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Product, Category, PaginatedResult } from '../models/product.model';
+import { Product, Category, Company, PaginatedResult } from '../models/product.model';
 import { Observable, tap } from 'rxjs';
 
 @Injectable({
@@ -13,7 +13,9 @@ export class ProductService {
   products = signal<Product[]>([]);
   totalCount = signal<number>(0);
   categories = signal<Category[]>([]);
+  companies = signal<Company[]>([]);
   selectedCategory = signal<number | null>(null);
+  selectedCompany = signal<number | null>(null);
 
   fetchCategories(): void {
     this.http.get<Category[]>(`${this.apiUrl}/categories`)
@@ -23,7 +25,15 @@ export class ProductService {
       });
   }
 
-  fetchProducts(categoryId?: number | null, pageNumber: number = 1, pageSize: number = 9): void {
+  fetchCompanies(): void {
+    this.http.get<Company[]>(`${this.apiUrl}/companies`)
+      .subscribe({
+        next: (data) => this.companies.set(data),
+        error: () => console.error('Failed to fetch companies')
+      });
+  }
+
+  fetchProducts(categoryId?: number | null, pageNumber: number = 1, pageSize: number = 9, companyId?: number | null): void {
     const url = categoryId 
       ? `${this.apiUrl}/products/by-category/${categoryId}`
       : `${this.apiUrl}/products`;
@@ -31,6 +41,10 @@ export class ProductService {
     let params = new HttpParams()
       .set('pageNumber', pageNumber)
       .set('pageSize', pageSize);
+
+    if (companyId) {
+      params = params.set('companyId', companyId);
+    }
 
     this.http.get<PaginatedResult<Product>>(url, { params })
       .subscribe({
@@ -43,7 +57,15 @@ export class ProductService {
               ? p.images.map(img => this.toAbsoluteImageUrl(img)) 
               : [this.toAbsoluteImageUrl(undefined)],
             priceText: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(p.price),
-            bg: this.getRandomColor()
+            bg: this.getRandomColor(),
+            variants: p.variants ? p.variants.map(v => ({
+              ...v,
+              id: v.id,
+              price: v.price,
+              isCustomizable: v.isCustomizable,
+              color: v.color,
+              coverImage: this.toAbsoluteImageUrl(v.coverImage)
+            })) : []
           }));
           this.products.set(processed);
           this.totalCount.set(data.totalCount);

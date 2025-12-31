@@ -67,6 +67,13 @@ namespace DomusMercatorisDotnetMVC.Services
             return _dbContext.Users.SingleOrDefault(u => u.Id == id);
         }
 
+        public async Task<User?> GetUserByEmailAsync(string email)
+        {
+            return await _dbContext.Users
+                .Include(u => u.Company)
+                .SingleOrDefaultAsync(u => u.Email == email);
+        }
+
         public List<User> GetByCompany(int companyId)
         {
             return _dbContext.Users.Where(u => u.CompanyId == companyId).OrderBy(u => u.FirstName).ThenBy(u => u.LastName).ToList();

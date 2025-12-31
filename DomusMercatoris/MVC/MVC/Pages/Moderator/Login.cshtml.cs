@@ -57,23 +57,29 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
                 };
 
                 var roles = (user.Roles ?? new List<string>()).ToList();
-                foreach (var r in roles.Select(r => r.Trim()).Distinct())
-                {
-                    claims.Add(new Claim(ClaimTypes.Role, r));
-                }
-                claims.Add(new Claim("CompanyId", user.CompanyId.ToString()));
-
+                
+                // If user is banned, ONLY assign "Baned" role
                 if (user.Ban != null && user.Ban.IsBaned)
                 {
                     claims.Add(new Claim(ClaimTypes.Role, "Baned"));
+                    HttpContext.Session.SetString("Role", "Baned");
                 }
+                else
+                {
+                    foreach (var r in roles.Select(r => r.Trim()).Distinct())
+                    {
+                        claims.Add(new Claim(ClaimTypes.Role, r));
+                    }
+                    HttpContext.Session.SetString("Role", string.Join(",", roles));
+                }
+
+                claims.Add(new Claim("CompanyId", user.CompanyId.ToString()));
 
                 var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                 var principal = new ClaimsPrincipal(identity);
                 await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
                 
                 HttpContext.Session.SetString("Email", user.Email);
-                HttpContext.Session.SetString("Role", string.Join(",", roles));
 
                 // Ban check (even though moderators probably shouldn't be banned, good to keep consistent or maybe moderators are immune? 
                 // The user requirement says "Baned users... redirected to Baned page". 

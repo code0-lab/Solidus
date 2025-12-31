@@ -13,6 +13,7 @@ using DomusMercatoris.Data.Repositories;
 using DomusMercatoris.Service.Services;
 using DomusMercatoris.Service.Mappings;
 using DomusMercatorisDotnetRest.Infrastructure;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +31,9 @@ builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 
 // Services
 builder.Services.AddScoped<ICommentService, CommentService>();
+builder.Services.AddScoped<BrandService>();
+builder.Services.AddScoped<VariantProductService>();
+builder.Services.AddScoped<CargoService>();
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
@@ -42,6 +46,20 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "DomusMercatoris API", Version = "v1" });
+    var xmlFiles = new[]
+    {
+        $"{Assembly.GetExecutingAssembly().GetName().Name}.xml",
+        "DomusMercatoris.Service.xml",
+        "DomusMercatoris.Core.xml"
+    };
+    foreach (var xml in xmlFiles)
+    {
+        var p = Path.Combine(AppContext.BaseDirectory, xml);
+        if (File.Exists(p))
+        {
+            c.IncludeXmlComments(p, includeControllerXmlComments: true);
+        }
+    }
     
     c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
@@ -109,6 +127,13 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.Lifetime.ApplicationStarted.Register(() =>
+    {
+        foreach (var url in app.Urls)
+        {
+            Console.WriteLine($"Swagger: {url.TrimEnd('/')}/swagger");
+        }
+    });
 }
 
 app.UseExceptionHandler();

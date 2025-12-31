@@ -21,10 +21,30 @@ namespace DomusMercatoris.Service.Mappings
             CreateMap<UserRegisterDto, User>();
             
             // Product Mapping
-            CreateMap<Product, ProductDto>();
+            CreateMap<Product, ProductDto>()
+                .ForMember(dest => dest.BrandName, opt => opt.MapFrom(src => src.Brand != null ? src.Brand.Name : null));
 
             // Category Mapping
             CreateMap<Category, CategoryDto>();
+
+            // Brand Mapping
+            CreateMap<Brand, BrandDto>();
+            CreateMap<CreateBrandDto, Brand>();
+            CreateMap<UpdateBrandDto, Brand>();
+
+            // Cargo Tracking Mapping
+            CreateMap<CargoTracking, CargoTrackingDto>()
+                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User != null ? $"{src.User.FirstName} {src.User.LastName}".Trim() : null));
+            CreateMap<CreateCargoTrackingDto, CargoTracking>();
+
+            // Variant Product Mapping
+            CreateMap<VariantProduct, VariantProductDto>()
+                .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product.Name))
+                .ForMember(dest => dest.BrandName, opt => opt.MapFrom(src => src.Product.Brand != null ? src.Product.Brand.Name : null))
+                .ForMember(dest => dest.CategoryNames, opt => opt.MapFrom(src => src.Product.Categories.Select(c => c.Name).ToList()))
+                .ForMember(dest => dest.Quantity, opt => opt.MapFrom(src => src.Product.Quantity))
+                .ForMember(dest => dest.Images, opt => opt.MapFrom(src => src.Product.Images));
+            CreateMap<CreateVariantProductDto, VariantProduct>();
         }
     }
 }

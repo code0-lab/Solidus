@@ -23,6 +23,9 @@ namespace DomusMercatoris.Core.Entities
         public int? SubCategoryId { get; set; }
         public ICollection<Category> Categories { get; set; } = new List<Category>();
 
+        public int? BrandId { get; set; }
+        public Brand? Brand { get; set; }
+
         [DataType(DataType.Currency)]
         public decimal Price { get; set; }
 
@@ -35,6 +38,7 @@ namespace DomusMercatoris.Core.Entities
         public List<string> Images { get; set; } = new List<string>();
 
         public ICollection<Comment> Comments { get; set; } = new List<Comment>();
+        public ICollection<VariantProduct> Variants { get; set; } = new List<VariantProduct>();
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }

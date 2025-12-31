@@ -41,30 +41,37 @@ namespace DomusMercatorisDotnetMVC.Pages
                 };
 
                 var roles = (user.Roles ?? new List<string>()).ToList();
-                if (roles.Count == 0) {
-                    roles.Add("User");
-                }
-                var hasManager = roles.Any(r => string.Equals(r, "Manager", StringComparison.OrdinalIgnoreCase));
-                var hasUser = roles.Any(r => string.Equals(r, "User", StringComparison.OrdinalIgnoreCase));
-                if (hasManager && !hasUser) {
-                    roles.Add("User");
-                }
-                foreach (var r in roles.Select(r => r.Trim()).Distinct())
-                {
-                    claims.Add(new Claim(ClaimTypes.Role, r));
-                }
-                claims.Add(new Claim("CompanyId", user.CompanyId.ToString()));
+                
+                // If user is banned, ONLY assign "Baned" role
                 if (user.Ban != null && user.Ban.IsBaned)
                 {
                     claims.Add(new Claim(ClaimTypes.Role, "Baned"));
+                    HttpContext.Session.SetString("Role", "Baned");
                 }
+                else 
+                {
+                    if (roles.Count == 0) {
+                        roles.Add("User");
+                    }
+                    var hasManager = roles.Any(r => string.Equals(r, "Manager", StringComparison.OrdinalIgnoreCase));
+                    var hasUser = roles.Any(r => string.Equals(r, "User", StringComparison.OrdinalIgnoreCase));
+                    if (hasManager && !hasUser) {
+                        roles.Add("User");
+                    }
+                    foreach (var r in roles.Select(r => r.Trim()).Distinct())
+                    {
+                        claims.Add(new Claim(ClaimTypes.Role, r));
+                    }
+                    HttpContext.Session.SetString("Role", string.Join(",", roles));
+                }
+
+                claims.Add(new Claim("CompanyId", user.CompanyId.ToString()));
 
                 var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                 var principal = new ClaimsPrincipal(identity);
                 await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
                 
                 HttpContext.Session.SetString("Email", user.Email);
-                HttpContext.Session.SetString("Role", string.Join(",", roles));
 
                 if (user.Ban != null && user.Ban.IsBaned)
                 {

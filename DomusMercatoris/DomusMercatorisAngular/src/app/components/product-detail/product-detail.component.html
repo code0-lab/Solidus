@@ -7,22 +7,26 @@
     
     <div class="product-detail-content">
       <div class="product-images" [style.background-color]="product.bg">
-        @if (product.imageUrls && product.imageUrls.length > 1) {
+        @if (allImages().length > 1) {
           <button class="nav-btn prev" (click)="prevImage()">❮</button>
-          <img [src]="product.imageUrls[currentImageIndex()]" alt="Product Image">
+          <img [src]="allImages()[currentImageIndex()].url" alt="Product Image" (click)="openImageViewer(allImages()[currentImageIndex()].url)">
           <button class="nav-btn next" (click)="nextImage()">❯</button>
           
           <div class="image-indicators">
-            @for (img of product.imageUrls; track $index) {
+            @for (img of allImages(); track $index) {
               <div 
                 class="indicator" 
                 [class.active]="$index === currentImageIndex()"
-                (click)="setImage($index)">
+                (click)="setImage($index)"
+                [title]="img.variant ? img.variant.color : 'Product Image'">
               </div>
             }
           </div>
+        } @else if (allImages().length === 1) {
+          <img [src]="allImages()[0].url" alt="Product Image" (click)="openImageViewer(allImages()[0].url)">
         } @else {
-          <img [src]="product.imageUrl" alt="Product Image">
+           <!-- Fallback if no images at all -->
+           <div style="height: 100%; display: flex; align-items: center; justify-content: center;">No Image</div>
         }
       </div>
 
@@ -46,11 +50,33 @@
           <div class="tab-content">
             <span class="product-sku">{{ product.sku }}</span>
             <h1>{{ product.name }}</h1>
-            <div class="product-price">{{ product.priceText }}</div>
+            <div class="product-price">{{ currentPrice() | currency:'USD':'symbol' }}</div>
+
+            @if (product.variants && product.variants.length > 0) {
+              <div class="variants-section">
+                <h4 style="margin-bottom: 0.5rem;">Options</h4>
+                <div class="variant-list" style="display: flex; gap: 10px; margin-bottom: 1rem;">
+                  @for (variant of product.variants; track variant.id) {
+                    <button 
+                      class="variant-btn" 
+                      [class.active]="selectedVariant()?.id === variant.id"
+                      style="padding: 5px 10px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;"
+                      [style.background-color]="selectedVariant()?.id === variant.id ? '#ddd' : '#fff'"
+                      (click)="selectVariant(variant)">
+                      {{ variant.color }}
+                      @if (variant.isCustomizable) {
+                         ({{ variant.price | currency:'USD':'symbol' }})
+                      }
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+
             <p class="product-desc">
               {{ product.description || 'No description available for this product.' }}
             </p>
-            <button class="add-to-cart-btn">Add to Cart</button>
+            <button class="add-to-cart-btn" (click)="addToCart()">Add to Cart</button>
           </div>
         } @else {
           <div class="tab-content comments-section">
@@ -88,5 +114,13 @@
         }
       </div>
     </div>
+    @if (viewerOpen()) {
+      <div class="image-viewer-overlay" (click)="closeImageViewer()">
+        <div class="image-viewer-content" (click)="$event.stopPropagation()">
+          <button class="close-btn" (click)="closeImageViewer()">×</button>
+          <img [src]="viewerImageUrl()" alt="Full Image">
+        </div>
+      </div>
+    }
   </div>
 </div>

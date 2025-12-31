@@ -10,7 +10,9 @@
         <h3 class="mb-0">Edit Product</h3>
         @if (Model.Existing != null)
         {
-            <a href="/Product/@Model.Existing.Id" class="btn btn-outline-secondary">Back</a>
+            <div>
+                <a href="/Product/@Model.Existing.Id" class="btn btn-outline-secondary">Back</a>
+            </div>
         }
     </div>
 
@@ -82,6 +84,16 @@
             <small class="text-muted">Key features and details.</small>
         </div>
         <div class="mb-3">
+            <label for="Product_BrandId" class="form-label">Brand</label>
+            <select id="Product_BrandId" asp-for="Product.BrandId" class="form-select">
+                <option value="">Select a Brand (Optional)</option>
+                @foreach (var brand in Model.Brands)
+                {
+                    <option value="@brand.Id">@brand.Name</option>
+                }
+            </select>
+        </div>
+        <div class="mb-3">
             <label class="form-label">Categories</label>
             <div class="category-selector">
                 <input type="text" id="catSearchEdit" class="form-control" placeholder="Type to search top category" autocomplete="off" />
@@ -117,7 +129,13 @@
         </div>
         <div id="orderInputs" hidden></div>
 
-        <button class="btn btn-primary">Save</button>
+        <div class="d-flex gap-2">
+            @if (Model.Existing != null)
+            {
+                <a asp-page="/ManageVariants" asp-route-productId="@Model.Existing.Id" class="btn btn-secondary">Add Variants</a>
+            }
+            <button class="btn btn-primary">Save</button>
+        </div>
     </form>
 </div>
 

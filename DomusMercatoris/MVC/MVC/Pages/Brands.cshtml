@@ -1,0 +1,78 @@
+@page
+@model DomusMercatorisDotnetMVC.Pages.BrandsModel
+@{
+    ViewData["Title"] = "Manage Brands";
+    Layout = "_LayoutAuth";
+}
+
+<div class="container py-5">
+    <h3 class="mb-4">Manage Brands</h3>
+    
+    <div class="row g-4">
+        <!-- Add Brand Form -->
+        <div class="col-12 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="fw-bold mb-3 fs-5">New Brand</div>
+                    <form method="post" asp-page-handler="Create">
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <input asp-for="NewBrand.Name" class="form-control" required placeholder="Brand Name" />
+                            <span asp-validation-for="NewBrand.Name" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea asp-for="NewBrand.Description" class="form-control" rows="3" placeholder="Description (optional)"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-dark w-100">Add Brand</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Brands List -->
+        <div class="col-12 col-lg-8">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="fw-bold mb-3 fs-5">Existing Brands</div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th class="text-end" style="width: 100px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var brand in Model.Brands)
+                                {
+                                    <tr>
+                                        <td class="fw-bold">@brand.Name</td>
+                                        <td class="text-muted small">@brand.Description</td>
+                                        <td class="text-end">
+                                            <form method="post" asp-page-handler="Delete" asp-route-id="@brand.Id" class="d-inline"
+                                                  onsubmit="return confirm('Are you sure you want to delete this brand?');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger border-0">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                                @if (Model.Brands.Count == 0)
+                                {
+                                    <tr>
+                                        <td colspan="3" class="text-center py-4 text-muted">
+                                            No brands found. Add one to get started.
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

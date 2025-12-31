@@ -51,5 +51,7 @@
         </main>
         @await Html.PartialAsync("_Footer")
     </div>
+    @await RenderSectionAsync("Modals", required: false)
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

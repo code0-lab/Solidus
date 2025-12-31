@@ -10,9 +10,42 @@
     <input class="search" type="search" placeholder="Search..." />
   </div>
   <div class="nav-actions">
-    <button class="icon" aria-label="cart">🛒</button>
+    <button class="icon" aria-label="cart" (click)="handleCartClick()">🛒</button>
     <button class="icon" aria-label="profile" (click)="handleProfileClick()">
       {{ authService.currentUser() ? '👤' : 'LOGIN' }}
     </button>
   </div>
+  @if (isCartOpen) {
+    <div class="cart-dropdown">
+      <div class="cart-header">
+        <span>Cart</span>
+        <span class="count">{{ cartService.totalCount() }} items</span>
+      </div>
+      <div class="cart-items">
+        @for (item of cartService.items(); track item) {
+          <div class="cart-item">
+            <div class="title">
+              {{ item.product.name }}
+              @if (item.variant) {
+                <span class="variant-info" style="font-size: 0.8em; color: #888;">({{ item.variant.color }})</span>
+              }
+            </div>
+            <div class="controls">
+              <button (click)="dec(item)">-</button>
+              <span class="qty">{{ item.qty }}</span>
+              <button (click)="inc(item)">+</button>
+              <button class="remove" (click)="remove(item)">×</button>
+            </div>
+          </div>
+        }
+        @if (cartService.items().length === 0) {
+          <div class="empty">Your cart is empty.</div>
+        }
+      </div>
+      <div class="cart-footer">
+        <div class="total">Total: {{ cartService.totalPrice() | currency:'USD':'symbol' }}</div>
+        <button class="clear" (click)="clearCart()">Clear</button>
+      </div>
+    </div>
+  }
 </header>

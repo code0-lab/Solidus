@@ -22,5 +22,6 @@ namespace DomusMercatoris.Core.Entities
         public List<User> Users { get; set; } = new List<User>();
         public List<Product> Products { get; set; } = new List<Product>();
         public List<Category> Categories { get; set; } = new List<Category>();
+        public List<Brand> Brands { get; set; } = new List<Brand>();
     }
 }

@@ -6,6 +6,8 @@ using DomusMercatoris.Core.Entities;
 using DomusMercatorisDotnetMVC.Dto.ProductDto;
 using DomusMercatoris.Data;
 using System.Linq;
+using DomusMercatoris.Service.Services;
+using DomusMercatoris.Service.DTOs;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
@@ -17,22 +19,25 @@ namespace DomusMercatorisDotnetMVC.Pages
 
         private readonly GeminiService _geminiService;
         private readonly UserService _userService;
+        private readonly BrandService _brandService;
 
-        public EditProductModel(ProductService productService, DomusDbContext db, GeminiService geminiService, UserService userService)
+        public EditProductModel(ProductService productService, DomusDbContext db, GeminiService geminiService, UserService userService, BrandService brandService)
         {
             _productService = productService;
             _db = db;
             _geminiService = geminiService;
             _userService = userService;
+            _brandService = brandService;
         }
 
         public Product? Existing { get; set; }
         public List<Category> Categories { get; set; } = new();
+        public List<BrandDto> Brands { get; set; } = new();
 
         [BindProperty]
         public ProductUpdateDto Product { get; set; } = new();
 
-        public IActionResult OnGet(long id)
+        public async Task<IActionResult> OnGet(long id)
         {
             var comp = User.FindFirst("CompanyId")?.Value;
             if (string.IsNullOrEmpty(comp) || !int.TryParse(comp, out var companyId))
@@ -48,11 +53,15 @@ namespace DomusMercatorisDotnetMVC.Pages
                 .OrderBy(c => c.ParentId.HasValue)
                 .ThenBy(c => c.Name)
                 .ToList();
+            
+            Brands = await _brandService.GetBrandsByCompanyAsync(companyId);
+
             Product.Name = Existing.Name;
             Product.Sku = Existing.Sku;
             Product.Description = Existing.Description;
             Product.CategoryId = Existing.CategoryId;
             Product.SubCategoryId = Existing.SubCategoryId;
+            Product.BrandId = Existing.BrandId;
             Product.Price = Existing.Price;
             Product.Quantity = Existing.Quantity;
             var ids = new List<int>();
@@ -63,7 +72,7 @@ namespace DomusMercatorisDotnetMVC.Pages
             return Page();
         }
 
-        public IActionResult OnPost(long id)
+        public async Task<IActionResult> OnPost(long id)
         {
             var comp = User.FindFirst("CompanyId")?.Value;
             var companyId = (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var c)) ? c : 0;
@@ -72,6 +81,9 @@ namespace DomusMercatorisDotnetMVC.Pages
                 .OrderBy(c => c.ParentId.HasValue)
                 .ThenBy(c => c.Name)
                 .ToList();
+            
+            Brands = await _brandService.GetBrandsByCompanyAsync(companyId);
+
             foreach (var kv in ModelState.Where(k => k.Key.StartsWith("Product.ImageFiles")).ToList())
             {
                 kv.Value?.Errors?.Clear();

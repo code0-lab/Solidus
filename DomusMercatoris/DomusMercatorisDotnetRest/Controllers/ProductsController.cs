@@ -18,9 +18,18 @@ namespace DomusMercatorisDotnetRest.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<PaginatedResult<ProductDto>>> GetAll([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 9)
+        public async Task<ActionResult<PaginatedResult<ProductDto>>> GetAll([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 9, [FromQuery] int? companyId = null)
         {
-            var query = _db.Products.Include(p => p.Categories).AsQueryable();
+            var query = _db.Products
+                .Include(p => p.Categories)
+                .Include(p => p.Brand)
+                .Include(p => p.Variants)
+                .AsQueryable();
+
+            if (companyId.HasValue)
+            {
+                query = query.Where(p => p.CompanyId == companyId.Value);
+            }
 
             var totalCount = await query.CountAsync();
             var list = await query
@@ -44,6 +53,8 @@ namespace DomusMercatorisDotnetRest.Controllers
         {
             var product = await _db.Products
                 .Include(p => p.Categories)
+                .Include(p => p.Brand)
+                .Include(p => p.Variants)
                 .FirstOrDefaultAsync(p => p.Id == id);
             if (product is null) return NotFound();
             
@@ -51,12 +62,19 @@ namespace DomusMercatorisDotnetRest.Controllers
         }
 
         [HttpGet("by-category/{categoryId:int}")]
-        public async Task<ActionResult<PaginatedResult<ProductDto>>> GetByCategory(int categoryId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 9)
+        public async Task<ActionResult<PaginatedResult<ProductDto>>> GetByCategory(int categoryId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 9, [FromQuery] int? companyId = null)
         {
             var query = _db.Products
                 .Include(p => p.Categories)
+                .Include(p => p.Brand)
+                .Include(p => p.Variants)
                 .Where(p => p.Categories.Any(c => c.Id == categoryId))
                 .AsQueryable();
+
+            if (companyId.HasValue)
+            {
+                query = query.Where(p => p.CompanyId == companyId.Value);
+            }
 
             var totalCount = await query.CountAsync();
             var list = await query
@@ -86,6 +104,8 @@ namespace DomusMercatorisDotnetRest.Controllers
                 Price = product.Price,
                 Quantity = product.Quantity,
                 Images = product.Images,
+                BrandId = product.BrandId,
+                BrandName = product.Brand?.Name,
                 Categories = product.Categories.Select(c => new CategoryDto
                 {
                     Id = c.Id,
@@ -93,6 +113,20 @@ namespace DomusMercatorisDotnetRest.Controllers
                     Description = c.Description,
                     ParentId = c.ParentId
                     // Children mapping is skipped here to avoid potential circular depth issues in simple product view
+                }).ToList(),
+                Variants = product.Variants.Select(v => new VariantProductDto
+                {
+                    Id = v.Id,
+                    ProductId = v.ProductId,
+                    ProductName = product.Name,
+                    Color = v.Color,
+                    Price = v.Price,
+                    CoverImage = v.CoverImage,
+                    IsCustomizable = v.IsCustomizable,
+                    BrandName = product.Brand?.Name,
+                    CategoryNames = product.Categories.Select(c => c.Name).ToList(),
+                    Quantity = product.Quantity,
+                    Images = product.Images
                 }).ToList()
             };
         }

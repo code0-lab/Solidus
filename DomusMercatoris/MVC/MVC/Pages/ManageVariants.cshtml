@@ -1,0 +1,276 @@
+@page "{productId:long}"
+@model DomusMercatorisDotnetMVC.Pages.ManageVariantsModel
+@{
+    ViewData["Title"] = "Manage Variants";
+    Layout = "_LayoutAuth";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Manage Variants for @Model.Product?.Name</h2>
+        <a asp-page="/EditProduct" asp-route-id="@Model.Product?.Id" class="btn btn-secondary">Back to Product</a>
+    </div>
+
+    @if (!ModelState.IsValid)
+    {
+        <div class="alert alert-danger">
+            <div asp-validation-summary="All"></div>
+        </div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>Add New Variant</h4>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                <input type="hidden" asp-for="NewVariant.ProductId" />
+                
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="NewVariant.Color" class="form-label">Color / Variant Name</label>
+                        <input asp-for="NewVariant.Color" class="form-control" required />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="NewVariant.Price" class="form-label">Price</label>
+                        <input asp-for="NewVariant.Price" class="form-control" type="number" step="0.01" required id="variantPriceInput" data-original-price="@(Model.Product?.Price.ToString(System.Globalization.CultureInfo.InvariantCulture))" />
+                        <div class="form-check mt-2">
+                            <input type="checkbox" asp-for="NewVariant.IsCustomizable" class="form-check-input" id="checkIsCustomizable" />
+                            <label class="form-check-label" for="checkIsCustomizable">Apply different price</label>
+                        </div>
+                    </div>
+                </div>
+
+                <script>
+                    (function() {
+                        const check = document.getElementById('checkIsCustomizable');
+                        const input = document.getElementById('variantPriceInput');
+                        const originalPrice = parseFloat(input.getAttribute('data-original-price'));
+
+                        function togglePrice() {
+                            if (check.checked) {
+                                input.removeAttribute('readonly');
+                            } else {
+                                input.setAttribute('readonly', 'readonly');
+                                input.value = originalPrice;
+                            }
+                        }
+
+                        if (check && input) {
+                            check.addEventListener('change', togglePrice);
+                            // Initial state
+                            togglePrice();
+                        }
+                    })();
+                </script>
+
+                @if (Model.Product?.Images != null && Model.Product.Images.Any())
+                {
+                    <div class="mb-3">
+                        <label class="form-label">Select Cover Image (from Product Images)</label>
+                        <div class="d-flex flex-wrap gap-3">
+                            @foreach (var img in Model.Product.Images)
+                            {
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" asp-for="NewVariant.CoverImage" value="@img" id="img_@img.GetHashCode()">
+                                    <label class="form-check-label" for="img_@img.GetHashCode()">
+                                        <img src="@img" alt="Product Image" style="height: 80px; width: 80px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;" />
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-warning">
+                        Product has no images. Please add images to the product first to select a cover image for variants.
+                    </div>
+                }
+
+                <button type="submit" class="btn btn-primary">Add Variant</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h4>Existing Variants (@Model.Variants.Count / 5)</h4>
+        </div>
+        <div class="card-body">
+            @if (Model.Variants.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Image</th>
+                                <th>Color</th>
+                                <th>Price</th>
+                                <th>Customizable</th>
+                                <th>Inherited Info</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var variant in Model.Variants)
+                            {
+                                <tr>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(variant.CoverImage))
+                                        {
+                                            <img src="@variant.CoverImage" alt="Variant Image" style="height: 50px; width: 50px; object-fit: cover;" />
+                                        }
+                                        else if (variant.Images != null && variant.Images.Any())
+                                        {
+                                            <img src="@variant.Images.First()" alt="Product Image" style="height: 50px; width: 50px; object-fit: cover; opacity: 0.7;" title="Inherited" />
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">No Image</span>
+                                        }
+                                    </td>
+                                    <td>@variant.Color</td>
+                                    <td>@variant.Price.ToString("C")</td>
+                                    <td>@(variant.IsCustomizable ? "Yes" : "No")</td>
+                                    <td>
+                                        <small>
+                                            Stock: @variant.Quantity<br/>
+                                            Brand: @variant.BrandName<br/>
+                                            Cats: @string.Join(", ", variant.CategoryNames)
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-2">
+                                            <button type="button" class="btn btn-sm btn-warning" 
+                                                data-bs-toggle="modal" data-bs-target="#editVariantModal"
+                                                data-id="@variant.Id" 
+                                                data-color="@variant.Color" 
+                                                data-price="@variant.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                                data-iscustomizable="@variant.IsCustomizable.ToString().ToLower()"
+                                                data-coverimage="@variant.CoverImage"
+                                                onclick="openEditModal(this)">
+                                                ✏️
+                                            </button>
+                                            <form method="post" asp-page-handler="Delete" asp-route-id="@variant.Id" asp-route-productId="@Model.Product?.Id" onsubmit="return confirm('Are you sure?');">
+                                                <button type="submit" class="btn btn-sm btn-danger">🗑️</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p class="text-muted">No variants found.</p>
+            }
+        </div>
+    </div>
+</div>
+
+@section Modals {
+    <!-- Edit Modal -->
+    <div class="modal fade" id="editVariantModal" tabindex="-1" aria-labelledby="editVariantModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editVariantModalLabel">Edit Variant</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="post" asp-page-handler="Update">
+                        <input type="hidden" asp-for="UpdateVariant.Id" id="editVariantId" />
+                        <input type="hidden" asp-for="UpdateVariant.ProductId" value="@Model.Product?.Id" />
+                        
+                        <div class="mb-3">
+                            <label asp-for="UpdateVariant.Color" class="form-label">Color / Variant Name</label>
+                            <input asp-for="UpdateVariant.Color" class="form-control" id="editVariantColor" required />
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="UpdateVariant.Price" class="form-label">Price</label>
+                            <input asp-for="UpdateVariant.Price" class="form-control" id="editVariantPrice" type="number" step="0.01" />
+                            
+                             <div class="form-check mt-2">
+                                <input type="checkbox" asp-for="UpdateVariant.IsCustomizable" class="form-check-input" id="editIsCustomizable" />
+                                <label class="form-check-label" for="editIsCustomizable">Apply different price</label>
+                            </div>
+                        </div>
+
+                        @if (Model.Product?.Images != null && Model.Product.Images.Any())
+                        {
+                            <div class="mb-3">
+                                <label class="form-label">Select Cover Image</label>
+                                <div class="d-flex flex-wrap gap-3">
+                                    @foreach (var img in Model.Product.Images)
+                                    {
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" asp-for="UpdateVariant.CoverImage" value="@img" name="UpdateVariant.CoverImage" id="edit_img_@img.GetHashCode()">
+                                            <label class="form-check-label" for="edit_img_@img.GetHashCode()">
+                                                <img src="@img" alt="Product Image" style="height: 60px; width: 60px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;" />
+                                            </label>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        <div class="d-flex justify-content-end">
+                             <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Close</button>
+                             <button type="submit" class="btn btn-primary">Update</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        function openEditModal(button) {
+            var id = button.getAttribute('data-id');
+            var color = button.getAttribute('data-color');
+            var price = button.getAttribute('data-price');
+            var isCustomizable = button.getAttribute('data-iscustomizable') === 'true';
+            var coverImage = button.getAttribute('data-coverimage');
+    
+            document.getElementById('editVariantId').value = id;
+            document.getElementById('editVariantColor').value = color;
+            
+            var priceInput = document.getElementById('editVariantPrice');
+            priceInput.value = price; 
+            
+            var check = document.getElementById('editIsCustomizable');
+            check.checked = isCustomizable;
+            
+            var radios = document.getElementsByName('UpdateVariant.CoverImage');
+            for(var i=0; i<radios.length; i++) {
+                if(radios[i].value === coverImage) {
+                    radios[i].checked = true;
+                } else {
+                    radios[i].checked = false;
+                }
+            }
+            
+            toggleEditPrice();
+        }
+        
+        const editCheck = document.getElementById('editIsCustomizable');
+        const editPriceInput = document.getElementById('editVariantPrice');
+        
+        function toggleEditPrice() {
+            if (editCheck.checked) {
+                editPriceInput.removeAttribute('readonly');
+            } else {
+                editPriceInput.setAttribute('readonly', 'readonly');
+            }
+        }
+        
+        if (editCheck) {
+            editCheck.addEventListener('change', toggleEditPrice);
+        }
+    </script>
+}

@@ -134,3 +134,17 @@
   transform: none;
   box-shadow: 2px 2px 0 black;
 }
+
+@media (max-width: 360px) {
+  .shop {
+    padding: 0 6px;
+  }
+  .shop-header {
+    margin-bottom: 0.5rem;
+  }
+  .page-btn {
+    min-width: 26px;
+    height: 26px;
+    font-size: 12px;
+  }
+}

@@ -1,0 +1,164 @@
+using DomusMercatoris.Core.Entities;
+using DomusMercatoris.Service.DTOs;
+using DomusMercatoris.Service.Services;
+using DomusMercatorisDotnetMVC.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using DomusMercatoris.Data;
+
+namespace DomusMercatorisDotnetMVC.Pages
+{
+    [Authorize(Roles = "Manager,User")]
+    public class ManageVariantsModel : PageModel
+    {
+        private readonly VariantProductService _variantService;
+        private readonly ProductService _productService;
+        private readonly IWebHostEnvironment _env;
+        private readonly DomusDbContext _context;
+
+        public ManageVariantsModel(VariantProductService variantService, ProductService productService, IWebHostEnvironment env, DomusDbContext context)
+        {
+            _variantService = variantService;
+            _productService = productService;
+            _env = env;
+            _context = context;
+        }
+
+        public Product? Product { get; set; }
+        public List<VariantProductDto> Variants { get; set; } = new();
+
+        [BindProperty]
+        public CreateVariantProductDto NewVariant { get; set; } = new();
+
+        [BindProperty]
+        public DomusMercatorisDotnetMVC.Dto.ProductDto.UpdateVariantDto UpdateVariant { get; set; } = new();
+
+        public async Task<IActionResult> OnGetAsync(long productId)
+        {
+            var comp = User.FindFirst("CompanyId")?.Value;
+            if (string.IsNullOrEmpty(comp) || !int.TryParse(comp, out var companyId))
+            {
+                return RedirectToPage("/Products");
+            }
+
+            Product = _productService.GetByIdInCompany(productId, companyId);
+            if (Product == null)
+            {
+                return RedirectToPage("/Products");
+            }
+
+            Variants = await _variantService.GetVariantsByProductIdAsync(productId);
+            NewVariant.ProductId = productId;
+
+            return Page();
+        }
+
+        public async Task<IActionResult> OnPostAsync(long productId)
+        {
+            var comp = User.FindFirst("CompanyId")?.Value;
+            if (string.IsNullOrEmpty(comp) || !int.TryParse(comp, out var companyId))
+            {
+                return RedirectToPage("/Products");
+            }
+
+            Product = _productService.GetByIdInCompany(productId, companyId);
+            if (Product == null)
+            {
+                return RedirectToPage("/Products");
+            }
+
+            // Manually validate because CoverImageFile is not in DTO
+            if (string.IsNullOrWhiteSpace(NewVariant.Color))
+            {
+                ModelState.AddModelError("NewVariant.Color", "Color is required");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                 Variants = await _variantService.GetVariantsByProductIdAsync(productId);
+                 return Page();
+            }
+
+            try
+            {
+                NewVariant.ProductId = productId;
+
+                // CoverImage is populated from form selection (existing product image path)
+
+
+                if (!NewVariant.IsCustomizable)
+                {
+                    NewVariant.Price = Product.Price;
+                }
+
+                await _variantService.CreateVariantAsync(NewVariant);
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", ex.Message);
+                Variants = await _variantService.GetVariantsByProductIdAsync(productId);
+                return Page();
+            }
+
+            return RedirectToPage(new { productId });
+        }
+
+        public async Task<IActionResult> OnPostUpdateAsync()
+        {
+             var comp = User.FindFirst("CompanyId")?.Value;
+            if (string.IsNullOrEmpty(comp) || !int.TryParse(comp, out var companyId))
+            {
+                return RedirectToPage("/Products");
+            }
+            
+            Product = _productService.GetByIdInCompany(UpdateVariant.ProductId, companyId);
+            if (Product == null)
+            {
+                return RedirectToPage("/Products");
+            }
+
+            var variant = await _context.VariantProducts.FindAsync(UpdateVariant.Id);
+            if (variant == null || variant.ProductId != UpdateVariant.ProductId)
+            {
+                 return RedirectToPage(new { productId = UpdateVariant.ProductId });
+            }
+
+            variant.Color = UpdateVariant.Color;
+            variant.Price = UpdateVariant.Price;
+            variant.IsCustomizable = UpdateVariant.IsCustomizable;
+            if (!string.IsNullOrEmpty(UpdateVariant.CoverImage))
+            {
+                variant.CoverImage = UpdateVariant.CoverImage;
+            }
+
+            _context.VariantProducts.Update(variant);
+            await _context.SaveChangesAsync();
+
+            return RedirectToPage(new { productId = UpdateVariant.ProductId });
+        }
+
+        public async Task<IActionResult> OnPostDeleteAsync(long id, long productId)
+        {
+             var comp = User.FindFirst("CompanyId")?.Value;
+            if (string.IsNullOrEmpty(comp) || !int.TryParse(comp, out var companyId))
+            {
+                return RedirectToPage("/Products");
+            }
+            
+            Product = _productService.GetByIdInCompany(productId, companyId);
+            if (Product == null)
+            {
+                return RedirectToPage("/Products");
+            }
+
+            var variant = await _variantService.GetVariantByIdAsync(id);
+            if (variant != null && variant.ProductId == productId)
+            {
+                await _variantService.DeleteVariantAsync(id);
+            }
+
+            return RedirectToPage(new { productId });
+        }
+    }
+}

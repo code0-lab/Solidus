@@ -103,6 +103,24 @@ button {
   padding: 0;
 }
 
+@media (max-width: 360px) {
+  .modal-content {
+    width: 100%;
+    max-width: 100%;
+  }
+  .modal-header {
+    height: 20px;
+  }
+  .modal-title-box {
+    font-size: 12px;
+  }
+  .close-btn {
+    width: 14px;
+    height: 14px;
+    font-size: 10px;
+    line-height: 10px;
+  }
+}
 .modal-header {
   height: 24px;
   border-bottom: 1px solid black;

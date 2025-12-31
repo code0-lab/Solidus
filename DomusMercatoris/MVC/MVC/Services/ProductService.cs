@@ -163,6 +163,7 @@ namespace DomusMercatorisDotnetMVC.Services
                 Description = dto.Description,
                 CategoryId = dto.CategoryId,
                 SubCategoryId = dto.SubCategoryId,
+                BrandId = dto.BrandId,
                 Price = dto.Price,
                 CompanyId = companyId,
                 Quantity = dto.Quantity,
@@ -226,6 +227,7 @@ namespace DomusMercatorisDotnetMVC.Services
             entity.Description = dto.Description;
             entity.CategoryId = dto.CategoryId;
             entity.SubCategoryId = dto.SubCategoryId;
+            entity.BrandId = dto.BrandId;
             entity.Price = dto.Price;
             entity.Quantity = dto.Quantity;
             var ids = (dto.CategoryIds ?? new List<int>()).Where(id => id > 0).Distinct().ToList();

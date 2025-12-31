@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using DomusMercatorisDotnetMVC.Services;
 using DomusMercatoris.Core.Entities;
+using DomusMercatoris.Service.Services;
+using DomusMercatoris.Service.DTOs;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
@@ -10,14 +12,18 @@ namespace DomusMercatorisDotnetMVC.Pages
     public class ProductDetailModel : PageModel
     {
         private readonly ProductService _productService;
-        public ProductDetailModel(ProductService productService)
+        private readonly VariantProductService _variantService;
+
+        public ProductDetailModel(ProductService productService, VariantProductService variantService)
         {
             _productService = productService;
+            _variantService = variantService;
         }
 
         public Product? Product { get; set; }
+        public List<VariantProductDto> Variants { get; set; } = new();
 
-        public IActionResult OnGet(long id)
+        public async Task<IActionResult> OnGetAsync(long id)
         {
             var comp = User.FindFirst("CompanyId")?.Value;
             if (string.IsNullOrEmpty(comp) || !int.TryParse(comp, out var companyId))
@@ -29,6 +35,9 @@ namespace DomusMercatorisDotnetMVC.Pages
             {
                 return RedirectToPage("/Products");
             }
+
+            Variants = await _variantService.GetVariantsByProductIdAsync(id);
+
             return Page();
         }
 

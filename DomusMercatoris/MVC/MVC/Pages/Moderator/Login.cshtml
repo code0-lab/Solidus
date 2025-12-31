@@ -262,7 +262,26 @@
 
                 <form method="post">
                     <input type="email" asp-for="Email" class="brutalist-input" placeholder="MODERATOR EMAIL" required autocomplete="email" />
-                    <input type="password" asp-for="Password" class="brutalist-input" placeholder="PASSWORD" required autocomplete="current-password" />
+                    <div class="position-relative">
+                        <input type="password" asp-for="Password" class="brutalist-input" placeholder="PASSWORD" required autocomplete="current-password" id="modPassword" style="padding-right: 40px;" />
+                        <i class="bi bi-eye position-absolute top-50 end-0 translate-middle-y me-3" id="toggleModPassword" style="cursor: pointer; z-index: 10; color: #fff;"></i>
+                    </div>
+
+                    <script>
+                        document.getElementById('toggleModPassword').addEventListener('click', function () {
+                            const passwordInput = document.getElementById('modPassword');
+                            const icon = this;
+                            if (passwordInput.type === 'password') {
+                                passwordInput.type = 'text';
+                                icon.classList.remove('bi-eye');
+                                icon.classList.add('bi-eye-slash');
+                            } else {
+                                passwordInput.type = 'password';
+                                icon.classList.remove('bi-eye-slash');
+                                icon.classList.add('bi-eye');
+                            }
+                        });
+                    </script>
                     
                     <button type="submit" class="brutalist-btn">AUTHENTICATE</button>
                 </form>

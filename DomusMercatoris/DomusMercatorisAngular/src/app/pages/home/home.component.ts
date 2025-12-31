@@ -43,7 +43,8 @@ export class HomeComponent {
     // If data is already loaded (singleton service), we might not need to fetch again, 
     // but fetching ensures freshness.
     this.productService.fetchCategories();
-    this.productService.fetchProducts(null, 1, this.itemsPerPage);
+    this.productService.fetchCompanies();
+    this.productService.fetchProducts(null, 1, this.itemsPerPage, null);
   }
 
   toggleFilter() {
@@ -52,9 +53,16 @@ export class HomeComponent {
 
   selectCategory(id: number | null) {
     this.productService.selectedCategory.set(id);
-    this.productService.fetchProducts(id, 1, this.itemsPerPage);
+    this.productService.fetchProducts(id, 1, this.itemsPerPage, this.productService.selectedCompany());
     this.isFilterOpen.set(false);
     this.currentPage.set(1); // Reset to first page when filtering
+  }
+
+  selectCompany(id: number | null) {
+    this.productService.selectedCompany.set(id);
+    this.productService.fetchProducts(this.productService.selectedCategory(), 1, this.itemsPerPage, id);
+    this.isFilterOpen.set(false);
+    this.currentPage.set(1);
   }
 
   onSelectProduct(product: Product) {
@@ -71,7 +79,8 @@ export class HomeComponent {
       this.productService.fetchProducts(
         this.productService.selectedCategory(), 
         page, 
-        this.itemsPerPage
+        this.itemsPerPage,
+        this.productService.selectedCompany()
       );
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }

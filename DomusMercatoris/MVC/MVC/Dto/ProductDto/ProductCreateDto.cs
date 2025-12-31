@@ -19,6 +19,7 @@ namespace DomusMercatorisDotnetMVC.Dto.ProductDto
 
         public int? CategoryId { get; set; }
         public int? SubCategoryId { get; set; }
+        public int? BrandId { get; set; }
 
         [Required]
         [DataType(DataType.Currency)]
