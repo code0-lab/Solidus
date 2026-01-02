@@ -27,6 +27,7 @@ export class ProductDetailComponent implements OnChanges {
   viewerOpen = signal(false);
   viewerImageUrl = signal<string | null>(null);
   selectedVariant = signal<VariantProduct | null>(null);
+  isDescriptionExpanded = signal(false);
 
   currentPrice = computed(() => {
     const variant = this.selectedVariant();
@@ -127,6 +128,10 @@ export class ProductDetailComponent implements OnChanges {
       // This implies if we move AWAY from variant photo, we should probably go back to product info.
       this.selectedVariant.set(null);
     }
+  }
+
+  toggleDescription() {
+    this.isDescriptionExpanded.update(v => !v);
   }
 
   postComment() {

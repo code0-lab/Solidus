@@ -52,6 +52,7 @@
         @await Html.PartialAsync("_Footer")
     </div>
     @await RenderSectionAsync("Modals", required: false)
+    <script src="/js/site.js?v=@DateTime.Now.Ticks"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

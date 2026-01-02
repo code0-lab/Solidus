@@ -68,13 +68,11 @@ namespace DomusMercatorisDotnetMVC.Pages
                 return RedirectToPage("/Products");
             }
 
-            // Manually validate because CoverImageFile is not in DTO
-            if (string.IsNullOrWhiteSpace(NewVariant.Color))
-            {
-                ModelState.AddModelError("NewVariant.Color", "Color is required");
-            }
+            // Clear all validation state to avoid interference from UpdateVariant model
+            ModelState.Clear();
 
-            if (!ModelState.IsValid)
+            // Re-validate ONLY NewVariant
+            if (!TryValidateModel(NewVariant, nameof(NewVariant)))
             {
                  Variants = await _variantService.GetVariantsByProductIdAsync(productId);
                  return Page();
@@ -83,9 +81,6 @@ namespace DomusMercatorisDotnetMVC.Pages
             try
             {
                 NewVariant.ProductId = productId;
-
-                // CoverImage is populated from form selection (existing product image path)
-
 
                 if (!NewVariant.IsCustomizable)
                 {
@@ -116,6 +111,16 @@ namespace DomusMercatorisDotnetMVC.Pages
             if (Product == null)
             {
                 return RedirectToPage("/Products");
+            }
+
+            // Clear all validation state to avoid interference from NewVariant model
+            ModelState.Clear();
+
+            // Re-validate ONLY UpdateVariant
+            if (!TryValidateModel(UpdateVariant, nameof(UpdateVariant)))
+            {
+                Variants = await _variantService.GetVariantsByProductIdAsync(UpdateVariant.ProductId);
+                return Page();
             }
 
             var variant = await _context.VariantProducts.FindAsync(UpdateVariant.Id);

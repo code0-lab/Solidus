@@ -1,6 +1,9 @@
 .navbar {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  width: 100%;
+  box-sizing: border-box;
   z-index: 100;
   display: flex;
   align-items: center;
@@ -82,6 +85,24 @@
 .icon:active {
   background: black;
   color: white;
+}
+
+.cart-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: red;
+  color: white;
+  border-radius: 50%;
+  padding: 0 4px;
+  font-size: 9px;
+  min-width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  border: 1px solid white;
 }
 
 .cart-dropdown {

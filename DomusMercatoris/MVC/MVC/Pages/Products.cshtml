@@ -9,13 +9,14 @@
     <div class="d-flex align-items-center justify-content-between mb-3">
         <h3 class="mb-0">Products</h3>
         <a href="/AddProduct" class="btn brutalist-btn-black" title="Add Product">
-            <i class="bi bi-plus-lg"></i>
+            <i class="bi bi-plus-lg"></i> Add Product
         </a>
     </div>
+
     @if (ModelState.IsValid == false)
     {
-        <div class="alert alert-danger">
-            <ul>
+        <div class="alert alert-danger rounded-0 border-3 border-dark mb-4">
+            <ul class="mb-0">
                 @foreach (Microsoft.AspNetCore.Mvc.ModelBinding.ModelStateEntry modelState in ModelState.Values)
                 {
                     @foreach (var error in modelState.Errors)
@@ -26,30 +27,43 @@
             </ul>
         </div>
     }
-    <div class="row g-3">
-        @foreach (var p in Model.Items)
-        {
-            <div class="col-12 col-sm-6 col-md-4">
-                @await Html.PartialAsync("_ProductCard", p)
-            </div>
-        }
-    </div>
-    @if (Model.TotalPages > 1)
+
+    @if (Model.Items.Count == 0)
     {
-        <nav class="mt-4" aria-label="Products pagination">
-            <ul class="pagination justify-content-center">
-                <li class="page-item @(Model.PageNumber <= 1 ? "disabled" : "")">
-                    <a class="page-link" href="/Products?page=@(Model.PageNumber - 1)" tabindex="-1" aria-disabled="@(Model.PageNumber <= 1)">Previous</a>
-                </li>
-                @for (var i = 1; i <= Model.TotalPages; i++)
-                {
-                    <li class="page-item @(Model.PageNumber == i ? "active" : "")"><a class="page-link" href="/Products?page=@i">@i</a></li>
-                }
-                <li class="page-item @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")">
-                    <a class="page-link" href="/Products?page=@(Model.PageNumber + 1)" aria-disabled="@(Model.PageNumber >= Model.TotalPages)">Next</a>
-                </li>
-            </ul>
-        </nav>
+        <div class="alert alert-info rounded-0 border-3 border-dark">
+            No products found for your company yet.
+        </div>
+    }
+    else
+    {
+        <div class="row g-3 align-items-start">
+            @foreach (var p in Model.Items)
+            {
+                <div class="col-12 col-sm-6 col-md-4">
+                    @await Html.PartialAsync("_ProductCard", p)
+                </div>
+            }
+        </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <nav class="mt-4" aria-label="Products pagination">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item @(Model.PageNumber <= 1 ? "disabled" : "")">
+                        <a class="page-link rounded-0 text-dark" href="/Products?page=@(Model.PageNumber - 1)" tabindex="-1" aria-disabled="@(Model.PageNumber <= 1)">Previous</a>
+                    </li>
+                    @for (var i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <li class="page-item @(Model.PageNumber == i ? "active" : "")">
+                            <a class="page-link rounded-0 @(Model.PageNumber == i ? "bg-dark border-dark" : "text-dark")" href="/Products?page=@i">@i</a>
+                        </li>
+                    }
+                    <li class="page-item @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")">
+                        <a class="page-link rounded-0 text-dark" href="/Products?page=@(Model.PageNumber + 1)" aria-disabled="@(Model.PageNumber >= Model.TotalPages)">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        }
     }
 
     <form id="deleteFormProducts" method="post" action="/Products?handler=Delete" class="d-none">
@@ -71,4 +85,3 @@
         f.submit();
     }
 </script>
-</div>

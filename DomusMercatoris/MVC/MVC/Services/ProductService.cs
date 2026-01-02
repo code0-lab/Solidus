@@ -333,6 +333,7 @@ namespace DomusMercatorisDotnetMVC.Services
             if (pageSize < 1) pageSize = 9;
             var skip = (page - 1) * pageSize;
             return _db.Products
+                .Include(p => p.Variants)
                 .Where(p => p.CompanyId == companyId)
                 .OrderByDescending(p => p.CreatedAt)
                 .Skip(skip)

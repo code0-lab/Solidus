@@ -142,7 +142,7 @@
                                     </td>
                                     <td>
                                         <div class="d-flex gap-2">
-                                            <button type="button" class="btn btn-sm btn-warning" 
+                                            <button type="button" class="btn btn-sm btn-dark rounded-0 border-2" 
                                                 data-bs-toggle="modal" data-bs-target="#editVariantModal"
                                                 data-id="@variant.Id" 
                                                 data-color="@variant.Color" 
@@ -153,7 +153,7 @@
                                                 ✏️
                                             </button>
                                             <form method="post" asp-page-handler="Delete" asp-route-id="@variant.Id" asp-route-productId="@Model.Product?.Id" onsubmit="return confirm('Are you sure?');">
-                                                <button type="submit" class="btn btn-sm btn-danger">🗑️</button>
+                                                <button type="submit" class="btn btn-sm btn-dark rounded-0 border-2">🗑️</button>
                                             </form>
                                         </div>
                                     </td>

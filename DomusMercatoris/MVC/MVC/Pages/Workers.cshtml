@@ -73,7 +73,7 @@
                                 <form method="post" action="/Workers?handler=Delete" onsubmit="return confirm('Delete user?')">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="DeleteId" value="@w.Id" />
-                                    <button class="btn btn-sm btn-danger">Delete</button>
+                                    <button class="btn btn-sm btn-dark rounded-0 border-2">Delete</button>
                                 </form>
                             </td>
                         }

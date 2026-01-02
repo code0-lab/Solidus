@@ -15,12 +15,12 @@
             }
         </div>
     </a>
-    <div class="card-body" style="cursor: pointer;" onclick="this.querySelector('.product-details').classList.toggle('d-none')">
+    <div class="card-body" style="cursor: pointer;" onclick="toggleProductCard(this)">
         <div class="d-flex justify-content-end mb-2">
-            <a href="/Product/Edit/@Model.Id" class="btn btn-sm btn-warning me-2" title="Edit" onclick="event.stopPropagation();">
+            <a href="/Product/Edit/@Model.Id" class="btn btn-sm btn-dark rounded-0 border-2 me-2" title="Edit" onclick="event.stopPropagation();">
                 <i class="bi bi-pencil-square"></i>
             </a>
-            <button type="button" class="btn btn-sm btn-danger" title="Delete" onclick="event.stopPropagation(); deleteProduct(@Model.Id, event)">
+            <button type="button" class="btn btn-sm btn-dark rounded-0 border-2" title="Delete" onclick="event.stopPropagation(); deleteProduct(@Model.Id, event)">
                 <i class="bi bi-trash"></i>
             </button>
         </div>

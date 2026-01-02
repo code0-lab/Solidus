@@ -330,8 +330,8 @@ namespace DomusMercatorisDotnetMVC.Pages
             sb.Append("</span>");
             sb.Append("<span class=\"node-actions\">");
             sb.Append($"<a class=\"btn btn-outline-secondary btn-sm\" href=\"/Category/{node.Item.Id}/Products\" title=\"View\"><i class=\"bi bi-eye\"></i></a>");
-            sb.Append($"<a class=\"btn btn-outline-primary btn-sm\" href=\"/Categories?editId={node.Item.Id}\" title=\"Edit\"><i class=\"bi bi-pencil\"></i></a>");
-            sb.Append($"<button type=\"button\" class=\"btn btn-outline-danger btn-sm btn-cat-delete\" data-id=\"{node.Item.Id}\" title=\"Delete\"><i class=\"bi bi-trash\"></i></button>");
+            sb.Append($"<a class=\"btn btn-dark rounded-0 border-2 btn-sm\" href=\"/Categories?editId={node.Item.Id}\" title=\"Edit\"><i class=\"bi bi-pencil\"></i></a>");
+            sb.Append($"<button type=\"button\" class=\"btn btn-dark rounded-0 border-2 btn-sm btn-cat-delete\" data-id=\"{node.Item.Id}\" title=\"Delete\"><i class=\"bi bi-trash\"></i></button>");
             sb.Append("</span>");
             sb.Append("</div>");
             if (node.Children.Count > 0)

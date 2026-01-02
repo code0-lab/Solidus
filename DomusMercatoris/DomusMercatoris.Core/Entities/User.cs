@@ -22,7 +22,7 @@ namespace DomusMercatoris.Core.Entities
         public List<string> Roles { get; set; } = new List<string>();
         public ICollection<Comment> Comments { get; set; } = new List<Comment>();
         public DateTime CreatedAt { get; set; } = DateTime.Now;
-        public string Address { get; set; } = null;
-        public string Phone { get; set; } = null;
+        public string? Address { get; set; }
+        public string? Phone { get; set; }
     }
 }

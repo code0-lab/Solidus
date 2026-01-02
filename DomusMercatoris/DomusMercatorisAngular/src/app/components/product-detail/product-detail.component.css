@@ -269,9 +269,45 @@ h1 {
 .product-desc {
   line-height: 1.4;
   color: black;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   font-size: 13px;
 }
+
+.product-desc.collapsed {
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.read-more-btn {
+  background: none;
+  border: none;
+  color: black;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  font-size: 12px;
+  margin-bottom: 20px;
+  font-family: var(--sys-font-family);
+  font-weight: bold;
+}
+
+.details-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+.details-footer {
+  margin-top: auto;
+  padding-top: 10px;
+  background: white;
+  border-top: 1px solid #eee;
+  flex-shrink: 0;
+}
+
 
 .add-to-cart-btn {
   background: white;
