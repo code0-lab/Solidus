@@ -36,8 +36,14 @@
                 }
                 @if (User.IsInRole("Moderator"))
                 {
-                    <li class="nav-item">
-                        <a class="nav-link text-uppercase fw-bold" href="/Moderator/Index">User Management</a>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-uppercase fw-bold" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Management
+                        </a>
+                        <ul class="dropdown-menu brutalist-dropdown">
+                            <li><a class="dropdown-item" href="/Moderator/Index">User Management</a></li>
+                            <li><a class="dropdown-item" href="/Moderator/Clustering">Cluster Management</a></li>
+                        </ul>
                     </li>
                 }
                 @if (User.Identity != null && User.Identity.IsAuthenticated)

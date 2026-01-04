@@ -15,12 +15,14 @@ namespace DomusMercatorisDotnetMVC.Services
         private readonly DomusDbContext _db;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IWebHostEnvironment _env;
+        private readonly IClusteringService _clusteringService;
 
-        public ProductService(DomusDbContext db, IHttpContextAccessor httpContextAccessor, IWebHostEnvironment env)
+        public ProductService(DomusDbContext db, IHttpContextAccessor httpContextAccessor, IWebHostEnvironment env, IClusteringService clusteringService)
         {
             _db = db;
             _httpContextAccessor = httpContextAccessor;
             _env = env;
+            _clusteringService = clusteringService;
         }
 
         private bool ProductCategoriesExists()
@@ -85,7 +87,7 @@ namespace DomusMercatorisDotnetMVC.Services
             return (rootId, subId);
         }
 
-        public Product Create(ProductCreateDto dto)
+        public async Task<Product> Create(ProductCreateDto dto)
         {
             int companyId = 0;
             var ctx = _httpContextAccessor.HttpContext;
@@ -128,7 +130,7 @@ namespace DomusMercatorisDotnetMVC.Services
                                 var fullPath = System.IO.Path.Combine(baseDir, fileName);
                                 using (var fs = new System.IO.FileStream(fullPath, System.IO.FileMode.Create))
                                 {
-                                    f.CopyTo(fs);
+                                    await f.CopyToAsync(fs);
                                 }
                                 var relPath = $"/uploads/products/{companyId}/{fileName}";
                                 savedPaths.Add(relPath);
@@ -149,7 +151,7 @@ namespace DomusMercatorisDotnetMVC.Services
                     var fullPath = System.IO.Path.Combine(baseDir, fileName);
                     using (var fs = new System.IO.FileStream(fullPath, System.IO.FileMode.Create))
                     {
-                        f.CopyTo(fs);
+                        await f.CopyToAsync(fs);
                     }
                     var relPath = $"/uploads/products/{companyId}/{fileName}";
                     savedPaths.Add(relPath);
@@ -183,7 +185,17 @@ namespace DomusMercatorisDotnetMVC.Services
                 }
             }
             _db.Products.Add(entity);
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
+            
+            // Extract features for clustering
+            if (savedPaths.Any())
+            {
+                // We should run this asynchronously or await it. 
+                // Since this might be slow, await ensures consistency but slows response.
+                // Given "Her Ürün Eklendiğinde Çalışmalı", await is safer.
+                await _clusteringService.ExtractAndStoreFeaturesAsync(entity.Id, savedPaths);
+            }
+            
             return entity;
         }
 

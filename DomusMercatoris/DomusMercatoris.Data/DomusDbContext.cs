@@ -23,6 +23,9 @@ namespace DomusMercatoris.Data
         public DbSet<CargoTracking> CargoTrackings { get; set; } = null!;
         public DbSet<Sale> Sales { get; set; } = null!;
         public DbSet<SaleProduct> SaleProducts { get; set; } = null!;
+        public DbSet<ProductCluster> ProductClusters { get; set; } = null!;
+        public DbSet<ProductClusterMember> ProductClusterMembers { get; set; } = null!;
+        public DbSet<ProductFeature> ProductFeatures { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -179,6 +182,27 @@ namespace DomusMercatoris.Data
                     .WithMany()
                     .HasForeignKey(sp => sp.VariantProductId)
                     .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            modelBuilder.Entity<ProductCluster>(entity => {
+                entity.HasMany(c => c.Members)
+                      .WithOne(m => m.ProductCluster)
+                      .HasForeignKey(m => m.ProductClusterId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<ProductClusterMember>(entity => {
+                entity.HasOne(m => m.Product)
+                      .WithMany()
+                      .HasForeignKey(m => m.ProductId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<ProductFeature>(entity => {
+                entity.HasOne(f => f.Product)
+                      .WithMany()
+                      .HasForeignKey(f => f.ProductId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }

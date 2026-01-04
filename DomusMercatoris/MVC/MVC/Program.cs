@@ -21,7 +21,7 @@ builder.Services.AddDataProtection()
 var dbConn = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<DomusMercatoris.Data.DomusDbContext>(option =>
 {
-    option.UseSqlServer(dbConn);
+    option.UseSqlServer(dbConn, b => b.MigrationsAssembly("DomusMercatoris.Data"));
     option.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
 });
 
@@ -48,6 +48,8 @@ builder.Services.AddHttpClient<GeminiService>();
 builder.Services.AddScoped<GeminiService>();
 builder.Services.AddHttpClient<GeminiCommentService>();
 builder.Services.AddScoped<GeminiCommentService>();
+builder.Services.AddHttpClient<IClusteringService, ClusteringService>();
+builder.Services.AddHostedService<MVC.Services.PythonRunnerService>();
 builder.Services.AddHttpContextAccessor();
 
 // Session ve Cookies AddAuthorization
