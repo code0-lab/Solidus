@@ -48,76 +48,15 @@
 
         @if (activeTab === 'details') {
           <div class="tab-content">
-            <div class="details-scroll-area">
-              <span class="product-sku">{{ product.sku }}</span>
-              <h1>{{ product.name }}</h1>
-              <div class="product-price">{{ currentPrice() | currency:'USD':'symbol' }}</div>
-
-              @if (product.variants && product.variants.length > 0) {
-                <div class="variants-section">
-                  <h4 style="margin-bottom: 0.5rem;">Options</h4>
-                  <div class="variant-list" style="display: flex; gap: 10px; margin-bottom: 1rem;">
-                    @for (variant of product.variants; track variant.id) {
-                      <button 
-                        class="variant-btn" 
-                        [class.active]="selectedVariant()?.id === variant.id"
-                        style="padding: 5px 10px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;"
-                        [style.background-color]="selectedVariant()?.id === variant.id ? '#ddd' : '#fff'"
-                        (click)="selectVariant(variant)">
-                        {{ variant.color }}
-                        @if (variant.isCustomizable) {
-                           ({{ variant.price | currency:'USD':'symbol' }})
-                        }
-                      </button>
-                    }
-                  </div>
-                </div>
-              }
-
-              <p class="product-desc" [class.collapsed]="!isDescriptionExpanded()">
-                {{ product.description || 'No description available for this product.' }}
-              </p>
-              
-              <button class="read-more-btn" (click)="toggleDescription()">
-                {{ isDescriptionExpanded() ? 'Read Less' : 'Read More' }}
-              </button>
-            </div>
-            <div class="details-footer">
-              <button class="add-to-cart-btn" (click)="addToCart()">Add to Cart</button>
-            </div>
+            <app-product-detail-info 
+              [product]="product" 
+              [selectedVariant]="selectedVariant()"
+              (variantSelected)="selectVariant($event)">
+            </app-product-detail-info>
           </div>
         } @else {
-          <div class="tab-content comments-section">
-            <div class="comments-list">
-              @for (comment of commentService.comments(); track comment.id) {
-                <div class="comment-item">
-                  <div class="comment-header">
-                    <strong>{{ comment.userFullName }}</strong>
-                    <span class="date">{{ comment.createdAt | date:'dd.MM.yyyy' }}</span>
-                  </div>
-                  <p>{{ comment.text }}</p>
-                </div>
-              }
-              @if (commentService.comments().length === 0) {
-                <p class="no-comments">No comments yet.</p>
-              }
-            </div>
-
-            @if (authService.currentUser()) {
-              <div class="add-comment">
-                <textarea 
-                  [(ngModel)]="newCommentText" 
-                  placeholder="Write your comment..."
-                  rows="3">
-                </textarea>
-                <button class="submit-comment-btn" (click)="postComment()">Post Comment</button>
-              </div>
-            } @else {
-              <div class="login-prompt">
-                <p>You must be logged in to post a comment.</p>
-                <button class="login-btn" (click)="authService.toggleLogin()">Log In</button>
-              </div>
-            }
+          <div class="tab-content">
+            <app-product-comments [productId]="product.id"></app-product-comments>
           </div>
         }
       </div>

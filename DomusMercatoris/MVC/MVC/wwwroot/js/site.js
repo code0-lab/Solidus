@@ -10,13 +10,18 @@ function toggleProductCard(cardBody) {
     var isHidden = details.classList.contains('d-none');
     
     // Close all other product details
-    var allDetails = document.querySelectorAll('.product-details');
-    for(var i=0; i<allDetails.length; i++) {
-        allDetails[i].classList.add('d-none');
+    var allCards = document.querySelectorAll('.product-card');
+    for(var i=0; i<allCards.length; i++) {
+        var d = allCards[i].querySelector('.product-details');
+        if(d) d.classList.add('d-none');
+        allCards[i].classList.remove('expanded');
     }
     
     // Toggle the clicked one
     if (isHidden) {
         details.classList.remove('d-none');
+        // Find the parent .product-card and add expanded class
+        var card = cardBody.closest('.product-card');
+        if(card) card.classList.add('expanded');
     }
 }

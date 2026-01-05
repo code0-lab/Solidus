@@ -2,6 +2,7 @@ import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { User, LoginResponse } from '../models/user.model';
 import { Observable, tap } from 'rxjs';
+import { jwtDecode } from 'jwt-decode';
 
 @Injectable({
   providedIn: 'root'
@@ -29,11 +30,32 @@ export class AuthService {
     const storedUser = localStorage.getItem(this.USER_KEY);
     if (storedUser) {
       try {
-        this.currentUser.set(JSON.parse(storedUser));
+        const user: User = JSON.parse(storedUser);
+        
+        // Check if token is expired
+        if (this.isTokenExpired(user.token)) {
+          this.logout();
+          return;
+        }
+
+        this.currentUser.set(user);
       } catch (e) {
         console.error('Failed to parse user from local storage', e);
         localStorage.removeItem(this.USER_KEY);
       }
+    }
+  }
+
+  isTokenExpired(token: string): boolean {
+    if (!token) return true;
+    try {
+      const decoded: any = jwtDecode(token);
+      if (!decoded.exp) return false; // Token doesn't have an expiration date
+      
+      const currentTime = Math.floor(Date.now() / 1000);
+      return decoded.exp < currentTime;
+    } catch (error) {
+      return true; // Invalid token
     }
   }
 

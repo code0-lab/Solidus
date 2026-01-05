@@ -53,6 +53,17 @@
     </div>
     @await RenderSectionAsync("Modals", required: false)
     <script src="/js/site.js?v=@DateTime.Now.Ticks"></script>
+    <script src="/lib/tinymce/tinymce.min.js"></script>
+    <script>
+        tinymce.init({
+            selector: 'textarea.tinymce-editor',
+            license_key: 'gpl',
+            plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
+            toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat',
+            promotion: false,
+            branding: false
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

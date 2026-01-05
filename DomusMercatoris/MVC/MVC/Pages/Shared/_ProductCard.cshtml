@@ -29,7 +29,7 @@
             <div class="text-muted">@Model.Sku</div>
             <div class="fw-bold">@Model.Price</div>
             <div class="small">Qty: @Model.Quantity</div>
-            <p class="card-text">@((Model.Description ?? "").Length > 120 ? (Model.Description!.Substring(0, 120) + "...") : Model.Description)</p>
+            <p class="card-text">@Html.Raw(Model.Description)</p>
         </div>
     </div>
 </div>

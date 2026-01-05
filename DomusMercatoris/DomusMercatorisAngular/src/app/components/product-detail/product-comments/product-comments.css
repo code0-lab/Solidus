@@ -1,0 +1,129 @@
+:host {
+  --border-black: 1px solid black;
+  --shadow-std: 2px 2px 0 black;
+  height: 100%;
+  display: block;
+}
+
+.comments-section {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.comments-list {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 10px;
+  padding-right: 5px;
+  border: var(--border-black);
+  padding: 5px;
+  background: white;
+}
+
+.comment-item {
+  background: white;
+  padding: 5px;
+  border-bottom: 1px dotted black;
+  margin-bottom: 5px;
+}
+
+.comment-item:last-child { border-bottom: none; }
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2px;
+  font-size: 12px;
+}
+
+.comment-header strong { color: black; }
+.comment-header .date { color: #555; }
+
+.comment-item p {
+  margin: 0;
+  color: black;
+  line-height: 1.3;
+  font-size: 13px;
+}
+
+.no-comments {
+  color: #555;
+  text-align: center;
+  margin-top: 20px;
+  font-style: italic;
+}
+
+.add-comment {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 10px;
+}
+
+.add-comment textarea {
+  width: 100%;
+  padding: 5px;
+  border: var(--border-black);
+  resize: none;
+  height: 60px;
+  font-size: 13px;
+  box-shadow: inset 1px 1px 0 #ccc;
+  font-family: inherit;
+}
+
+.add-comment textarea:focus {
+  outline: none;
+  background: white;
+}
+
+.submit-comment-btn, .login-btn {
+  background: white;
+  color: black;
+  cursor: pointer;
+  box-shadow: var(--shadow-std);
+  font-family: inherit;
+}
+
+.submit-comment-btn:active, .login-btn:active {
+  background: black;
+  color: white;
+  box-shadow: none;
+  transform: translate(2px, 2px);
+}
+
+.submit-comment-btn {
+  align-self: flex-end;
+  border: var(--border-black);
+  padding: 5px 15px;
+  font-weight: bold;
+}
+
+.login-prompt {
+  text-align: center;
+  padding: 20px;
+  background: white;
+  border: 1px dashed black;
+  margin-top: auto;
+}
+
+.login-prompt p {
+  color: black;
+  margin-bottom: 10px;
+}
+
+.login-btn {
+  border: var(--border-black);
+  padding: 5px 15px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: white; border-left: var(--border-black); }
+::-webkit-scrollbar-thumb {
+  background: white;
+  border: var(--border-black);
+  box-shadow: inset 1px 1px 0 white, inset -1px -1px 0 black;
+}
+::-webkit-scrollbar-thumb:hover { background: #eee; }

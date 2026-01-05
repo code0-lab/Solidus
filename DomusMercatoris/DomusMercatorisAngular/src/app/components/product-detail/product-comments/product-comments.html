@@ -1,0 +1,32 @@
+<div class="comments-section">
+  <div class="comments-list">
+    @for (comment of commentService.comments(); track comment.id) {
+      <div class="comment-item">
+        <div class="comment-header">
+          <strong>{{ comment.userFullName }}</strong>
+          <span class="date">{{ comment.createdAt | date:'dd.MM.yyyy' }}</span>
+        </div>
+        <p>{{ comment.text }}</p>
+      </div>
+    }
+    @if (commentService.comments().length === 0) {
+      <p class="no-comments">No comments yet.</p>
+    }
+  </div>
+
+  @if (authService.currentUser()) {
+    <div class="add-comment">
+      <textarea 
+        [(ngModel)]="newCommentText" 
+        placeholder="Write your comment..."
+        rows="3">
+      </textarea>
+      <button class="submit-comment-btn" (click)="postComment()">Post Comment</button>
+    </div>
+  } @else {
+    <div class="login-prompt">
+      <p>You must be logged in to post a comment.</p>
+      <button class="login-btn" (click)="authService.toggleLogin()">Log In</button>
+    </div>
+  }
+</div>

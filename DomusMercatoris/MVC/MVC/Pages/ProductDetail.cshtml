@@ -44,7 +44,7 @@
                 <div class="text-muted mb-2" id="productSku">@Model.Product.Sku</div>
                 <div class="fs-5 fw-bold mb-3" id="productPrice">@Model.Product.Price.ToString("C2")</div>
                 <div class="mb-3" id="productQuantity">Quantity: @Model.Product.Quantity</div>
-                <p id="productDescription">@Model.Product.Description</p>
+                <div id="productDescription">@Html.Raw(Model.Product.Description)</div>
             }
         </div>
     </div>

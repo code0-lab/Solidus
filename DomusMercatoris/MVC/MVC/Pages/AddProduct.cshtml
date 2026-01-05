@@ -47,7 +47,7 @@
         </div>
         <div class="mb-3">
             <label for="Create_Product_Description" class="form-label">Description</label>
-            <textarea id="Create_Product_Description" name="Product.Description" class="form-control" rows="4" placeholder="Short description">@Model.Product.Description</textarea>
+            <textarea id="Create_Product_Description" name="Product.Description" class="form-control tinymce-editor" rows="4" placeholder="Short description">@Model.Product.Description</textarea>
             <small class="text-muted">Key features and details.</small>
         </div>
         <div class="mb-3">
@@ -413,6 +413,10 @@
                         document.getElementById('Create_Product_Name').value = content.name;
                     }
                     if (content.description) {
+                        // Update TinyMCE if available, otherwise textarea
+                        if (typeof tinymce !== 'undefined' && tinymce.get('Create_Product_Description')) {
+                            tinymce.get('Create_Product_Description').setContent(content.description);
+                        }
                         document.getElementById('Create_Product_Description').value = content.description;
                     }
                 } catch (e) {

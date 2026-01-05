@@ -485,3 +485,20 @@ body {
 .product-card .product-card-overlay-content { text-align: center; max-width: 90%; }
 .product-card:hover .product-card-img { filter: blur(4px); transform: scale(1.06); }
 .product-card:hover .product-card-overlay { opacity: 1; }
+
+.product-card .card-title {
+    display: -webkit-box;
+    -webkit-line-clamp: 1; /* Show only 1 line when closed */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    height: 1.5em; /* Fixed height for 1 line */
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+}
+
+.product-card.expanded .card-title {
+    display: block;
+    -webkit-line-clamp: unset;
+    height: auto;
+    overflow: visible;
+}

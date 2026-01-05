@@ -54,9 +54,6 @@ class ClusterResponse(BaseModel):
 
 # --- Endpoints ---
 
-@app.on_event("startup")
-def load_model():
-    get_model()
 
 @app.post("/extract")
 async def extract_features(files: List[UploadFile] = File(...)):

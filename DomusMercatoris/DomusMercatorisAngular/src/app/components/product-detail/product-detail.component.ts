@@ -1,15 +1,14 @@
 import { Component, Input, Output, EventEmitter, inject, signal, OnChanges, SimpleChanges, computed } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 import { Product, VariantProduct } from '../../models/product.model';
 import { CommentService } from '../../services/comment.service';
-import { AuthService } from '../../services/auth.service';
-import { CartService } from '../../services/cart.service';
+import { ProductDetailInfoComponent } from './product-detail-info/product-detail-info';
+import { ProductCommentsComponent } from './product-comments/product-comments';
 
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, ProductDetailInfoComponent, ProductCommentsComponent],
   templateUrl: './product-detail.component.html',
   styleUrl: './product-detail.component.css'
 })
@@ -18,24 +17,12 @@ export class ProductDetailComponent implements OnChanges {
   @Output() onClose = new EventEmitter<void>();
 
   commentService = inject(CommentService);
-  authService = inject(AuthService);
-  cartService = inject(CartService);
 
   activeTab: 'details' | 'comments' = 'details';
-  newCommentText = signal('');
   currentImageIndex = signal(0);
   viewerOpen = signal(false);
   viewerImageUrl = signal<string | null>(null);
   selectedVariant = signal<VariantProduct | null>(null);
-  isDescriptionExpanded = signal(false);
-
-  currentPrice = computed(() => {
-    const variant = this.selectedVariant();
-    if (variant) {
-      return variant.price;
-    }
-    return this.product.price;
-  });
 
   allImages = computed(() => {
     const images: { url: string; variant?: VariantProduct }[] = [];
@@ -66,7 +53,7 @@ export class ProductDetailComponent implements OnChanges {
 
     return images;
   });
-
+  
   ngOnChanges(changes: SimpleChanges) {
     if (changes['product'] && this.product) {
       this.commentService.fetchComments(this.product.id);
@@ -128,50 +115,6 @@ export class ProductDetailComponent implements OnChanges {
       // This implies if we move AWAY from variant photo, we should probably go back to product info.
       this.selectedVariant.set(null);
     }
-  }
-
-  toggleDescription() {
-    this.isDescriptionExpanded.update(v => !v);
-  }
-
-  postComment() {
-    const text = this.newCommentText();
-    if (!text.trim()) return;
-
-    if (!this.authService.currentUser()) {
-      alert('You must be logged in to post a comment.');
-      this.authService.toggleLogin();
-      return;
-    }
-
-    this.commentService.createComment({ productId: this.product.id, text }).subscribe({
-      next: () => {
-        this.newCommentText.set('');
-        alert('Your comment has been added!');
-      },
-      error: (err) => {
-        console.error(err);
-        alert('Error adding comment.');
-      }
-    });
-  }
-
-  addToCart() {
-    const variant = this.selectedVariant();
-    // If product has variants but none selected, maybe we should force selection?
-    // User requirement: "Angular tarafı sadece product id yi ürün detaylarında görebiliyor... oysa müşteri gri olanı almak istiyor olabilir"
-    // So if user selects a variant, we add variant. If not, we add product (default).
-    // However, if the product *only* exists as variants (e.g. T-shirt sizes), we might want to force it.
-    // For now, let's allow adding base product if no variant selected, but prefer variant if selected.
-    
-    if (this.product.variants && this.product.variants.length > 0 && !variant) {
-        // Optional: Prompt user or just add base product. 
-        // Given the requirement "bir product un en fazla 5 varyantı olabilir", it implies base product + variants.
-        // Let's assume user can buy base product OR variant.
-    }
-
-    this.cartService.add(this.product, variant || undefined);
-    alert('Added to cart.');
   }
 
   openImageViewer(url: string | undefined) {
