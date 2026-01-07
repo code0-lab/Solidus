@@ -167,6 +167,7 @@ namespace DomusMercatorisDotnetMVC.Services
                 SubCategoryId = dto.SubCategoryId,
                 BrandId = dto.BrandId,
                 Price = dto.Price,
+                AutoCategoryId = dto.AutoCategoryId,
                 CompanyId = companyId,
                 Quantity = dto.Quantity,
                 Images = savedPaths,
@@ -206,7 +207,9 @@ namespace DomusMercatorisDotnetMVC.Services
 
         public Product? GetByIdInCompany(long id, int companyId)
         {
-            return _db.Products.SingleOrDefault(p => p.Id == id && p.CompanyId == companyId);
+            return _db.Products
+                .Include(p => p.AutoCategory)
+                .SingleOrDefault(p => p.Id == id && p.CompanyId == companyId);
         }
 
         public Product? Update(long id, ProductUpdateDto dto)
@@ -240,6 +243,7 @@ namespace DomusMercatorisDotnetMVC.Services
             entity.CategoryId = dto.CategoryId;
             entity.SubCategoryId = dto.SubCategoryId;
             entity.BrandId = dto.BrandId;
+            entity.AutoCategoryId = dto.AutoCategoryId;
             entity.Price = dto.Price;
             entity.Quantity = dto.Quantity;
             var ids = (dto.CategoryIds ?? new List<int>()).Where(id => id > 0).Distinct().ToList();

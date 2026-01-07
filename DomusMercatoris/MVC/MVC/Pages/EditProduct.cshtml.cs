@@ -8,6 +8,7 @@ using DomusMercatoris.Data;
 using System.Linq;
 using DomusMercatoris.Service.Services;
 using DomusMercatoris.Service.DTOs;
+using Microsoft.EntityFrameworkCore;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
@@ -33,6 +34,7 @@ namespace DomusMercatorisDotnetMVC.Pages
         public Product? Existing { get; set; }
         public List<Category> Categories { get; set; } = new();
         public List<BrandDto> Brands { get; set; } = new();
+        public AutoCategory? SuggestedAutoCategory { get; set; }
 
         [BindProperty]
         public ProductUpdateDto Product { get; set; } = new();
@@ -64,6 +66,18 @@ namespace DomusMercatorisDotnetMVC.Pages
             Product.BrandId = Existing.BrandId;
             Product.Price = Existing.Price;
             Product.Quantity = Existing.Quantity;
+            Product.AutoCategoryId = Existing.AutoCategoryId;
+
+            var member = await _db.ProductClusterMembers
+                .Include(m => m.ProductCluster)
+                .ThenInclude(c => c.AutoCategories)
+                .FirstOrDefaultAsync(m => m.ProductId == id);
+            
+            if (member != null && member.ProductCluster.AutoCategories.Any())
+            {
+                SuggestedAutoCategory = member.ProductCluster.AutoCategories.First();
+            }
+
             var ids = new List<int>();
             ids.AddRange((Existing.Categories ?? new List<Category>()).Select(c => c.Id));
             if (Existing.CategoryId.HasValue) ids.Add(Existing.CategoryId.Value);

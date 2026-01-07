@@ -83,6 +83,42 @@
             <textarea id="Product_Description" name="Product.Description" class="form-control tinymce-editor" rows="4" placeholder="Short description">@(Model.Existing?.Description ?? Model.Product.Description)</textarea>
             <small class="text-muted">Key features and details.</small>
         </div>
+
+        @if (Model.SuggestedAutoCategory != null || Model.Product.AutoCategoryId.HasValue)
+        {
+            <div class="card mb-3 border-info">
+                <div class="card-header bg-info text-dark">
+                    <i class="bi bi-magic"></i> Estimated Category (Auto Category)
+                </div>
+                <div class="card-body">
+                    <input type="hidden" asp-for="Product.AutoCategoryId" />
+                    
+                    @if (Model.Product.AutoCategoryId.HasValue && Model.Existing?.AutoCategory != null)
+                    {
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <h5 class="card-title">@Model.Existing.AutoCategory.Name</h5>
+                                <p class="card-text text-muted mb-0">@Model.Existing.AutoCategory.Description</p>
+                                <span class="badge bg-success mt-1">Assigned</span>
+                            </div>
+                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="clearAutoCategory(this)">Remove</button>
+                        </div>
+                    }
+                    else if (Model.SuggestedAutoCategory != null)
+                    {
+                         <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <h5 class="card-title">@Model.SuggestedAutoCategory.Name</h5>
+                                <p class="card-text text-muted mb-0">@Model.SuggestedAutoCategory.Description</p>
+                                <span class="badge bg-warning text-dark mt-1">Suggestion</span>
+                            </div>
+                            <button type="button" class="btn btn-success" onclick="acceptAutoCategory(this, @Model.SuggestedAutoCategory.Id)">Accept Suggestion</button>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
         <div class="mb-3">
             <label for="Product_BrandId" class="form-label">Brand</label>
             <select id="Product_BrandId" asp-for="Product.BrandId" class="form-select">
@@ -550,6 +586,27 @@
     search.addEventListener('focus', renderSuggest); // Show all on focus
     renderChips();
 })();
+
+function acceptAutoCategory(btn, id) {
+    document.getElementById('Product_AutoCategoryId').value = id;
+    btn.className = 'btn btn-secondary';
+    btn.textContent = 'Selected';
+    btn.disabled = true;
+    
+    // Optional: Update UI to show "Pending Save"
+    const badge = btn.previousElementSibling.querySelector('.badge');
+    if(badge) {
+        badge.className = 'badge bg-success mt-1';
+        badge.textContent = 'Accepted (Pending Save)';
+    }
+}
+
+function clearAutoCategory(btn) {
+    document.getElementById('Product_AutoCategoryId').value = '';
+    btn.closest('.d-flex').style.opacity = '0.5';
+    btn.disabled = true;
+    btn.textContent = 'Removed';
+}
 </script>
 <style>
 .chip-remove { color: #6c757d; }

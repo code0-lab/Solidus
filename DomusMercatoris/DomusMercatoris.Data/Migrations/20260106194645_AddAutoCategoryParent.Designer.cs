@@ -4,6 +4,7 @@ using DomusMercatoris.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DomusMercatoris.Data.Migrations
 {
     [DbContext(typeof(DomusDbContext))]
-    partial class DomusDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260106194645_AddAutoCategoryParent")]
+    partial class AddAutoCategoryParent
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,21 +24,6 @@ namespace DomusMercatoris.Data.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("AutoCategoryProductCluster", b =>
-                {
-                    b.Property<int>("AutoCategoriesId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProductClustersId")
-                        .HasColumnType("int");
-
-                    b.HasKey("AutoCategoriesId", "ProductClustersId");
-
-                    b.HasIndex("ProductClustersId");
-
-                    b.ToTable("AutoCategoryProductCluster", (string)null);
-                });
 
             modelBuilder.Entity("CategoryProduct", b =>
                 {
@@ -74,6 +62,9 @@ namespace DomusMercatoris.Data.Migrations
                     b.Property<int?>("ParentId")
                         .HasColumnType("int");
 
+                    b.Property<int>("ProductClusterId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
@@ -81,7 +72,9 @@ namespace DomusMercatoris.Data.Migrations
 
                     b.HasIndex("ParentId");
 
-                    b.ToTable("AutoCategories", (string)null);
+                    b.HasIndex("ProductClusterId");
+
+                    b.ToTable("AutoCategories");
                 });
 
             modelBuilder.Entity("DomusMercatoris.Core.Entities.Ban", b =>
@@ -132,7 +125,7 @@ namespace DomusMercatoris.Data.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Bans", (string)null);
+                    b.ToTable("Bans");
                 });
 
             modelBuilder.Entity("DomusMercatoris.Core.Entities.Brand", b =>
@@ -159,7 +152,7 @@ namespace DomusMercatoris.Data.Migrations
 
                     b.HasIndex("CompanyId");
 
-                    b.ToTable("Brands", (string)null);
+                    b.ToTable("Brands");
                 });
 
             modelBuilder.Entity("DomusMercatoris.Core.Entities.CargoTracking", b =>
@@ -214,7 +207,7 @@ namespace DomusMercatoris.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("CargoTrackings", (string)null);
+                    b.ToTable("CargoTrackings");
                 });
 
             modelBuilder.Entity("DomusMercatoris.Core.Entities.Category", b =>
@@ -251,7 +244,7 @@ namespace DomusMercatoris.Data.Migrations
 
                     b.HasIndex("ParentId");
 
-                    b.ToTable("Categories", (string)null);
+                    b.ToTable("Categories");
                 });
 
             modelBuilder.Entity("DomusMercatoris.Core.Entities.Comment", b =>
@@ -285,7 +278,7 @@ namespace DomusMercatoris.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Comments", (string)null);
+                    b.ToTable("Comments");
                 });
 
             modelBuilder.Entity("DomusMercatoris.Core.Entities.Company", b =>
@@ -318,7 +311,7 @@ namespace DomusMercatoris.Data.Migrations
 
                     b.HasKey("CompanyId");
 
-                    b.ToTable("Companies", (string)null);
+                    b.ToTable("Companies");
                 });
 
             modelBuilder.Entity("DomusMercatoris.Core.Entities.Complaint", b =>
@@ -354,7 +347,7 @@ namespace DomusMercatoris.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Complaints", (string)null);
+                    b.ToTable("Complaints");
                 });
 
             modelBuilder.Entity("DomusMercatoris.Core.Entities.FleetingUser", b =>
@@ -384,7 +377,7 @@ namespace DomusMercatoris.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("FleetingUser", (string)null);
+                    b.ToTable("FleetingUser");
                 });
 
             modelBuilder.Entity("DomusMercatoris.Core.Entities.Product", b =>
@@ -394,9 +387,6 @@ namespace DomusMercatoris.Data.Migrations
                         .HasColumnType("bigint");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<int?>("AutoCategoryId")
-                        .HasColumnType("int");
 
                     b.Property<int?>("BrandId")
                         .HasColumnType("int");
@@ -440,13 +430,11 @@ namespace DomusMercatoris.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AutoCategoryId");
-
                     b.HasIndex("BrandId");
 
                     b.HasIndex("CompanyId", "CreatedAt");
 
-                    b.ToTable("Products", (string)null);
+                    b.ToTable("Products");
                 });
 
             modelBuilder.Entity("DomusMercatoris.Core.Entities.ProductCluster", b =>
@@ -472,7 +460,7 @@ namespace DomusMercatoris.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ProductClusters", (string)null);
+                    b.ToTable("ProductClusters");
                 });
 
             modelBuilder.Entity("DomusMercatoris.Core.Entities.ProductClusterMember", b =>
@@ -495,7 +483,7 @@ namespace DomusMercatoris.Data.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductClusterMembers", (string)null);
+                    b.ToTable("ProductClusterMembers");
                 });
 
             modelBuilder.Entity("DomusMercatoris.Core.Entities.ProductFeature", b =>
@@ -520,7 +508,7 @@ namespace DomusMercatoris.Data.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductFeatures", (string)null);
+                    b.ToTable("ProductFeatures");
                 });
 
             modelBuilder.Entity("DomusMercatoris.Core.Entities.Sale", b =>
@@ -571,7 +559,7 @@ namespace DomusMercatoris.Data.Migrations
 
                     b.HasIndex("CompanyId", "CreatedAt");
 
-                    b.ToTable("Sales", (string)null);
+                    b.ToTable("Sales");
                 });
 
             modelBuilder.Entity("DomusMercatoris.Core.Entities.SaleProduct", b =>
@@ -605,7 +593,7 @@ namespace DomusMercatoris.Data.Migrations
 
                     b.HasIndex("VariantProductId");
 
-                    b.ToTable("SaleProducts", (string)null);
+                    b.ToTable("SaleProducts");
                 });
 
             modelBuilder.Entity("DomusMercatoris.Core.Entities.User", b =>
@@ -655,7 +643,7 @@ namespace DomusMercatoris.Data.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("DomusMercatoris.Core.Entities.VariantProduct", b =>
@@ -687,22 +675,7 @@ namespace DomusMercatoris.Data.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("VariantProducts", (string)null);
-                });
-
-            modelBuilder.Entity("AutoCategoryProductCluster", b =>
-                {
-                    b.HasOne("DomusMercatoris.Core.Entities.AutoCategory", null)
-                        .WithMany()
-                        .HasForeignKey("AutoCategoriesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("DomusMercatoris.Core.Entities.ProductCluster", null)
-                        .WithMany()
-                        .HasForeignKey("ProductClustersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.ToTable("VariantProducts");
                 });
 
             modelBuilder.Entity("CategoryProduct", b =>
@@ -726,7 +699,15 @@ namespace DomusMercatoris.Data.Migrations
                         .WithMany("Children")
                         .HasForeignKey("ParentId");
 
+                    b.HasOne("DomusMercatoris.Core.Entities.ProductCluster", "ProductCluster")
+                        .WithMany()
+                        .HasForeignKey("ProductClusterId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Parent");
+
+                    b.Navigation("ProductCluster");
                 });
 
             modelBuilder.Entity("DomusMercatoris.Core.Entities.Ban", b =>
@@ -832,10 +813,6 @@ namespace DomusMercatoris.Data.Migrations
 
             modelBuilder.Entity("DomusMercatoris.Core.Entities.Product", b =>
                 {
-                    b.HasOne("DomusMercatoris.Core.Entities.AutoCategory", "AutoCategory")
-                        .WithMany()
-                        .HasForeignKey("AutoCategoryId");
-
                     b.HasOne("DomusMercatoris.Core.Entities.Brand", "Brand")
                         .WithMany("Products")
                         .HasForeignKey("BrandId")
@@ -846,8 +823,6 @@ namespace DomusMercatoris.Data.Migrations
                         .HasForeignKey("CompanyId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("AutoCategory");
 
                     b.Navigation("Brand");
 

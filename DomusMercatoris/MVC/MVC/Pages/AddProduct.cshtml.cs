@@ -25,17 +25,19 @@ namespace DomusMercatorisDotnetMVC.Pages
         private readonly GeminiService _geminiService;
         private readonly UserService _userService;
         private readonly BrandService _brandService;
+        private readonly DomusMercatorisDotnetMVC.Services.IClusteringService _clusteringService;
 
         public List<Category> Categories { get; set; } = new();
         public List<BrandDto> Brands { get; set; } = new();
 
-        public AddProductModel(ProductService productService, DomusDbContext db, GeminiService geminiService, UserService userService, BrandService brandService)
+        public AddProductModel(ProductService productService, DomusDbContext db, GeminiService geminiService, UserService userService, BrandService brandService, DomusMercatorisDotnetMVC.Services.IClusteringService clusteringService)
         {
             _productService = productService;
             _db = db;
             _geminiService = geminiService;
             _userService = userService;
             _brandService = brandService;
+            _clusteringService = clusteringService;
         }
 
         public async Task<IActionResult> OnPostGenerateDescription(List<IFormFile> files)
@@ -117,6 +119,29 @@ namespace DomusMercatorisDotnetMVC.Pages
             }
 
             return RedirectToPage("/Products");
+        }
+
+        public async Task<IActionResult> OnPostAutoDetectAsync()
+        {
+            var files = Request.Form.Files.ToList();
+            if (files == null || files.Count == 0) return new JsonResult(new { success = false, message = "No files uploaded" });
+
+            var vector = await _clusteringService.ExtractFeaturesFromFilesAsync(files);
+            if (vector == null) return new JsonResult(new { success = false, message = "Could not extract features" });
+
+            var cluster = await _clusteringService.FindNearestClusterAsync(vector);
+            if (cluster == null) return new JsonResult(new { success = false, message = "No matching cluster found" });
+            
+            // Get AutoCategory (first one)
+            var autoCategory = cluster.AutoCategories.FirstOrDefault();
+            if (autoCategory == null) return new JsonResult(new { success = false, message = "Cluster found but no Auto Category assigned" });
+
+            return new JsonResult(new { 
+                success = true, 
+                autoCategoryId = autoCategory.Id,
+                name = autoCategory.Name,
+                description = autoCategory.Description
+            });
         }
     }
 }

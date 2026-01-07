@@ -74,7 +74,21 @@ namespace MVC.Services
                 
                 _pythonProcess.ErrorDataReceived += (sender, args) => 
                 {
-                    if (!string.IsNullOrEmpty(args.Data)) _logger.LogError($"[Python API Error]: {args.Data}");
+                    if (!string.IsNullOrEmpty(args.Data))
+                    {
+                        if (args.Data.Contains("INFO:"))
+                        {
+                            _logger.LogInformation($"[Python API]: {args.Data}");
+                        }
+                        else if (args.Data.Contains("WARNING:"))
+                        {
+                            _logger.LogWarning($"[Python API]: {args.Data}");
+                        }
+                        else
+                        {
+                            _logger.LogError($"[Python API Error]: {args.Data}");
+                        }
+                    }
                 };
 
                 _pythonProcess.Start();

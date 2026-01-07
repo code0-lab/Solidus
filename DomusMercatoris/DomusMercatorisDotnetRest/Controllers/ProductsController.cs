@@ -93,6 +93,38 @@ namespace DomusMercatorisDotnetRest.Controllers
             });
         }
 
+        [HttpGet("by-cluster/{clusterId:int}")]
+        public async Task<ActionResult<PaginatedResult<ProductDto>>> GetByCluster(int clusterId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 9, [FromQuery] int? companyId = null)
+        {
+            var query = _db.Products
+                .Include(p => p.Categories)
+                .Include(p => p.Brand)
+                .Include(p => p.Variants)
+                .Where(p => _db.ProductClusterMembers.Any(m => m.ProductId == p.Id && m.ProductClusterId == clusterId))
+                .AsQueryable();
+
+            if (companyId.HasValue)
+            {
+                query = query.Where(p => p.CompanyId == companyId.Value);
+            }
+
+            var totalCount = await query.CountAsync();
+            var list = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+            
+            var dtoList = list.Select(MapToDto).ToList();
+
+            return Ok(new PaginatedResult<ProductDto>
+            {
+                Items = dtoList,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = totalCount
+            });
+        }
+
         private static ProductDto MapToDto(Product product)
         {
             return new ProductDto

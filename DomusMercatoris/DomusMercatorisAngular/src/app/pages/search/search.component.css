@@ -1,0 +1,95 @@
+.search-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 10px;
+}
+
+.search-page h2 {
+  font-size: 1.75rem;
+  letter-spacing: 0.02em;
+  margin: 0 0 1rem;
+}
+
+.upload-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.upload-row label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.upload-row input[type="file"] {
+  background: white;
+  border: 1px solid black;
+  box-shadow: 2px 2px 0 black;
+  padding: 6px 8px;
+  font-family: var(--sys-font-family);
+  cursor: pointer;
+}
+
+.upload-row input[type="file"]:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+.status {
+  font-size: 12px;
+  color: #666;
+  border: 1px dashed black;
+  padding: 2px 6px;
+  background: white;
+}
+
+.status.error {
+  color: #b00020;
+  border-color: #b00020;
+}
+
+.query-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 1rem;
+}
+
+.preview-box {
+  border: 1px solid black;
+  box-shadow: 2px 2px 0 black;
+  background: white;
+  width: 140px;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-box img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.query-meta {
+  font-size: 12px;
+  color: #333;
+}
+
+@media (max-width: 360px) {
+  .search-page {
+    padding: 0 6px;
+  }
+  .upload-row {
+    gap: 8px;
+  }
+  .search-page h2 {
+    font-size: 1.4rem;
+    margin-bottom: 0.5rem;
+  }
+}

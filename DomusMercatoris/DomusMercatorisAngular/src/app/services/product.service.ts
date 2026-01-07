@@ -16,6 +16,56 @@ export class ProductService {
   companies = signal<Company[]>([]);
   selectedCategory = signal<number | null>(null);
   selectedCompany = signal<number | null>(null);
+  queryImageUrl = signal<string | null>(null);
+
+  classifyImage(file: File): Observable<{ clusterId: number; clusterName?: string; version: number }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const url = URL.createObjectURL(file);
+      this.queryImageUrl.set(url);
+    } catch {}
+    return this.http.post<{ clusterId: number; clusterName?: string; version: number }>(`${this.apiUrl}/clustering/classify`, formData);
+  }
+
+  fetchProductsByCluster(clusterId: number, pageNumber: number = 1, pageSize: number = 9, companyId?: number | null): void {
+    const url = `${this.apiUrl}/products/by-cluster/${clusterId}`;
+    let params = new HttpParams()
+      .set('pageNumber', pageNumber)
+      .set('pageSize', pageSize);
+    if (companyId) {
+      params = params.set('companyId', companyId);
+    }
+    this.http.get<PaginatedResult<Product>>(url, { params })
+      .subscribe({
+        next: (data) => {
+          const processed = data.items.map(p => ({
+            ...p,
+            imageUrl: this.toAbsoluteImageUrl(p.images && p.images.length > 0 ? p.images[0] : undefined),
+            imageUrls: p.images && p.images.length > 0 
+              ? p.images.map(img => this.toAbsoluteImageUrl(img)) 
+              : [this.toAbsoluteImageUrl(undefined)],
+            priceText: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(p.price),
+            bg: this.getRandomColor(),
+            variants: p.variants ? p.variants.map(v => ({
+              ...v,
+              id: v.id,
+              price: v.price,
+              isCustomizable: v.isCustomizable,
+              color: v.color,
+              coverImage: this.toAbsoluteImageUrl(v.coverImage)
+            })) : []
+          }));
+          this.products.set(processed);
+          this.totalCount.set(data.totalCount);
+        },
+        error: () => {
+          const sample = this.getSampleProducts();
+          this.products.set(sample);
+          this.totalCount.set(sample.length);
+        }
+      });
+  }
 
   fetchCategories(): void {
     this.http.get<Category[]>(`${this.apiUrl}/categories`)

@@ -27,6 +27,9 @@ namespace DomusMercatoris.Service.Mappings
             // Category Mapping
             CreateMap<Category, CategoryDto>();
 
+            // AutoCategory Mapping
+            CreateMap<AutoCategory, AutoCategoryDto>();
+
             // Brand Mapping
             CreateMap<Brand, BrandDto>();
             CreateMap<CreateBrandDto, Brand>();

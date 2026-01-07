@@ -1,0 +1,122 @@
+@page
+@model DomusMercatorisDotnetMVC.Pages.Moderator.AutoCategoriesModel
+@{
+    ViewData["PageTitle"] = "Auto Category Management";
+    Layout = "_LayoutAuth";
+}
+
+<div class="container py-5">
+    <h3 class="mb-4">Auto Category Management</h3>
+    
+    <div class="alert alert-info mb-4">
+        <i class="bi bi-info-circle"></i> Auto Categories link a visual "Cluster" to a user-facing "Category Name".
+    </div>
+
+    <div class="row g-4">
+        <!-- Form Column -->
+        <div class="col-12 col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white fw-bold">
+                    @(Model.IsEditing ? "Edit Auto Category" : "Add New Auto Category")
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="Input.Name" class="form-label">Category Name</label>
+                            <input asp-for="Input.Name" class="form-control" placeholder="e.g. Modern Sofa" />
+                            <span asp-validation-for="Input.Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Input.Description" class="form-label">Description</label>
+                            <textarea asp-for="Input.Description" class="form-control" rows="3" placeholder="Optional description"></textarea>
+                            <span asp-validation-for="Input.Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Input.ParentId" class="form-label">Parent Category (Optional)</label>
+                            <select asp-for="Input.ParentId" class="form-select">
+                                <option value="">Top-level (No Parent)</option>
+                                @{
+                                    // Start with root categories
+                                    var roots = Model.AutoCategories.Where(c => c.ParentId == null).OrderBy(c => c.Name);
+                                    foreach(var root in roots)
+                                    {
+                                        <partial name="_AutoCategoryOption" model="root" view-data='@(new ViewDataDictionary(ViewData) { { "Depth", 0 }, { "AllCats", Model.AutoCategories }, { "ExcludeId", Model.EditId } })' />
+                                    }
+                                }
+                            </select>
+                            <span asp-validation-for="Input.ParentId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Input.ProductClusterIds" class="form-label">Product Clusters</label>
+                            <select asp-for="Input.ProductClusterIds" class="form-select" multiple style="height: 150px;">
+                                @foreach (var cluster in Model.ProductClusters)
+                                {
+                                    <option value="@cluster.Id">@cluster.Name (v@(cluster.Version))</option>
+                                }
+                            </select>
+                            <span asp-validation-for="Input.ProductClusterIds" class="text-danger"></span>
+                            <div class="form-text">Select one or more clusters using Ctrl/Cmd + Click.</div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                @(Model.IsEditing ? "Update Auto Category" : "Create Auto Category")
+                            </button>
+                            @if (Model.IsEditing)
+                            {
+                                <a href="/Moderator/AutoCategories" class="btn btn-outline-secondary">Cancel</a>
+                            }
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- List Column -->
+        <div class="col-12 col-lg-8">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
+                    <span>Existing Auto Categories</span>
+                    <span class="badge bg-secondary">@Model.AutoCategories.Count</span>
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.AutoCategories.Count == 0)
+                    {
+                        <div class="p-4 text-center text-muted">
+                            No auto categories defined yet.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-3">Name</th>
+                                        <th>Cluster</th>
+                                        <th>Created</th>
+                                        <th class="text-end pe-3">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{
+                                        var rootItems = Model.AutoCategories.Where(c => c.ParentId == null).OrderBy(c => c.Name);
+                                        foreach(var item in rootItems)
+                                        {
+                                            <partial name="_AutoCategoryRow" model="item" view-data='@(new ViewDataDictionary(ViewData) { { "Depth", 0 }, { "AllCats", Model.AutoCategories } })' />
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -6,3 +6,4 @@ torchvision
 numpy
 pillow
 scikit-learn
+pillow-heif

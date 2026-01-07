@@ -39,6 +39,7 @@ export class HomeComponent {
     return Array.from({ length: total }, (_, i) => i + 1);
   });
 
+
   constructor() {
     // If data is already loaded (singleton service), we might not need to fetch again, 
     // but fetching ensures freshness.
@@ -46,6 +47,7 @@ export class HomeComponent {
     this.productService.fetchCompanies();
     this.productService.fetchProducts(null, 1, this.itemsPerPage, null);
   }
+
 
   toggleFilter() {
     this.isFilterOpen.set(!this.isFilterOpen());

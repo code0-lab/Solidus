@@ -19,5 +19,6 @@ namespace DomusMercatoris.Core.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public ICollection<ProductClusterMember> Members { get; set; } = new List<ProductClusterMember>();
+        public ICollection<AutoCategory> AutoCategories { get; set; } = new List<AutoCategory>();
     }
 }

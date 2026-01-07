@@ -1,0 +1,43 @@
+<section class="search-page">
+  <h2>Search</h2>
+  <div class="upload-row">
+    <label>Filter by image:</label>
+    <input type="file" accept="image/*" (change)="onImageSelected($event)" />
+    @if (isClassifying()) {
+      <span class="status">Classifying...</span>
+    }
+    @if (selectedClusterId() !== null) {
+      <span class="status">Selected class: {{ selectedClusterId() }}</span>
+    }
+    @if (classifyError()) {
+      <span class="status error">{{ classifyError() }}</span>
+    }
+  </div>
+  
+  @if (productService.queryImageUrl()) {
+    <div class="query-preview">
+      <div class="preview-box">
+        <img [src]="productService.queryImageUrl()!" alt="Query image">
+      </div>
+      @if (selectedClusterId() !== null) {
+        <span class="query-meta">Class: {{ selectedClusterId() }}</span>
+      }
+    </div>
+  }
+
+  @if (productService.products().length === 0) {
+    <p>No products found.</p>
+  } @else {
+    <app-product-list 
+      [products]="productService.products()" 
+      (selectProduct)="onSelectProduct($event)">
+    </app-product-list>
+  }
+
+  @if (selectedProduct()) {
+    <app-product-detail 
+      [product]="selectedProduct()!" 
+      (onClose)="closeProductDetail()">
+    </app-product-detail>
+  }
+</section>

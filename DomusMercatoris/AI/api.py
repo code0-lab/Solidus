@@ -7,6 +7,12 @@ import torch
 import torch.nn as nn
 from torchvision import models, transforms
 from PIL import Image
+try:
+    import pillow_heif
+    pillow_heif.register_heif_opener()
+    print("pillow-heif registered for HEIC/HEIF support.")
+except Exception as e:
+    print(f"HEIF support not available: {e}")
 from sklearn.cluster import KMeans
 import numpy as np
 import io

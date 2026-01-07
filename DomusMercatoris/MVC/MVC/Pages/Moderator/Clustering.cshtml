@@ -6,47 +6,51 @@
 }
 
 <div class="container py-4">
-    <h2>Manage Product Clusters</h2>
+    <h2 class="fw-black text-uppercase mb-4 border-bottom border-3 border-dark pb-2" style="letter-spacing: -1px;">Manage Product Clusters</h2>
     
-    <div class="card mb-4">
-        <div class="card-header">
-            <h4>Feature Extraction</h4>
+    <div class="card mb-4 border-3 border-dark rounded-0" style="box-shadow: 4px 4px 0 #000 !important;">
+        <div class="card-header bg-white border-bottom border-3 border-dark rounded-0">
+            <h4 class="mb-0 fw-bold text-uppercase">Feature Extraction</h4>
         </div>
-        <div class="card-body">
-            <p>If you have existing products without analyzed features, click below to process them.</p>
+        <div class="card-body bg-white">
+            <p class="lead fs-6">If you have existing products without analyzed features, click below to process them.</p>
             <form method="post" asp-page-handler="ExtractFeatures">
-                <button type="submit" class="btn btn-outline-secondary">Analyze Unprocessed Products</button>
+                <button type="submit" class="btn btn-outline-dark rounded-0 border-2 fw-bold text-uppercase px-4" style="box-shadow: 2px 2px 0 #000;">
+                    <i class="bi bi-cpu me-2"></i>Analyze Unprocessed Products
+                </button>
             </form>
         </div>
     </div>
 
-    <div class="card mb-4">
-        <div class="card-header">
-            <h4>Re-Train Clusters</h4>
+    <div class="card mb-5 border-3 border-dark rounded-0" style="box-shadow: 4px 4px 0 #000 !important;">
+        <div class="card-header bg-white border-bottom border-3 border-dark rounded-0">
+            <h4 class="mb-0 fw-bold text-uppercase">Re-Train Clusters</h4>
         </div>
-        <div class="card-body">
+        <div class="card-body bg-white">
             <form method="post" asp-page-handler="Train">
-                <div class="row align-items-end">
+                <div class="row align-items-end g-3">
                     <div class="col-md-4">
-                        <label class="form-label">Number of Clusters (K)</label>
-                        <input type="number" asp-for="NumberOfClusters" class="form-control" min="2" max="100" />
+                        <label class="form-label fw-bold text-uppercase">Number of Clusters (K)</label>
+                        <input type="number" asp-for="NumberOfClusters" class="form-control border-2 border-dark rounded-0 p-2" min="2" max="100" />
                     </div>
                     <div class="col-md-4">
-                        <button type="submit" class="btn btn-primary">Start Training (New Version)</button>
+                        <button type="submit" class="btn btn-dark rounded-0 border-2 fw-bold text-uppercase px-4 w-100" style="box-shadow: 2px 2px 0 #000;">
+                            <i class="bi bi-play-circle me-2"></i>Start Training
+                        </button>
                     </div>
                 </div>
-                <small class="text-muted">This will create a new version of clusters based on current product features.</small>
+                <small class="text-muted d-block mt-2 fst-italic">This will create a new version of clusters based on current product features.</small>
             </form>
         </div>
     </div>
 
-    <div class="mb-3 d-flex justify-content-between align-items-center">
+    <div class="mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
         <div>
-            <label class="fw-bold me-2">Select Version:</label>
-            <div class="btn-group">
+            <label class="fw-bold me-2 text-uppercase">Select Version:</label>
+            <div class="btn-group shadow-sm" style="box-shadow: 2px 2px 0 #000;">
                 @foreach (var v in Model.Versions)
                 {
-                    <a asp-page="./Clustering" asp-route-CurrentVersion="@v" class="btn @(Model.CurrentVersion == v ? "btn-primary" : "btn-outline-secondary")">v@(v)</a>
+                    <a asp-page="./Clustering" asp-route-CurrentVersion="@v" class="btn rounded-0 border-2 border-dark fw-bold @(Model.CurrentVersion == v ? "btn-dark" : "btn-light")">v@(v)</a>
                 }
             </div>
         </div>
@@ -55,57 +59,102 @@
         {
             <form method="post" asp-page-handler="DeleteVersion" onsubmit="return confirm('Are you sure you want to delete version v@(Model.CurrentVersion)? This action cannot be undone.');">
                 <input type="hidden" name="version" value="@Model.CurrentVersion" />
-                <button type="submit" class="btn btn-danger">Delete v@(Model.CurrentVersion)</button>
+                <button type="submit" class="btn btn-danger rounded-0 border-2 border-dark fw-bold text-uppercase shadow-sm" style="box-shadow: 2px 2px 0 #000;">
+                    <i class="bi bi-trash me-2"></i>Delete v@(Model.CurrentVersion)
+                </button>
             </form>
         }
     </div>
 
     @if (Model.Clusters.Any())
     {
-        <div class="row">
+        <div class="accordion" id="clustersAccordion">
             @foreach (var cluster in Model.Clusters)
             {
-                <div class="col-md-6 mb-4">
-                    <div class="card h-100">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <form method="post" asp-page-handler="Rename" class="d-flex w-100">
-                                <input type="hidden" name="clusterId" value="@cluster.Id" />
-                                <input type="text" name="newName" value="@cluster.Name" class="form-control me-2" />
-                                <button type="submit" class="btn btn-sm btn-primary">Save</button>
-                            </form>
-                        </div>
-                        <div class="card-body">
-                            <h6>Members (@cluster.Members.Count)</h6>
-                            <div class="row">
-                                @foreach (var member in cluster.Members.Take(6))
-                                {
-                                    <div class="col-4 mb-2">
-                                        @if (member.Product.Images != null && member.Product.Images.Any())
-                                        {
-                                            <img src="@member.Product.Images.First()" class="img-fluid rounded" style="max-height: 80px; object-fit: cover;" />
-                                        }
-                                        else
-                                        {
-                                            <div class="bg-light text-center py-4 rounded border border-dark">No Image</div>
-                                        }
-                                        <div class="small text-truncate">@member.Product.Name</div>
-                                    </div>
-                                }
+                <div class="accordion-item border-3 border-dark rounded-0 mb-3 shadow-sm" style="box-shadow: 4px 4px 0 #000 !important;">
+                    <h2 class="accordion-header" id="heading-@cluster.Id">
+                        <button class="accordion-button collapsed rounded-0 fw-bold text-uppercase fs-5 bg-white text-dark focus-ring-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-@cluster.Id" aria-expanded="false" aria-controls="collapse-@cluster.Id">
+                            <span class="me-auto">@cluster.Name</span>
+                            <span class="badge bg-dark rounded-0 border border-light ms-2">@cluster.Members.Count items</span>
+                        </button>
+                    </h2>
+                    <div id="collapse-@cluster.Id" class="accordion-collapse collapse" aria-labelledby="heading-@cluster.Id" data-bs-parent="#clustersAccordion" data-url="@Url.Page("Clustering", "ClusterMembers", new { clusterId = cluster.Id })">
+                        <div class="accordion-body bg-light border-top border-3 border-dark">
+                            <div class="d-flex justify-content-between align-items-center mb-4 p-3 border-2 border-dark bg-white" style="border: 2px dashed #000;">
+                                <strong class="text-uppercase">Rename Cluster:</strong>
+                                <form method="post" asp-page-handler="Rename" class="d-flex gap-2 align-items-center flex-grow-1 ms-3">
+                                    <input type="hidden" name="clusterId" value="@cluster.Id" />
+                                    <input type="hidden" name="pageIndex" value="@Model.PageIndex" />
+                                    <input type="text" name="newName" value="@cluster.Name" class="form-control border-2 border-dark rounded-0" />
+                                    <button type="submit" class="btn btn-sm btn-dark rounded-0 border-2 fw-bold text-uppercase">Save</button>
+                                </form>
                             </div>
-                            @if (cluster.Members.Count > 6)
-                            {
-                                <div class="text-center">
-                                    <small class="text-muted">+ @(cluster.Members.Count - 6) more</small>
+                            
+                            <div class="cluster-members-container text-center py-4">
+                                <div class="spinner-border text-dark" style="width: 3rem; height: 3rem; border-width: 0.25em;" role="status">
+                                    <span class="visually-hidden">Loading...</span>
                                 </div>
-                            }
+                            </div>
                         </div>
                     </div>
                 </div>
             }
         </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <nav aria-label="Page navigation" class="mt-5">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item @(Model.PageIndex <= 1 ? "disabled" : "")">
+                        <a class="page-link rounded-0 border-2 border-dark text-dark fw-bold me-2" asp-page="./Clustering" asp-route-CurrentVersion="@Model.CurrentVersion" asp-route-PageIndex="@(Model.PageIndex - 1)" style="box-shadow: 2px 2px 0 #000;">Previous</a>
+                    </li>
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <li class="page-item @(i == Model.PageIndex ? "active" : "")">
+                            <a class="page-link rounded-0 border-2 border-dark fw-bold me-2 @(i == Model.PageIndex ? "bg-dark text-white" : "text-dark")" asp-page="./Clustering" asp-route-CurrentVersion="@Model.CurrentVersion" asp-route-PageIndex="@i" style="box-shadow: 2px 2px 0 #000;">@i</a>
+                        </li>
+                    }
+                    <li class="page-item @(Model.PageIndex >= Model.TotalPages ? "disabled" : "")">
+                        <a class="page-link rounded-0 border-2 border-dark text-dark fw-bold" asp-page="./Clustering" asp-route-CurrentVersion="@Model.CurrentVersion" asp-route-PageIndex="@(Model.PageIndex + 1)" style="box-shadow: 2px 2px 0 #000;">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        }
     }
     else
     {
-        <div class="alert alert-info">No clusters found for this version.</div>
+        <div class="alert alert-info rounded-0 border-3 border-dark shadow-sm" style="box-shadow: 4px 4px 0 #000;">
+            <i class="bi bi-info-circle-fill me-2"></i>No clusters found for this version.
+        </div>
     }
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var accordionElement = document.getElementById('clustersAccordion');
+        if (accordionElement) {
+            accordionElement.addEventListener('show.bs.collapse', function (e) {
+                var collapseElement = e.target;
+                var url = collapseElement.getAttribute('data-url');
+                var container = collapseElement.querySelector('.cluster-members-container');
+                
+                if (url && container && !container.getAttribute('data-loaded')) {
+                    fetch(url)
+                        .then(response => {
+                            if (!response.ok) throw new Error('Network response was not ok');
+                            return response.text();
+                        })
+                        .then(html => {
+                            container.innerHTML = html;
+                            container.setAttribute('data-loaded', 'true');
+                            container.classList.remove('text-center', 'py-4');
+                        })
+                        .catch(error => {
+                            container.innerHTML = '<div class="text-danger fw-bold">Error loading members.</div>';
+                            console.error('Error:', error);
+                        });
+                }
+            });
+        }
+    });
+</script>

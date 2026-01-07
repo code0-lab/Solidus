@@ -1,0 +1,36 @@
+<div class="search-bar-container">
+  <input class="search" type="search" placeholder="Search..." [(ngModel)]="query" (keydown.enter)="goSearch()" />
+  <div class="icon-wrapper" (mouseenter)="showHint = true" (mouseleave)="showHint = false">
+    <button 
+      class="icon" 
+      type="button" 
+      (click)="togglePanel()" 
+      aria-label="search via photograph">📷</button>
+    @if (showHint) {
+      <span class="hint" role="tooltip">Search via photograph</span>
+    }
+  </div>
+  @if (panelOpen) {
+    <div 
+      class="dropzone" 
+      [class.dragging]="isDragging"
+      (dragover)="onDragOver($event)" 
+      (dragleave)="onDragLeave($event)" 
+      (drop)="onDrop($event)">
+      <div class="dropzone-content">
+        <div>Drag & drop photo or choose</div>
+        <button type="button" class="select-btn" (click)="openSelectDialog()">Choose</button>
+      </div>
+      <input #fileInput type="file" accept="image/*" (change)="onImageSelected($event)" style="display: none;" />
+    </div>
+  }
+  @if (isClassifying) {
+    <span class="status">Classifying...</span>
+  }
+  @if (selectedClusterId !== null) {
+    <span class="status">Class: {{ selectedClusterId }}</span>
+  }
+  @if (classifyError) {
+    <span class="status error">{{ classifyError }}</span>
+  }
+</div>

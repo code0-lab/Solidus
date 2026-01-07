@@ -19,6 +19,8 @@ namespace DomusMercatorisDotnetMVC.Services
         Task ExtractAndStoreFeaturesAsync(long productId, List<string> imagePaths);
         Task RunClusteringAsync(int numberOfClusters);
         Task ProcessAllProductsFeaturesAsync();
+        Task<List<float>?> ExtractFeaturesFromFilesAsync(List<Microsoft.AspNetCore.Http.IFormFile> files);
+        Task<ProductCluster?> FindNearestClusterAsync(List<float> featureVector);
     }
 
     public class ClusteringService : IClusteringService
@@ -108,47 +110,85 @@ namespace DomusMercatorisDotnetMVC.Services
             }
         }
 
+        public async Task<List<float>?> ExtractFeaturesFromFilesAsync(List<Microsoft.AspNetCore.Http.IFormFile> files)
+        {
+            if (files == null || !files.Any()) return null;
+
+            try
+            {
+                using var content = new MultipartFormDataContent();
+                foreach (var f in files)
+                {
+                    if (f.Length > 0)
+                    {
+                        var stream = f.OpenReadStream();
+                        var imageContent = new StreamContent(stream);
+                        content.Add(imageContent, "files", f.FileName);
+                    }
+                }
+
+                if (!content.Any()) return null;
+
+                var response = await _httpClient.PostAsync($"{_pythonApiUrl}/extract", content);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<FeatureResponse>();
+                    return result?.vector;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error calling Python API: {ex.Message}");
+            }
+            return null;
+        }
+
+        public async Task<ProductCluster?> FindNearestClusterAsync(List<float> featureVector)
+        {
+            var maxVersion = await _context.ProductClusters.MaxAsync(c => (int?)c.Version);
+            if (!maxVersion.HasValue) return null;
+
+            var clusters = await _context.ProductClusters
+                .Include(c => c.AutoCategories)
+                .Where(c => c.Version == maxVersion.Value)
+                .ToListAsync();
+            
+            if (!clusters.Any()) return null;
+
+            ProductCluster? bestCluster = null;
+            double minDistance = double.MaxValue;
+
+            foreach (var cluster in clusters)
+            {
+                if (string.IsNullOrEmpty(cluster.CentroidJson)) continue;
+
+                List<float>? centroid = null;
+                try { centroid = JsonSerializer.Deserialize<List<float>>(cluster.CentroidJson); } catch { }
+
+                if (centroid == null || centroid.Count != featureVector.Count) continue;
+
+                double dist = 0;
+                for (int i = 0; i < featureVector.Count; i++)
+                {
+                    double diff = featureVector[i] - centroid[i];
+                    dist += diff * diff;
+                }
+
+                if (dist < minDistance)
+                {
+                    minDistance = dist;
+                    bestCluster = cluster;
+                }
+            }
+            return bestCluster;
+        }
+
         private async Task AssignToCurrentClustersAsync(long productId, List<float> featureVector)
         {
             try
             {
-                // Find latest version
-                var maxVersion = await _context.ProductClusters.MaxAsync(c => (int?)c.Version);
-                if (!maxVersion.HasValue) return;
-
-                // Get clusters for this version
-                var clusters = await _context.ProductClusters
-                    .Where(c => c.Version == maxVersion.Value)
-                    .ToListAsync();
-                
-                if (!clusters.Any()) return;
-
-                ProductCluster? bestCluster = null;
-                double minDistance = double.MaxValue;
-
-                foreach (var cluster in clusters)
-                {
-                    if (string.IsNullOrEmpty(cluster.CentroidJson)) continue;
-
-                    List<float>? centroid = null;
-                    try { centroid = JsonSerializer.Deserialize<List<float>>(cluster.CentroidJson); } catch { }
-
-                    if (centroid == null || centroid.Count != featureVector.Count) continue;
-
-                    // Euclidean distance
-                    double dist = 0;
-                    for (int i = 0; i < featureVector.Count; i++)
-                    {
-                        double diff = featureVector[i] - centroid[i];
-                        dist += diff * diff;
-                    }
-
-                    if (dist < minDistance)
-                    {
-                        minDistance = dist;
-                        bestCluster = cluster;
-                    }
-                }
+                var bestCluster = await FindNearestClusterAsync(featureVector);
 
                 if (bestCluster != null)
                 {
@@ -232,7 +272,7 @@ namespace DomusMercatorisDotnetMVC.Services
                     var result = await response.Content.ReadFromJsonAsync<ClusterResponse>();
                     if (result != null && result.labels != null)
                     {
-                        await SaveClustersToDb(productDataList, result.labels, result.centroids, numberOfClusters);
+                        await SaveClustersToDb(productDataList, result.labels, result.centroids ?? new List<List<float>>(), numberOfClusters);
                     }
                 }
             }
@@ -290,18 +330,18 @@ namespace DomusMercatorisDotnetMVC.Services
 
     public class FeatureResponse
     {
-        public List<float> vector { get; set; }
+        public List<float>? vector { get; set; }
     }
 
     public class ClusterResponse
     {
-        public List<int> labels { get; set; }
-        public List<List<float>> centroids { get; set; }
+        public List<int>? labels { get; set; }
+        public List<List<float>>? centroids { get; set; }
     }
 
     public class ProductData
     {
         public long ProductId { get; set; }
-        public List<float> Features { get; set; }
+        public List<float>? Features { get; set; }
     }
 }

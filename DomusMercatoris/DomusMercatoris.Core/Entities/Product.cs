@@ -23,6 +23,9 @@ namespace DomusMercatoris.Core.Entities
         public int? SubCategoryId { get; set; }
         public ICollection<Category> Categories { get; set; } = new List<Category>();
 
+        public int? AutoCategoryId { get; set; }
+        public AutoCategory? AutoCategory { get; set; }
+
         public int? BrandId { get; set; }
         public Brand? Brand { get; set; }
 
