@@ -55,6 +55,8 @@ namespace DomusMercatorisDotnetMVC.Pages
             //            ^ await ile a senkron yapıldı ve veri tabanının kategori tespitinde kitlenmesi önlendi
                 .OrderBy(c => c.ParentId.HasValue)
                 .ThenBy(c => c.Name)
+                //sadece gerekli olanları çek (.select)
+                .Select(c => new Category { Id = c.Id, Name = c.Name, ParentId = c.ParentId })
                 .ToListAsync();
             
             Brands = await _brandService.GetBrandsByCompanyAsync(companyId);
@@ -95,6 +97,7 @@ namespace DomusMercatorisDotnetMVC.Pages
             Categories = await _db.Categories.Where(c => c.CompanyId == companyId)
                 .OrderBy(c => c.ParentId.HasValue) //ParentId genelde "Üst Kategori"yi tutar. Eğer null ise o bir Ana Kategoridir. Doluysa (HasValue true ise) bir Alt Kategoridir.
                 .ThenBy(c => c.Name)
+                .Select(c => new Category { Id = c.Id, Name = c.Name, ParentId = c.ParentId })
                 .ToListAsync();
             
             Brands = await _brandService.GetBrandsByCompanyAsync(companyId);

@@ -97,6 +97,8 @@ namespace DomusMercatorisDotnetMVC.Pages
                 Categories = await _db.Categories.Where(c => c.CompanyId == companyId)
                     .OrderBy(c => c.ParentId.HasValue)
                     .ThenBy(c => c.Name)
+                    //sadece gerekli olanları çek (.select)
+                    .Select(c => new Category { Id = c.Id, Name = c.Name, ParentId = c.ParentId })
                     .ToListAsync();
                 
                 Brands = await _brandService.GetBrandsByCompanyAsync(companyId);
