@@ -16,9 +16,13 @@
         <div class="col-12 col-lg-6">
             <div class="card h-100">
                 <div class="card-body">
-                    <div class="fw-bold mb-3">Add New Category</div>
+                    <div class="fw-bold mb-3">@(Model.IsEditing ? "Edit Category" : "Add New Category")</div>
                     <form method="post">
                         @Html.AntiForgeryToken()
+                        @if (Model.IsEditing)
+                        {
+                            <input type="hidden" name="EditId" value="@Model.EditId" />
+                        }
                         <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
                         <div class="mb-3">
                             <label class="form-label">Name</label>
@@ -68,7 +72,15 @@
                                 }
                             </select>
                         </div>
-                        <button type="submit" class="btn btn-primary">Save</button>
+                        @if (Model.IsEditing)
+                        {
+                            <button type="submit" class="btn btn-primary" asp-page-handler="Update">Update</button>
+                            <a href="/Categories" class="btn btn-secondary ms-2">Cancel</a>
+                        }
+                        else
+                        {
+                            <button type="submit" class="btn btn-primary">Save</button>
+                        }
                     </form>
                 </div>
             </div>

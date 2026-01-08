@@ -70,14 +70,14 @@ namespace DomusMercatorisDotnetMVC.Pages
                     };
                 }
             }
-            Console.WriteLine($"[Categories.OnGet] compClaim={comp}, parsedCompanyId={companyId}, categoriesCount={Categories.Count}");
+            //Console.WriteLine($"[Categories.OnGet] compClaim={comp}, parsedCompanyId={companyId}, categoriesCount={Categories.Count}");
             return Page();
         }
 
         public IActionResult OnPost()
         {
             var comp = User.FindFirst("CompanyId")?.Value;
-            Console.WriteLine($"[Categories.OnPost] compClaim={comp}");
+            //Console.WriteLine($"[Categories.OnPost] compClaim={comp}");
             int companyId = 0;
             if (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var cid))
             {
@@ -92,11 +92,11 @@ namespace DomusMercatorisDotnetMVC.Pages
                     if (user != null) companyId = user.CompanyId;
                 }
             }
-            Console.WriteLine($"[Categories.OnPost] resolvedCompanyId={companyId}");
+            //Console.WriteLine($"[Categories.OnPost] resolvedCompanyId={companyId}");
             if (companyId == 0)
             {
                 ModelState.AddModelError(string.Empty, "Authorization error.");
-                Console.WriteLine("[Categories.OnPost] companyId=0 authorization error");
+                //Console.WriteLine("[Categories.OnPost] companyId=0 authorization error");
                 return OnGet();
             }
             if (Request.HasFormContentType)
@@ -104,24 +104,24 @@ namespace DomusMercatorisDotnetMVC.Pages
                 foreach (var key in Request.Form.Keys)
                 {
                     var val = Request.Form[key].ToString();
-                    Console.WriteLine($"[Categories.OnPost] form {key}='{val}'");
+                    //Console.WriteLine($"[Categories.OnPost] form {key}='{val}'");
                 }
             }
-            Console.WriteLine($"[Categories.OnPost] bound Input.Name='{Input.Name}'");
+            //Console.WriteLine($"[Categories.OnPost] bound Input.Name='{Input.Name}'");
             var parentRaw = Input.ParentId.HasValue ? Input.ParentId.Value.ToString() : "null";
-            Console.WriteLine($"[Categories.OnPost] input Name='{Input.Name}', DescLen={(Input.Description ?? string.Empty).Length}, ParentId={parentRaw}");
-            Console.WriteLine($"[Categories.OnPost] modelStateValid={ModelState.IsValid}, errorCount={ModelState.ErrorCount}");
+            //Console.WriteLine($"[Categories.OnPost] input Name='{Input.Name}', DescLen={(Input.Description ?? string.Empty).Length}, ParentId={parentRaw}");
+            //Console.WriteLine($"[Categories.OnPost] modelStateValid={ModelState.IsValid}, errorCount={ModelState.ErrorCount}");
             foreach (var kv in ModelState)
             {
-                foreach (var err in kv.Value.Errors)
-                {
-                    Console.WriteLine($"[Categories.OnPost] modelError key={kv.Key} error={err.ErrorMessage}");
-                }
+                //foreach (var err in kv.Value.Errors)
+                //{
+                    //Console.WriteLine($"[Categories.OnPost] modelError key={kv.Key} error={err.ErrorMessage}");
+                //}
             }
             if (!ModelState.IsValid)
             {
                 BuildTree(companyId);
-                Console.WriteLine($"[Categories.OnPost] invalid model, categoriesCount={Categories.Count}");
+                //Console.WriteLine($"[Categories.OnPost] invalid model, categoriesCount={Categories.Count}");
                 return Page();
             }
 
@@ -130,7 +130,7 @@ namespace DomusMercatorisDotnetMVC.Pages
             {
                 var exists = _db.Categories.Any(c => c.CompanyId == companyId && c.Id == Input.ParentId.Value);
                 if (exists) parentId = Input.ParentId.Value;
-                Console.WriteLine($"[Categories.OnPost] parentExists={exists}, parentId={(parentId.HasValue ? parentId.Value.ToString() : "null")}");
+                //Console.WriteLine($"[Categories.OnPost] parentExists={exists}, parentId={(parentId.HasValue ? parentId.Value.ToString() : "null")}");
             }
 
             var entity = new Category
@@ -140,7 +140,7 @@ namespace DomusMercatorisDotnetMVC.Pages
                 CompanyId = companyId,
                 ParentId = parentId
             };
-            Console.WriteLine($"[Categories.OnPost] saving CompanyId={companyId}, Name='{entity.Name}', ParentId={(entity.ParentId.HasValue ? entity.ParentId.Value.ToString() : "null")}");
+            //Console.WriteLine($"[Categories.OnPost] saving CompanyId={companyId}, Name='{entity.Name}', ParentId={(entity.ParentId.HasValue ? entity.ParentId.Value.ToString() : "null")}");
             try
             {
                 _db.Categories.Add(entity);
@@ -148,18 +148,19 @@ namespace DomusMercatorisDotnetMVC.Pages
             }
             catch
             {
-                Console.WriteLine("[Categories.OnPost] save failed");
+                //Console.WriteLine("[Categories.OnPost] save failed");
                 ModelState.AddModelError(string.Empty, "Save failed.");
                 BuildTree(companyId);
                 return Page();
             }
             TempData["Message"] = "Category created.";
-            Console.WriteLine("[Categories.OnPost] save ok, redirect to /Categories");
+            //Console.WriteLine("[Categories.OnPost] save ok, redirect to /Categories");
             return RedirectToPage("/Categories");
         }
 
         public IActionResult OnPostUpdate()
         {
+            //Console.WriteLine("edit Categories worked");
             var comp = User.FindFirst("CompanyId")?.Value;
             int companyId = (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var cid)) ? cid : 0;
             var editStr = Request.Form["EditId"].ToString();
@@ -172,6 +173,7 @@ namespace DomusMercatorisDotnetMVC.Pages
                 BuildTree(companyId);
                 IsEditing = true;
                 EditId = eid;
+                //Console.WriteLine($"[Categories.OnPost] editId={eid}");
                 return Page();
             }
             if (Input.ParentId.HasValue && Input.ParentId.Value == eid)
@@ -196,6 +198,7 @@ namespace DomusMercatorisDotnetMVC.Pages
             entity.Name = Input.Name;
             entity.Description = Input.Description;
             entity.ParentId = parentId;
+            //entity.Id = eid;
             _db.SaveChanges();
             TempData["Message"] = "Category updated.";
             return RedirectToPage("/Categories");
