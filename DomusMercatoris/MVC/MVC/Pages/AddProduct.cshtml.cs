@@ -8,9 +8,9 @@ using DomusMercatorisDotnetMVC.Dto.ProductDto;
 using DomusMercatorisDotnetMVC.Services;
 using DomusMercatoris.Data;
 using DomusMercatoris.Core.Entities;
-using System.Linq;
 using DomusMercatoris.Service.Services;
 using DomusMercatoris.Service.DTOs;
+using Microsoft.EntityFrameworkCore;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
@@ -39,7 +39,7 @@ namespace DomusMercatorisDotnetMVC.Pages
             _brandService = brandService;
             _clusteringService = clusteringService;
         }
-
+        //aşağıdaki task yapısında await ile a senkron yapıldı ve veri tabanının kategori tespitinde kitlenmesi önlendi
         public async Task<IActionResult> OnPostGenerateDescription(List<IFormFile> files)
         {
             var comp = User.FindFirst("CompanyId")?.Value;
@@ -53,7 +53,7 @@ namespace DomusMercatorisDotnetMVC.Pages
                 var idClaim = User.FindFirst("UserId")?.Value;
                 if (!string.IsNullOrEmpty(idClaim) && long.TryParse(idClaim, out var userId))
                 {
-                    var me = _db.Users.SingleOrDefault(u => u.Id == userId);
+                    var me = await _db.Users.SingleOrDefaultAsync(u => u.Id == userId);
                     if (me != null) companyId = me.CompanyId;
                 }
             }
@@ -88,16 +88,16 @@ namespace DomusMercatorisDotnetMVC.Pages
                 var idClaim = User.FindFirst("UserId")?.Value;
                 if (!string.IsNullOrEmpty(idClaim) && long.TryParse(idClaim, out var userId))
                 {
-                    var me = _db.Users.SingleOrDefault(u => u.Id == userId);
+                    var me = await _db.Users.SingleOrDefaultAsync(u => u.Id == userId);
                     if (me != null) companyId = me.CompanyId;
                 }
             }
             if (companyId > 0)
             {
-                Categories = _db.Categories.Where(c => c.CompanyId == companyId)
+                Categories = await _db.Categories.Where(c => c.CompanyId == companyId)
                     .OrderBy(c => c.ParentId.HasValue)
                     .ThenBy(c => c.Name)
-                    .ToList();
+                    .ToListAsync();
                 
                 Brands = await _brandService.GetBrandsByCompanyAsync(companyId);
             }

@@ -51,10 +51,11 @@ namespace DomusMercatorisDotnetMVC.Pages
             {
                 return RedirectToPage("/Products");
             }
-            Categories = _db.Categories.Where(c => c.CompanyId == companyId)
+            Categories = await _db.Categories.Where(c => c.CompanyId == companyId) 
+            //            ^ await ile a senkron yapıldı ve veri tabanının kategori tespitinde kitlenmesi önlendi
                 .OrderBy(c => c.ParentId.HasValue)
                 .ThenBy(c => c.Name)
-                .ToList();
+                .ToListAsync();
             
             Brands = await _brandService.GetBrandsByCompanyAsync(companyId);
 
@@ -91,10 +92,10 @@ namespace DomusMercatorisDotnetMVC.Pages
             var comp = User.FindFirst("CompanyId")?.Value;
             var companyId = (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var c)) ? c : 0;
             Existing = _productService.GetByIdInCompany(id, companyId);
-            Categories = _db.Categories.Where(c => c.CompanyId == companyId)
-                .OrderBy(c => c.ParentId.HasValue)
+            Categories = await _db.Categories.Where(c => c.CompanyId == companyId)
+                .OrderBy(c => c.ParentId.HasValue) //ParentId genelde "Üst Kategori"yi tutar. Eğer null ise o bir Ana Kategoridir. Doluysa (HasValue true ise) bir Alt Kategoridir.
                 .ThenBy(c => c.Name)
-                .ToList();
+                .ToListAsync();
             
             Brands = await _brandService.GetBrandsByCompanyAsync(companyId);
 
