@@ -1,6 +1,7 @@
 import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ProductService } from '../../services/product.service';
+import { SearchService } from '../../services/search.service';
 import { Product } from '../../models/product.model';
 import { ProductListComponent } from '../../components/product-list/product-list.component';
 import { ProductDetailComponent } from '../../components/product-detail/product-detail.component';
@@ -14,6 +15,7 @@ import { ProductDetailComponent } from '../../components/product-detail/product-
 })
 export class SearchComponent {
   productService = inject(ProductService);
+  searchService = inject(SearchService);
 
   selectedProduct = signal<Product | null>(null);
   selectedClusterId = signal<number | null>(null);
@@ -35,10 +37,10 @@ export class SearchComponent {
     const file = input.files[0];
     this.isClassifying.set(true);
     this.classifyError.set(null);
-    this.productService.classifyImage(file).subscribe({
+    this.searchService.classifyImage(file).subscribe({
       next: (res) => {
         this.selectedClusterId.set(res.clusterId);
-        this.productService.fetchProductsByCluster(res.clusterId, 1, this.itemsPerPage, this.productService.selectedCompany());
+        this.searchService.fetchProductsByCluster(res.clusterId, 1, this.itemsPerPage, this.productService.selectedCompany());
         this.isClassifying.set(false);
       },
       error: () => {

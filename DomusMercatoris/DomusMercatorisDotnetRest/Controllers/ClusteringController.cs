@@ -24,10 +24,18 @@ namespace DomusMercatorisDotnetRest.Controllers
             public string? ClusterName { get; set; }
             public int Version { get; set; }
         }
+        
+        public class FileUploadDto
+        {
+            public IFormFile? File { get; set; }
+        }
 
         [HttpPost("classify")]
-        public async Task<ActionResult<ClassificationResultDto>> Classify([FromForm] IFormFile file)
+        [ApiExplorerSettings(IgnoreApi = true)]
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<ClassificationResultDto>> Classify([FromForm] FileUploadDto form)
         {
+            var file = form.File;
             if (file == null || file.Length == 0) return BadRequest("File is required.");
             var isImageMime = file.ContentType != null && file.ContentType.StartsWith("image/");
             var ext = System.IO.Path.GetExtension(file.FileName)?.ToLowerInvariant();

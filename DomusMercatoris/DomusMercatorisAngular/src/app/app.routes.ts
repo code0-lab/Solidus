@@ -7,6 +7,7 @@ import { SearchComponent } from './pages/search/search.component';
 export const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'search', component: SearchComponent },
+  { path: 'products/search', component: SearchComponent },
   { path: 'profile', component: ProfileComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: '' }
 ];

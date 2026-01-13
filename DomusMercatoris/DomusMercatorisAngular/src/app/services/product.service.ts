@@ -69,9 +69,8 @@ export class ProductService {
           this.totalCount.set(data.totalCount);
         },
         error: () => {
-          const sample = this.getSampleProducts();
-          this.products.set(sample);
-          this.totalCount.set(sample.length);
+          this.products.set([]);
+          this.totalCount.set(0);
         }
       });
   }
@@ -110,7 +109,56 @@ export class ProductService {
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: (data) => {
-          // Process products (e.g., set default images or formatting)
+          this.applyProductPage(data, append);
+        },
+        error: () => {
+          this.products.set([]);
+          this.totalCount.set(0);
+        }
+      });
+  }
+ 
+  applyProductPage(data: PaginatedResult<Product>, append: boolean = false) {
+    const processed = data.items.map(p => ({
+      ...p,
+      imageUrl: this.toAbsoluteImageUrl(p.images && p.images.length > 0 ? p.images[0] : undefined),
+      imageUrls: p.images && p.images.length > 0 
+        ? p.images.map(img => this.toAbsoluteImageUrl(img)) 
+        : [this.toAbsoluteImageUrl(undefined)],
+      priceText: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(p.price),
+      bg: this.getRandomColor(),
+      variants: p.variants ? p.variants.map(v => ({
+        ...v,
+        id: v.id,
+        price: v.price,
+        isCustomizable: v.isCustomizable,
+        color: v.color,
+        coverImage: this.toAbsoluteImageUrl(v.coverImage)
+      })) : []
+    }));
+    if (append) {
+      this.products.update(current => [...current, ...processed]);
+    } else {
+      this.products.set(processed);
+    }
+    this.totalCount.set(data.totalCount);
+  }
+
+  searchProductsByName(query: string, pageNumber: number = 1, pageSize: number = 9, companyId?: number | null): void {
+    const url = `${this.apiUrl}/products/search`;
+    let params = new HttpParams()
+      .set('query', query)
+      .set('pageNumber', pageNumber)
+      .set('pageSize', pageSize);
+    if (companyId) {
+      params = params.set('companyId', companyId);
+    }
+    this.queryImageUrl.set(null);
+    this.loading.set(true);
+    this.http.get<PaginatedResult<Product>>(url, { params })
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (data) => {
           const processed = data.items.map(p => ({
             ...p,
             imageUrl: this.toAbsoluteImageUrl(p.images && p.images.length > 0 ? p.images[0] : undefined),
@@ -128,20 +176,12 @@ export class ProductService {
               coverImage: this.toAbsoluteImageUrl(v.coverImage)
             })) : []
           }));
-          
-          if (append) {
-            this.products.update(current => [...current, ...processed]);
-          } else {
-            this.products.set(processed);
-          }
-          
+          this.products.set(processed);
           this.totalCount.set(data.totalCount);
         },
         error: () => {
-          // If API fails, fall back to sample products (simulating a page)
-          const sample = this.getSampleProducts();
-          this.products.set(sample);
-          this.totalCount.set(sample.length); // Assume single page for sample
+          this.products.set([]);
+          this.totalCount.set(0);
         }
       });
   }
@@ -174,33 +214,4 @@ export class ProductService {
     return palette[Math.floor(Math.random() * palette.length)];
   }
 
-  private getSampleProducts(): Product[] {
-    // Return dummy data if API fails or is empty
-    const baseProducts = [
-        { id: 1, name: 'Sample Product A', sku: 'SAMPLE-A', price: 19.9, images: [] },
-        { id: 2, name: 'Sample Product B', sku: 'SAMPLE-B', price: 29.9, images: [] },
-        { id: 3, name: 'Sample Product C', sku: 'SAMPLE-C', price: 39.9, images: [] },
-        { id: 4, name: 'Sample Product D', sku: 'SAMPLE-D', price: 49.9, images: [] }
-    ];
-
-    // Generate more products for pagination testing (3x3 = 9 per page)
-    const products: any[] = [];
-    for (let i = 0; i < 3; i++) {
-      baseProducts.forEach(p => {
-        products.push({
-          ...p,
-          id: products.length + 1,
-          name: `${p.name} (${products.length + 1})`,
-          sku: `${p.sku}-${products.length + 1}`
-        });
-      });
-    }
-
-    return products.map((p) => ({
-        ...p,
-        priceText: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(p.price),
-        imageUrl: this.toAbsoluteImageUrl(undefined),
-        bg: this.getRandomColor(),
-      }));
-  }
 }

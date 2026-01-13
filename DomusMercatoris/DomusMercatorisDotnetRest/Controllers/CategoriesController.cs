@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using DomusMercatoris.Data;
-using DomusMercatoris.Core.Entities;
 using DomusMercatoris.Service.DTOs;
-using Microsoft.EntityFrameworkCore;
+using DomusMercatorisDotnetRest.Services;
 
 namespace DomusMercatorisDotnetRest.Controllers
 {
@@ -10,46 +8,28 @@ namespace DomusMercatorisDotnetRest.Controllers
     [Route("api/[controller]")]
     public class CategoriesController : ControllerBase
     {
-        private readonly DomusDbContext _db;
+        private readonly CategoryService _categoryService;
 
-        public CategoriesController(DomusDbContext db)
+        public CategoriesController(CategoryService categoryService)
         {
-            _db = db;
+            _categoryService = categoryService;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CategoryDto>>> GetAll()
         {
-            var list = await _db.Categories
-                .Include(c => c.Children)
-                .ToListAsync();
-            
-            var dtoList = list.Select(MapToDto).ToList();
-            return Ok(dtoList);
+            var categories = await _categoryService.GetAllAsync();
+            return Ok(categories);
         }
 
         [HttpGet("{id:int}")]
         public async Task<ActionResult<CategoryDto>> GetById(int id)
         {
-            var category = await _db.Categories
-                .Include(c => c.Children)
-                .FirstOrDefaultAsync(c => c.Id == id);
-
+            var category = await _categoryService.GetByIdAsync(id);
             if (category == null) return NotFound();
-            
-            return Ok(MapToDto(category));
+            return Ok(category);
         }
 
-        private static CategoryDto MapToDto(Category category)
-        {
-            return new CategoryDto
-            {
-                Id = category.Id,
-                Name = category.Name,
-                Description = category.Description,
-                ParentId = category.ParentId,
-                Children = category.Children.Select(MapToDto).ToList()
-            };
-        }
+        // Manual mapping removed in favor of AutoMapper profiles
     }
 }

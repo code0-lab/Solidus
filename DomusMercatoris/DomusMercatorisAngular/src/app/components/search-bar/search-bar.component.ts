@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ProductService } from '../../services/product.service';
+import { SearchService } from '../../services/search.service';
 import { Subject, takeUntil } from 'rxjs';
 
 // Extend Window interface to include heic2any if needed, but module import is better.
@@ -17,6 +18,7 @@ declare module 'heic2any';
 })
 export class SearchBarComponent implements OnDestroy {
   private productService = inject(ProductService);
+  private searchService = inject(SearchService);
   private router = inject(Router);
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
@@ -39,7 +41,10 @@ export class SearchBarComponent implements OnDestroy {
   }
 
   goSearch() {
-    this.router.navigate(['/search']);
+    const q = this.query?.trim();
+    if (!q || q.length === 0) return;
+    this.searchService.searchProductsByName(q, 1, this.itemsPerPage, this.productService.selectedCompany());
+    this.router.navigate(['/products/search']);
   }
 
   togglePanel() {
@@ -115,14 +120,14 @@ export class SearchBarComponent implements OnDestroy {
     
     this.isClassifying = true;
     this.classifyError = null;
-    this.productService.classifyImage(file).pipe(takeUntil(this.destroy$)).subscribe({
+    this.searchService.classifyImage(file).pipe(takeUntil(this.destroy$)).subscribe({
       next: (res) => {
         if (this.destroyed) return;
         this.selectedClusterId = res.clusterId;
-        this.productService.fetchProductsByCluster(res.clusterId, 1, this.itemsPerPage, this.productService.selectedCompany());
+        this.searchService.fetchProductsByCluster(res.clusterId, 1, this.itemsPerPage, this.productService.selectedCompany());
         this.isClassifying = false;
         this.panelOpen = false; // Close the panel on success
-        this.router.navigate(['/search']);
+        this.router.navigate(['/products/search']);
       },
       error: (err) => {
         if (this.destroyed) return;

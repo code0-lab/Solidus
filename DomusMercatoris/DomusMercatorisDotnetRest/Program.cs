@@ -13,6 +13,7 @@ using DomusMercatoris.Data.Repositories;
 using DomusMercatoris.Service.Services;
 using DomusMercatoris.Service.Mappings;
 using DomusMercatorisDotnetRest.Infrastructure;
+using DomusMercatorisDotnetRest.Services;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,6 +24,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddAutoMapper(cfg => 
 {
     cfg.AddProfile<MappingProfile>();
+    cfg.AddProfile<ApiMappingProfile>();
 });
 
 // Repositories
@@ -34,6 +36,12 @@ builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<BrandService>();
 builder.Services.AddScoped<VariantProductService>();
 builder.Services.AddScoped<CargoService>();
+builder.Services.AddScoped<ProductService>();
+builder.Services.AddScoped<CategoryService>();
+builder.Services.AddScoped<CompanyService>();
+builder.Services.AddScoped<SalesService>();
+builder.Services.AddScoped<ModeratorService>();
+builder.Services.AddScoped<UsersService>();
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
@@ -43,49 +51,7 @@ builder.Services.AddControllers()
 builder.Services.AddDbContext<DomusDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "DomusMercatoris API", Version = "v1" });
-    var xmlFiles = new[]
-    {
-        $"{Assembly.GetExecutingAssembly().GetName().Name}.xml",
-        "DomusMercatoris.Service.xml",
-        "DomusMercatoris.Core.xml"
-    };
-    foreach (var xml in xmlFiles)
-    {
-        var p = Path.Combine(AppContext.BaseDirectory, xml);
-        if (File.Exists(p))
-        {
-            c.IncludeXmlComments(p, includeControllerXmlComments: true);
-        }
-    }
-    
-    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-    {
-        Description = "Please enter token",
-        Name = "Authorization",
-        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
-        BearerFormat = "JWT",
-        Scheme = "bearer"
-    });
-
-    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
-    {
-        {
-            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-            {
-                Reference = new Microsoft.OpenApi.Models.OpenApiReference
-                {
-                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            new string[] {}
-        }
-    });
-});
+builder.Services.AddDomusSwagger();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular", policy =>
@@ -95,30 +61,7 @@ builder.Services.AddCors(options =>
               .AllowCredentials());
 });
 
-// JWT Authentication Configuration
-var jwtSettings = builder.Configuration.GetSection("Jwt");
-var key = Encoding.ASCII.GetBytes(jwtSettings["Key"]!);
-
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.RequireHttpsMetadata = false; // Dev environment
-    options.SaveToken = true;
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(key),
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidIssuer = jwtSettings["Issuer"],
-        ValidAudience = jwtSettings["Audience"],
-        ClockSkew = TimeSpan.Zero // Immediate expiration
-    };
-});
+builder.Services.AddJwtAuth(builder.Configuration);
 
 var app = builder.Build();
 
@@ -132,7 +75,17 @@ if (app.Environment.IsDevelopment())
     {
         foreach (var url in app.Urls)
         {
-            Console.WriteLine($"Swagger: {url.TrimEnd('/')}/swagger");
+            try
+            {
+                var uri = new Uri(url);
+                var host = uri.Host == "0.0.0.0" ? "localhost" : uri.Host;
+                var swaggerUrl = $"{uri.Scheme}://{host}:{uri.Port}/swagger";
+                Console.WriteLine($"Swagger: {swaggerUrl}");
+            }
+            catch
+            {
+                Console.WriteLine($"Swagger: {url.TrimEnd('/')}/swagger");
+            }
         }
     });
 }

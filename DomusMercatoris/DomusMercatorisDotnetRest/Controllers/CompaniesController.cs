@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using DomusMercatoris.Data;
-using DomusMercatoris.Core.Entities;
 using DomusMercatoris.Service.DTOs;
-using Microsoft.EntityFrameworkCore;
+using DomusMercatorisDotnetRest.Services;
 
 namespace DomusMercatorisDotnetRest.Controllers
 {
@@ -10,37 +8,17 @@ namespace DomusMercatorisDotnetRest.Controllers
     [Route("api/[controller]")]
     public class CompaniesController : ControllerBase
     {
-        private readonly DomusDbContext _db;
+        private readonly CompanyService _companyService;
 
-        public CompaniesController(DomusDbContext db)
+        public CompaniesController(CompanyService companyService)
         {
-            _db = db;
+            _companyService = companyService;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CompanyDto>>> GetAll()
         {
-            // Auto-seed if empty (for convenience in dev)
-            if (!await _db.Companies.AnyAsync())
-            {
-                var defaultCompany = new Company
-                {
-                    Name = "Domus Mercatoris",
-                    CreatedAt = DateTime.UtcNow
-                };
-                _db.Companies.Add(defaultCompany);
-                await _db.SaveChangesAsync();
-            }
-
-            var companies = await _db.Companies
-                .OrderBy(c => c.Name)
-                .Select(c => new CompanyDto
-                {
-                    CompanyId = c.CompanyId,
-                    Name = c.Name
-                })
-                .ToListAsync();
-
+            var companies = await _companyService.GetAllAsync();
             return Ok(companies);
         }
     }
