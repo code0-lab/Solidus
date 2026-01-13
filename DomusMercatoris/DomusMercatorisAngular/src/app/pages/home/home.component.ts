@@ -34,12 +34,6 @@ export class HomeComponent {
     return Math.ceil(this.productService.totalCount() / this.itemsPerPage);
   });
 
-  pages = computed(() => {
-    const total = this.totalPages();
-    return Array.from({ length: total }, (_, i) => i + 1);
-  });
-
-
   constructor() {
     // If data is already loaded (singleton service), we might not need to fetch again, 
     // but fetching ensures freshness.
@@ -47,6 +41,7 @@ export class HomeComponent {
     this.productService.fetchCompanies();
     this.productService.fetchProducts(null, 1, this.itemsPerPage, null);
   }
+
 
 
   toggleFilter() {
@@ -58,6 +53,7 @@ export class HomeComponent {
     this.productService.fetchProducts(id, 1, this.itemsPerPage, this.productService.selectedCompany());
     this.isFilterOpen.set(false);
     this.currentPage.set(1); // Reset to first page when filtering
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   selectCompany(id: number | null) {
@@ -65,6 +61,7 @@ export class HomeComponent {
     this.productService.fetchProducts(this.productService.selectedCategory(), 1, this.itemsPerPage, id);
     this.isFilterOpen.set(false);
     this.currentPage.set(1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   onSelectProduct(product: Product) {
@@ -75,16 +72,18 @@ export class HomeComponent {
     this.selectedProduct.set(null);
   }
 
-  changePage(page: number) {
-    if (page >= 1 && page <= this.totalPages()) {
-      this.currentPage.set(page);
-      this.productService.fetchProducts(
-        this.productService.selectedCategory(), 
-        page, 
-        this.itemsPerPage,
-        this.productService.selectedCompany()
-      );
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+  loadMore() {
+    if (this.productService.loading()) return;
+    if (this.currentPage() >= this.totalPages()) return;
+    
+    const nextPage = this.currentPage() + 1;
+    this.currentPage.set(nextPage);
+    this.productService.fetchProducts(
+      this.productService.selectedCategory(), 
+      nextPage, 
+      this.itemsPerPage,
+      this.productService.selectedCompany(),
+      true
+    );
   }
 }

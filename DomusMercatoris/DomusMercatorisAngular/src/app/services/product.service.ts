@@ -1,16 +1,25 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Product, Category, Company, PaginatedResult } from '../models/product.model';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, finalize } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProductService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:5280/api';
+  
+  private get baseUrl(): string {
+    // Return current origin (e.g. http://localhost:4200 or http://172.20.10.2:4200)
+    return window.location.origin;
+  }
+
+  private get apiUrl(): string {
+    return `/api`;
+  }
 
   products = signal<Product[]>([]);
+  loading = signal<boolean>(false);
   totalCount = signal<number>(0);
   categories = signal<Category[]>([]);
   companies = signal<Company[]>([]);
@@ -83,7 +92,7 @@ export class ProductService {
       });
   }
 
-  fetchProducts(categoryId?: number | null, pageNumber: number = 1, pageSize: number = 9, companyId?: number | null): void {
+  fetchProducts(categoryId?: number | null, pageNumber: number = 1, pageSize: number = 9, companyId?: number | null, append: boolean = false): void {
     const url = categoryId 
       ? `${this.apiUrl}/products/by-category/${categoryId}`
       : `${this.apiUrl}/products`;
@@ -96,7 +105,9 @@ export class ProductService {
       params = params.set('companyId', companyId);
     }
 
+    this.loading.set(true);
     this.http.get<PaginatedResult<Product>>(url, { params })
+      .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: (data) => {
           // Process products (e.g., set default images or formatting)
@@ -117,7 +128,13 @@ export class ProductService {
               coverImage: this.toAbsoluteImageUrl(v.coverImage)
             })) : []
           }));
-          this.products.set(processed);
+          
+          if (append) {
+            this.products.update(current => [...current, ...processed]);
+          } else {
+            this.products.set(processed);
+          }
+          
           this.totalCount.set(data.totalCount);
         },
         error: () => {
@@ -134,10 +151,13 @@ export class ProductService {
     if (!img || img.length === 0) return fallback;
     try {
       const u = new URL(img);
+      // If localhost, strip domain to use proxy
+      if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') {
+         return u.pathname + u.search;
+      }
       return u.toString();
     } catch {
       // Backend maps /uploads directly from MVC project
-      const baseUrl = 'http://localhost:5280';
       
       // If path already starts with http, return it
       if (img.startsWith('http')) return img;
@@ -145,7 +165,7 @@ export class ProductService {
       // Ensure we don't have double slashes
       const cleanPath = img.startsWith('/') ? img : `/${img}`;
       
-      return `${baseUrl}${cleanPath}`;
+      return `${this.baseUrl}${cleanPath}`;
     }
   }
 

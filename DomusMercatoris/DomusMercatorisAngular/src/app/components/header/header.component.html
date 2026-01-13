@@ -1,31 +1,41 @@
 <header class="navbar">
-  <div class="brand" routerLink="/">
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px;">
-      <circle cx="12" cy="12" r="10" fill="#FFD700" stroke="black" stroke-width="2"/>
-      <circle cx="12" cy="12" r="7" stroke="black" stroke-width="1" stroke-dasharray="2 2" fill="none"/>
-      <text x="12" y="16.5" font-family="serif" font-size="14" text-anchor="middle" font-weight="bold" fill="black">S</text>
-    </svg>
-    Solidus
+  <div class="navbar-top">
+    <div class="brand" routerLink="/">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px;">
+        <circle cx="12" cy="12" r="10" fill="#FFD700" stroke="black" stroke-width="2"/>
+        <circle cx="12" cy="12" r="7" stroke="black" stroke-width="1" stroke-dasharray="2 2" fill="none"/>
+        <text x="12" y="16.5" font-family="serif" font-size="14" text-anchor="middle" font-weight="bold" fill="black">S</text>
+      </svg>
+      Solidus
+    </div>
+
+    <div class="nav-actions">
+      <button class="icon" aria-label="cart" (click)="handleCartClick()" style="position: relative;">
+        🛒
+        @if (cartService.totalCount() > 0) {
+          <span class="cart-badge">{{ cartService.totalCount() }}</span>
+        }
+      </button>
+      <button class="icon" aria-label="profile" (click)="handleProfileClick()">
+        {{ authService.currentUser() ? '👤' : 'LOGIN' }}
+      </button>
+      <button class="icon hamburger" (click)="toggleMobileMenu()">
+        ☰
+      </button>
+    </div>
   </div>
-  <nav class="nav-links">
-    <a routerLink="/">Products</a>
-    <a href="#">Collections</a>
-    <a href="#">About</a>
-  </nav>
-  <div class="nav-center">
-    <app-search-bar></app-search-bar>
+
+  <div class="nav-content" [class.open]="isMobileMenuOpen">
+    <div class="nav-center">
+      <app-search-bar></app-search-bar>
+    </div>
+    <nav class="nav-links">
+      <a routerLink="/" (click)="isMobileMenuOpen = false">Products</a>
+      <a href="#" (click)="isMobileMenuOpen = false">Collections</a>
+      <a href="#" (click)="isMobileMenuOpen = false">About</a>
+    </nav>
   </div>
-  <div class="nav-actions">
-    <button class="icon" aria-label="cart" (click)="handleCartClick()" style="position: relative;">
-      🛒
-      @if (cartService.totalCount() > 0) {
-        <span class="cart-badge">{{ cartService.totalCount() }}</span>
-      }
-    </button>
-    <button class="icon" aria-label="profile" (click)="handleProfileClick()">
-      {{ authService.currentUser() ? '👤' : 'LOGIN' }}
-    </button>
-  </div>
+
   @if (isCartOpen) {
     <div class="cart-dropdown">
       <div class="cart-header">

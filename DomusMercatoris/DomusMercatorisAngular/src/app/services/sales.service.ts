@@ -35,7 +35,15 @@ export interface SaleResponse {
 @Injectable({ providedIn: 'root' })
 export class SalesService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:5280/api';
+  
+  private get baseUrl(): string {
+    const host = window.location.hostname;
+    return `http://${host}:5280`;
+  }
+
+  private get apiUrl(): string {
+    return `${this.baseUrl}/api`;
+  }
 
   checkout(payload: CheckoutPayload): Observable<SaleResponse> {
     return this.http.post<SaleResponse>(`${this.apiUrl}/sales/checkout`, payload);

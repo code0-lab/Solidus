@@ -33,35 +33,15 @@
   } @else {
     <app-product-list 
       [products]="paginatedProducts()" 
-      (selectProduct)="onSelectProduct($event)">
+      (selectProduct)="onSelectProduct($event)"
+      (loadMore)="loadMore()">
     </app-product-list>
+  }
 
-    @if (totalPages() > 1) {
-      <div class="pagination">
-        <button 
-          class="page-btn prev" 
-          [disabled]="currentPage() === 1"
-          (click)="changePage(currentPage() - 1)">
-          ❮
-        </button>
-        
-        @for (page of pages(); track page) {
-          <button 
-            class="page-btn number" 
-            [class.active]="currentPage() === page"
-            (click)="changePage(page)">
-            {{ page }}
-          </button>
-        }
-
-        <button 
-          class="page-btn next" 
-          [disabled]="currentPage() === totalPages()"
-          (click)="changePage(currentPage() + 1)">
-          ❯
-        </button>
-      </div>
-    }
+  @if (productService.loading()) {
+    <div class="loading-overlay">
+      <p>Loading more...</p>
+    </div>
   }
 </section>
 

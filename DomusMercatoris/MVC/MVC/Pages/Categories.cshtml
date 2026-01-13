@@ -35,7 +35,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Parent Category (Optional)</label>
-                            @{ Func<DomusMercatoris.Core.Entities.Category, int> depth = (DomusMercatoris.Core.Entities.Category c) => {
+                            @{ Func<Category, int> depth = (Category c) => {
                                     var d = 0; var cur = c; var all = Model.Categories;
                                     while (cur.ParentId.HasValue)
                                     {

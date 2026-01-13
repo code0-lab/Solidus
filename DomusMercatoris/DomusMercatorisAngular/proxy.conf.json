@@ -4,5 +4,17 @@
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug"
+  },
+  "/uploads": {
+    "target": "http://localhost:5280",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/images": {
+    "target": "http://localhost:5280",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
   }
 }

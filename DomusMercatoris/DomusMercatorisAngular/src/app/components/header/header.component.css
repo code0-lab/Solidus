@@ -5,74 +5,44 @@
   width: 100%;
   box-sizing: border-box;
   z-index: 100;
-  display: flex;
-  align-items: center;
   background: white;
   padding: 0 10px;
-  height: 24px;
   border-bottom: 1px solid black;
   box-shadow: none;
   font-family: var(--sys-font-family);
+  display: flex;
+  flex-direction: column;
+}
+
+.navbar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 48px;
+  width: 100%;
 }
 
 .brand {
   font-weight: bold;
-  padding: 0 10px;
+  padding: 0 5px;
   margin-right: 10px;
   cursor: pointer;
   display: flex;
   align-items: center;
-}
-
-
-.nav-center {
-  flex-grow: 1;
-  display: flex;
-  justify-content: flex-end; /* Push search to right or keep hidden? Let's keep it visible but styled */
-  margin-right: 10px;
-}
-
-.search {
-  height: 18px;
-  border: 1px solid black;
-  border-radius: 0;
-  padding: 0 4px;
-  font-size: 12px;
-  width: 150px;
-  font-family: var(--sys-font-family);
-}
-
-.nav-links {
-  display: flex;
-}
-
-.nav-links a {
-  text-decoration: none;
-  color: black;
-  background: transparent;
-  padding: 2px 10px;
-  border-radius: 0;
-  font-size: 13px;
-  line-height: 20px;
-}
-
-.nav-links a:hover {
-  background: black;
-  color: white;
+  font-size: 16px;
 }
 
 .nav-actions {
   display: flex;
-  gap: 5px;
-  margin-left: 10px;
+  gap: 2px;
+  align-items: center;
 }
 
 .icon {
-  min-width: 20px;
-  height: 20px;
-  font-size: 12px;
-  line-height: 18px;
-  padding: 0 5px;
+  min-width: 36px;
+  height: 36px;
+  font-size: 18px;
+  padding: 0;
   border: none;
   background: transparent;
   box-shadow: none;
@@ -80,24 +50,82 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  border-radius: 4px;
 }
 
 .icon:active {
-  background: black;
-  color: white;
+  background: #eee;
+  color: black;
 }
 
+.hamburger {
+  display: flex;
+  font-size: 20px;
+}
+
+/* Nav Content (Search + Links) */
+.nav-content {
+  display: none;
+  flex-direction: column;
+  width: 100%;
+  padding-bottom: 10px;
+  background: white;
+  border-top: 1px solid #f0f0f0;
+}
+
+.nav-content.open {
+  display: flex;
+}
+
+.nav-center {
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+}
+
+.search {
+  height: 36px;
+  border: 1px solid black;
+  border-radius: 4px;
+  padding: 0 10px;
+  font-size: 16px; /* Better for mobile input to avoid zoom */
+  width: 100%;
+  font-family: var(--sys-font-family);
+}
+
+.nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: black;
+  background: transparent;
+  padding: 12px 15px;
+  font-size: 16px;
+  line-height: 24px;
+  text-align: left;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.nav-links a:hover {
+  background: #f9f9f9;
+}
+
+/* Cart Badge */
 .cart-badge {
   position: absolute;
-  top: -2px;
-  right: -2px;
+  top: 2px;
+  right: 2px;
   background: red;
   color: white;
   border-radius: 50%;
-  padding: 0 4px;
-  font-size: 9px;
-  min-width: 14px;
-  height: 14px;
+  padding: 0;
+  font-size: 10px;
+  min-width: 16px;
+  height: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -105,27 +133,30 @@
   border: 1px solid white;
 }
 
+/* Cart Dropdown */
 .cart-dropdown {
   position: absolute;
-  top: 24px;
+  top: 50px;
   right: 10px;
-  width: 280px;
+  width: 300px;
+  max-width: 95vw;
   background: white;
   border: 1px solid black;
-  box-shadow: 2px 2px 0 black;
+  box-shadow: 4px 4px 0 rgba(0,0,0,0.1);
   z-index: 200;
 }
 
 .cart-header {
   display: flex;
   justify-content: space-between;
-  padding: 6px 8px;
-  border-bottom: 1px solid black;
+  padding: 10px 15px;
+  border-bottom: 1px solid #eee;
   font-weight: bold;
+  background: #f9f9f9;
 }
 
 .cart-items {
-  max-height: 240px;
+  max-height: 300px;
   overflow-y: auto;
 }
 
@@ -133,65 +164,146 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 8px;
-  border-bottom: 1px dotted black;
+  padding: 10px 15px;
+  border-bottom: 1px solid #eee;
 }
 
 .cart-item .title {
-  font-size: 12px;
+  font-size: 14px;
   color: black;
-  margin-right: 6px;
+  margin-right: 10px;
+  flex: 1;
 }
 
 .cart-item .controls {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .cart-item .controls button {
-  border: 1px solid black;
+  border: 1px solid #ccc;
   background: white;
-  min-width: 22px;
-  height: 22px;
+  min-width: 28px;
+  height: 28px;
   cursor: pointer;
-  box-shadow: 1px 1px 0 black;
-  font-family: var(--sys-font-family);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .cart-item .controls .qty {
-  min-width: 20px;
+  min-width: 24px;
   text-align: center;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .cart-item .controls .remove {
-  color: black;
+  color: #ff4444;
+  border-color: #ffcccc;
+  background: #fff0f0;
 }
 
 .empty {
-  padding: 10px;
+  padding: 20px;
   text-align: center;
-  color: #555;
+  color: #666;
 }
 
 .cart-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 8px;
-  border-top: 1px solid black;
+  padding: 15px;
+  border-top: 1px solid #eee;
+  background: #f9f9f9;
 }
 
 .cart-footer .total {
   font-weight: bold;
+  font-size: 16px;
 }
 
 .cart-footer .clear {
-  border: 1px solid black;
+  border: 1px solid #999;
   background: white;
-  padding: 4px 8px;
+  padding: 6px 15px;
   cursor: pointer;
-  box-shadow: 1px 1px 0 black;
-  font-family: var(--sys-font-family);
+  border-radius: 4px;
+}
+
+/* Desktop Styles */
+@media (min-width: 768px) {
+  .navbar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    padding: 0 20px;
+  }
+  
+  .navbar-top {
+    display: contents;
+  }
+
+  .brand {
+    order: 1;
+    margin-right: 30px;
+    padding: 0;
+  }
+  
+  .nav-content {
+    display: flex !important;
+    flex-direction: row;
+    align-items: center;
+    flex-grow: 1;
+    justify-content: space-between;
+    border-top: none;
+    padding-bottom: 0;
+    order: 2;
+    background: transparent;
+  }
+
+  .nav-links {
+    flex-direction: row;
+    gap: 20px;
+    margin-right: auto;
+  }
+
+  .nav-links a {
+    padding: 8px 12px;
+    font-size: 15px;
+    border-bottom: none;
+    border-radius: 4px;
+  }
+
+  .nav-links a:hover {
+    background: #f0f0f0;
+  }
+
+  .nav-center {
+    padding: 0;
+    margin: 0 20px;
+    width: auto;
+  }
+
+  .search {
+    width: 250px;
+    height: 32px;
+    font-size: 14px;
+  }
+  
+  .nav-actions {
+    order: 3;
+    margin-left: 0;
+  }
+
+  .hamburger {
+    display: none;
+  }
+
+  .cart-dropdown {
+    top: 60px;
+  }
 }

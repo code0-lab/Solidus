@@ -1,33 +1,23 @@
-.product-grid {
+.list-container {
+  height: calc(100vh - 120px); /* Adjusted for header height */
+  width: 100%;
+}
+
+.viewport {
+  height: 100%;
+  width: 100%;
+}
+
+.product-row {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 20px;
   padding: 10px;
+  box-sizing: border-box; /* Ensure padding is included in height calculation if needed, but here it adds to height */
 }
 
-@media (min-width: 768px) {
-  .product-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (max-width: 360px) {
-  .product-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-  .card-image {
-    height: 120px;
-  }
-  .card-content h3 {
-    font-size: 11px;
-  }
-  .price {
-    font-size: 11px;
-  }
-}
-
+/* Ensure card height is consistent for virtual scroll itemSize calculation */
 .product-card {
+  height: 300px; /* Fixed height for cards (Desktop default) */
   background: white;
   border: 1px solid black;
   box-shadow: 2px 2px 0 black;
@@ -35,6 +25,7 @@
   flex-direction: column;
   cursor: pointer;
   padding: 5px;
+  box-sizing: border-box;
 }
 
 .product-card:active {
@@ -107,10 +98,64 @@
   margin-bottom: 5px;
   font-size: 12px;
   margin-top: 0;
-  text-transform: none; /* Keep original case or make uppercase? Let's keep normal */
+  text-transform: none;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .price {
   font-weight: bold;
   font-size: 12px;
+}
+
+/* Responsive adjustments */
+
+/* Mobile Grid (2 cols) */
+@media (max-width: 767px) and (min-width: 400px) {
+  .product-row {
+    gap: 10px;
+    padding: 10px; /* Keeps row height consistent with calculation */
+  }
+
+  .product-card {
+    height: 270px;
+  }
+  
+  .card-image {
+    height: 130px;
+  }
+  
+  .card-image img {
+    max-height: 120px;
+  }
+}
+
+/* Tiny Screens (1 col) */
+@media (max-width: 399px) {
+  .product-row {
+    padding: 10px;
+  }
+
+  .product-card {
+    height: 330px; /* Larger card for single column */
+  }
+  
+  .card-image {
+    height: 180px;
+  }
+  
+  .card-image img {
+    max-height: 160px;
+  }
+  
+  .card-content h3 {
+    font-size: 14px;
+  }
+  
+  .price {
+    font-size: 14px;
+  }
 }

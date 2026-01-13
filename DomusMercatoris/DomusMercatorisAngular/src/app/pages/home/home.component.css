@@ -94,45 +94,23 @@
   background: #e8e8e8;
 }
 
-/* Pagination Styles */
-.pagination {
-  display: flex;
-  justify-content: center;
-  gap: 5px;
-  margin-top: 20px;
-  margin-bottom: 20px;
+.loading-overlay {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 10px 20px;
+  border-radius: 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  z-index: 1000;
 }
 
-.page-btn {
-  background: white;
-  border: 1px solid black;
-  min-width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-family: var(--sys-font-family);
-  font-size: 14px;
-  box-shadow: 2px 2px 0 black;
-}
-
-.page-btn:active {
-  transform: translate(2px, 2px);
-  box-shadow: none;
-}
-
-.page-btn.active {
-  background: black;
-  color: white;
-  font-weight: bold;
-}
-
-.page-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: 2px 2px 0 black;
+.loading-overlay p {
+  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+  font-style: italic;
 }
 
 @media (max-width: 360px) {
@@ -141,10 +119,5 @@
   }
   .shop-header {
     margin-bottom: 0.5rem;
-  }
-  .page-btn {
-    min-width: 26px;
-    height: 26px;
-    font-size: 12px;
   }
 }

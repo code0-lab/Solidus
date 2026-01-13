@@ -9,8 +9,20 @@ import { jwtDecode } from 'jwt-decode';
 })
 export class AuthService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:5280/api/users';
-  private companiesUrl = 'http://localhost:5280/api/companies';
+  
+  private get baseUrl(): string {
+    const host = window.location.hostname;
+    return `http://${host}:5280`;
+  }
+
+  private get apiUrl(): string {
+    return `${this.baseUrl}/api/users`;
+  }
+
+  private get companiesUrl(): string {
+    return `${this.baseUrl}/api/companies`;
+  }
+
   private readonly USER_KEY = 'user';
 
   // Signals for state management
