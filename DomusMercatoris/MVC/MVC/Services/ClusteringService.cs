@@ -40,19 +40,9 @@ namespace DomusMercatorisDotnetMVC.Services
 
         public async Task ProcessAllProductsFeaturesAsync()
         {
-            // Get all products
-            var allProducts = await _context.Products.ToListAsync();
-
-            // Get all product IDs that have features
-            var existingFeatureProductIds = await _context.ProductFeatures
-                .Select(f => f.ProductId)
+            var productsToProcess = await _context.Products
+                .Where(p => !_context.ProductFeatures.Any(f => f.ProductId == p.Id))
                 .ToListAsync();
-            
-            var existingSet = new HashSet<long>(existingFeatureProductIds);
-            
-            var productsToProcess = allProducts
-                .Where(p => !existingSet.Contains(p.Id))
-                .ToList();
 
             foreach (var p in productsToProcess)
             {
