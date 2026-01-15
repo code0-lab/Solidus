@@ -54,6 +54,7 @@
                         <div class="mb-3">
                             <label asp-for="Input.ProductClusterIds" class="form-label">Product Clusters</label>
                             <select asp-for="Input.ProductClusterIds" class="form-select" multiple style="height: 150px;">
+                                <option value="0">-- null -- (no cluster)</option>
                                 @foreach (var cluster in Model.ProductClusters)
                                 {
                                     <option value="@cluster.Id">@cluster.Name (v@(cluster.Version))</option>

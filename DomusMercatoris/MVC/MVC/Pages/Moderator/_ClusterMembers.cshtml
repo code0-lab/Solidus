@@ -5,7 +5,7 @@
     @foreach (var member in Model)
     {
         <div class="col-6 col-md-3 col-lg-2">
-            <div class="card h-100 border-3 border-dark rounded-0 shadow-sm" style="box-shadow: 4px 4px 0 #000 !important;">
+            <div class="card h-100 border-3 border-dark rounded-0 shadow-sm cluster-member-card" draggable="true" data-product-id="@member.ProductId" data-cluster-id="@member.ProductClusterId" style="box-shadow: 4px 4px 0 #000 !important; cursor: grab;">
                 @if (member.Product.Images != null && member.Product.Images.Any())
                 {
                     <img src="@member.Product.Images.First()" class="card-img-top rounded-0" style="height: 100px; object-fit: cover; border-bottom: 3px solid #000;" loading="lazy" />

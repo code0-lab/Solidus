@@ -1,6 +1,13 @@
 <nav class="navbar navbar-expand-lg brutalist-navbar">
     <div class="container-fluid">
-        <a class="navbar-brand d-flex align-items-center gap-2" href="/Dashboard">
+        @{
+            var brandLink = "/Dashboard";
+            if (User.IsInRole("Moderator") || User.IsInRole("Rex"))
+            {
+                brandLink = "/Moderator/Index";
+            }
+        }
+        <a class="navbar-brand d-flex align-items-center gap-2" href="@brandLink">
             <i class="bi bi-square-fill"></i>
             <span class="fw-bold text-uppercase tracking-wider">Domus Mercatoris</span>
         </a>

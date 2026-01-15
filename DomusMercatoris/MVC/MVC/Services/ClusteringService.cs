@@ -21,6 +21,7 @@ namespace DomusMercatorisDotnetMVC.Services
         Task ProcessAllProductsFeaturesAsync();
         Task<List<float>?> ExtractFeaturesFromFilesAsync(List<Microsoft.AspNetCore.Http.IFormFile> files);
         Task<ProductCluster?> FindNearestClusterAsync(List<float> featureVector);
+        Task SplitClusterAsync(int clusterId, int numberOfSubClusters = 2);
     }
 
     public class ClusteringService : IClusteringService
@@ -269,6 +270,129 @@ namespace DomusMercatorisDotnetMVC.Services
             catch (Exception ex)
             {
                  Console.WriteLine($"Error calling Python API (Cluster): {ex.Message}");
+            }
+        }
+
+        public async Task SplitClusterAsync(int clusterId, int numberOfSubClusters = 2)
+        {
+            var cluster = await _context.ProductClusters
+                .Include(c => c.Members)
+                .FirstOrDefaultAsync(c => c.Id == clusterId);
+
+            if (cluster == null) return;
+            if (cluster.Members == null || !cluster.Members.Any()) return;
+
+            var productIds = cluster.Members.Select(m => m.ProductId).ToList();
+
+            var featureEntities = await _context.ProductFeatures
+                .Where(f => productIds.Contains(f.ProductId))
+                .ToListAsync();
+
+            var productDataList = new List<ProductData>();
+            foreach (var f in featureEntities)
+            {
+                try
+                {
+                    var vec = JsonSerializer.Deserialize<List<float>>(f.FeatureVectorJson);
+                    if (vec != null && vec.Count > 0)
+                    {
+                        productDataList.Add(new ProductData { ProductId = f.ProductId, Features = vec });
+                    }
+                }
+                catch
+                {
+                }
+            }
+
+            if (!productDataList.Any()) return;
+            if (numberOfSubClusters < 2) numberOfSubClusters = 2;
+
+            var request = new
+            {
+                features = productDataList.Select(p => p.Features).ToList(),
+                k = numberOfSubClusters
+            };
+
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync($"{_pythonApiUrl}/cluster", request);
+
+                if (!response.IsSuccessStatusCode) return;
+
+                var result = await response.Content.ReadFromJsonAsync<ClusterResponse>();
+                if (result == null || result.labels == null) return;
+
+                var labels = result.labels;
+                if (labels.Count != productDataList.Count) return;
+
+                var centroids = result.centroids ?? new List<List<float>>();
+
+                var distinctLabels = labels.Distinct().OrderBy(l => l).ToList();
+                if (distinctLabels.Count < 2) return;
+
+                var minLabel = distinctLabels.Min();
+
+                var clusterMap = new Dictionary<int, ProductCluster>();
+
+                foreach (var label in distinctLabels)
+                {
+                    if (label == minLabel)
+                    {
+                        List<float>? centroid = null;
+                        if (label >= 0 && label < centroids.Count)
+                        {
+                            centroid = centroids[label];
+                        }
+
+                        cluster.CentroidJson = JsonSerializer.Serialize(centroid ?? new List<float>());
+                        clusterMap[label] = cluster;
+                    }
+                    else
+                    {
+                        List<float>? centroid = null;
+                        if (label >= 0 && label < centroids.Count)
+                        {
+                            centroid = centroids[label];
+                        }
+
+                        var newCluster = new ProductCluster
+                        {
+                            Version = cluster.Version,
+                            Name = $"{cluster.Name} (Split {label})",
+                            CentroidJson = JsonSerializer.Serialize(centroid ?? new List<float>()),
+                            CreatedAt = DateTime.UtcNow
+                        };
+
+                        _context.ProductClusters.Add(newCluster);
+                        clusterMap[label] = newCluster;
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+
+                var members = await _context.ProductClusterMembers
+                    .Where(m => m.ProductClusterId == cluster.Id && productIds.Contains(m.ProductId))
+                    .ToListAsync();
+
+                var memberByProductId = members.ToDictionary(m => m.ProductId, m => m);
+
+                for (int i = 0; i < productDataList.Count; i++)
+                {
+                    var pid = productDataList[i].ProductId;
+                    if (!memberByProductId.TryGetValue(pid, out var member)) continue;
+
+                    var label = labels[i];
+                    if (clusterMap.TryGetValue(label, out var targetCluster))
+                    {
+                        member.ProductClusterId = targetCluster.Id;
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error calling Python API (SplitCluster): {ex.Message}");
             }
         }
 

@@ -122,5 +122,144 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
 
             return RedirectToPage();
         }
+
+        public async Task<IActionResult> OnPostMoveMemberAsync(long productId, int? fromClusterId, int? toClusterId, bool createNewCluster, int? version)
+        {
+            if (!createNewCluster && !toClusterId.HasValue)
+            {
+                return BadRequest(new { success = false, message = "Target cluster is required." });
+            }
+
+            var memberQuery = _context.ProductClusterMembers.AsQueryable().Where(m => m.ProductId == productId);
+
+            if (fromClusterId.HasValue)
+            {
+                memberQuery = memberQuery.Where(m => m.ProductClusterId == fromClusterId.Value);
+            }
+
+            var member = await memberQuery.FirstOrDefaultAsync();
+            if (member == null)
+            {
+                return NotFound(new { success = false, message = "Member not found." });
+            }
+
+            ProductCluster? targetCluster = null;
+
+            if (createNewCluster)
+            {
+                int targetVersion = version ?? await _context.ProductClusters
+                    .Where(c => c.Id == member.ProductClusterId)
+                    .Select(c => c.Version)
+                    .FirstOrDefaultAsync();
+
+                if (targetVersion <= 0)
+                {
+                    targetVersion = 1;
+                }
+
+                targetCluster = new ProductCluster
+                {
+                    Version = targetVersion,
+                    Name = $"Manual Cluster (v{targetVersion})",
+                    CentroidJson = null,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _context.ProductClusters.Add(targetCluster);
+                await _context.SaveChangesAsync();
+            }
+            else if (toClusterId.HasValue)
+            {
+                targetCluster = await _context.ProductClusters.FindAsync(toClusterId.Value);
+                if (targetCluster == null)
+                {
+                    return NotFound(new { success = false, message = "Target cluster not found." });
+                }
+            }
+
+            if (targetCluster == null)
+            {
+                return BadRequest(new { success = false, message = "Invalid target cluster." });
+            }
+
+            member.ProductClusterId = targetCluster.Id;
+            await _context.SaveChangesAsync();
+
+            return new JsonResult(new { success = true, targetClusterId = targetCluster.Id });
+        }
+
+        public async Task<IActionResult> OnPostMergeAsync(int sourceClusterId, int targetClusterId, int pageIndex)
+        {
+            if (sourceClusterId == targetClusterId)
+            {
+                return RedirectToPage(new { CurrentVersion, PageIndex = pageIndex });
+            }
+
+            var source = await _context.ProductClusters
+                .Include(c => c.Members)
+                .FirstOrDefaultAsync(c => c.Id == sourceClusterId);
+
+            var target = await _context.ProductClusters
+                .Include(c => c.Members)
+                .FirstOrDefaultAsync(c => c.Id == targetClusterId);
+
+            if (source == null || target == null)
+            {
+                return NotFound();
+            }
+
+            var existingProductIds = await _context.ProductClusterMembers
+                .Where(m => m.ProductClusterId == target.Id)
+                .Select(m => m.ProductId)
+                .ToListAsync();
+
+            foreach (var member in source.Members.ToList())
+            {
+                if (!existingProductIds.Contains(member.ProductId))
+                {
+                    member.ProductClusterId = target.Id;
+                }
+            }
+
+            _context.ProductClusters.Remove(source);
+            await _context.SaveChangesAsync();
+
+            return RedirectToPage(new { CurrentVersion = target.Version, PageIndex = pageIndex });
+        }
+
+        public async Task<IActionResult> OnPostSplitAsync(int clusterId, int pageIndex)
+        {
+            await _clusteringService.SplitClusterAsync(clusterId, 2);
+
+            var version = await _context.ProductClusters
+                .Where(c => c.Id == clusterId)
+                .Select(c => c.Version)
+                .FirstOrDefaultAsync();
+
+            if (version <= 0 && CurrentVersion.HasValue)
+            {
+                version = CurrentVersion.Value;
+            }
+
+            return RedirectToPage(new { CurrentVersion = version, PageIndex = pageIndex });
+        }
+
+        public async Task<IActionResult> OnPostDeleteClusterAsync(int clusterId, int pageIndex)
+        {
+            var cluster = await _context.ProductClusters
+                .FirstOrDefaultAsync(c => c.Id == clusterId);
+
+            if (cluster == null)
+            {
+                return RedirectToPage(new { CurrentVersion, PageIndex = pageIndex });
+            }
+
+            var version = cluster.Version;
+
+            _context.ProductClusters.Remove(cluster);
+            await _context.SaveChangesAsync();
+
+            return RedirectToPage(new { CurrentVersion = version, PageIndex = pageIndex });
+        }
     }
 }

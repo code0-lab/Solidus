@@ -66,6 +66,16 @@
         }
     </div>
 
+    @if (Model.CurrentVersion.HasValue)
+    {
+        <div class="card mb-3 border-3 border-dark rounded-0" id="newClusterDropzone" data-version="@Model.CurrentVersion">
+            <div class="card-body bg-white text-center py-3" style="border: 2px dashed #000;">
+                <span class="fw-bold text-uppercase">Yeni Oluşturulacak Küme</span>
+                <small class="d-block text-muted mt-1">Ürünleri buraya sürükleyerek yeni bir küme oluştur.</small>
+            </div>
+        </div>
+    }
+
     @if (Model.Clusters.Any())
     {
         <div class="accordion" id="clustersAccordion">
@@ -73,13 +83,43 @@
             {
                 <div class="accordion-item border-3 border-dark rounded-0 mb-3 shadow-sm" style="box-shadow: 4px 4px 0 #000 !important;">
                     <h2 class="accordion-header" id="heading-@cluster.Id">
-                        <button class="accordion-button collapsed rounded-0 fw-bold text-uppercase fs-5 bg-white text-dark focus-ring-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-@cluster.Id" aria-expanded="false" aria-controls="collapse-@cluster.Id">
+                        <button class="accordion-button collapsed rounded-0 fw-bold text-uppercase fs-5 bg-white text-dark focus-ring-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-@cluster.Id" aria-expanded="false" aria-controls="collapse-@cluster.Id" data-cluster-id="@cluster.Id">
                             <span class="me-auto">@cluster.Name</span>
                             <span class="badge bg-dark rounded-0 border border-light ms-2">@cluster.Members.Count items</span>
                         </button>
                     </h2>
                     <div id="collapse-@cluster.Id" class="accordion-collapse collapse" aria-labelledby="heading-@cluster.Id" data-bs-parent="#clustersAccordion" data-url="@Url.Page("Clustering", "ClusterMembers", new { clusterId = cluster.Id })">
                         <div class="accordion-body bg-light border-top border-3 border-dark">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <form method="post" asp-page-handler="Merge" class="d-flex align-items-center gap-2">
+                                    <input type="hidden" name="sourceClusterId" value="@cluster.Id" />
+                                    <input type="hidden" name="pageIndex" value="@Model.PageIndex" />
+                                    <select name="targetClusterId" class="form-select border-2 border-dark rounded-0">
+                                        @foreach (var other in Model.Clusters.Where(c => c.Id != cluster.Id))
+                                        {
+                                            <option value="@other.Id">@other.Name</option>
+                                        }
+                                    </select>
+                                    <button type="submit" class="btn btn-sm btn-outline-dark rounded-0 border-2 fw-bold text-uppercase">
+                                        Merge
+                                    </button>
+                                </form>
+                                <form method="post" asp-page-handler="Split" class="ms-3">
+                                    <input type="hidden" name="clusterId" value="@cluster.Id" />
+                                    <input type="hidden" name="pageIndex" value="@Model.PageIndex" />
+                                    <button type="submit" class="btn btn-sm btn-outline-dark rounded-0 border-2 fw-bold text-uppercase">
+                                        Split (K=2)
+                                    </button>
+                                </form>
+                                <form method="post" asp-page-handler="DeleteCluster" class="ms-3" onsubmit="return confirm('Bu kümeyi silmek istediğinizden emin misiniz? Tüm üyelikler kaldırılacak.');">
+                                    <input type="hidden" name="clusterId" value="@cluster.Id" />
+                                    <input type="hidden" name="pageIndex" value="@Model.PageIndex" />
+                                    <button type="submit" class="btn btn-sm btn-danger rounded-0 border-2 fw-bold text-uppercase">
+                                        Delete
+                                    </button>
+                                </form>
+                            </div>
+
                             <div class="d-flex justify-content-between align-items-center mb-4 p-3 border-2 border-dark bg-white" style="border: 2px dashed #000;">
                                 <strong class="text-uppercase">Rename Cluster:</strong>
                                 <form method="post" asp-page-handler="Rename" class="d-flex gap-2 align-items-center flex-grow-1 ms-3">
@@ -90,7 +130,7 @@
                                 </form>
                             </div>
                             
-                            <div class="cluster-members-container text-center py-4">
+                            <div class="cluster-members-container text-center py-4" data-cluster-id="@cluster.Id">
                                 <div class="spinner-border text-dark" style="width: 3rem; height: 3rem; border-width: 0.25em;" role="status">
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
@@ -130,9 +170,139 @@
 </div>
 
 <script>
+    var moveMemberUrl = '@Url.Page("Clustering", "MoveMember")';
+
+    function getAntiForgeryToken() {
+        var tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+        return tokenInput ? tokenInput.value : '';
+    }
+
+    function onClusterMemberDragStart(e) {
+        var card = e.currentTarget;
+        var productId = card.getAttribute('data-product-id');
+        var fromClusterId = card.getAttribute('data-cluster-id');
+
+        if (!productId || !fromClusterId) return;
+
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', JSON.stringify({
+            productId: parseInt(productId),
+            fromClusterId: parseInt(fromClusterId)
+        }));
+    }
+
+    function moveClusterMember(productId, fromClusterId, toClusterId, createNewCluster, version) {
+        var token = getAntiForgeryToken();
+        var params = new URLSearchParams();
+        params.append('productId', productId);
+        if (fromClusterId) params.append('fromClusterId', fromClusterId);
+        if (toClusterId) params.append('toClusterId', toClusterId);
+        params.append('createNewCluster', createNewCluster ? 'true' : 'false');
+        if (version) params.append('version', version);
+
+        fetch(moveMemberUrl, {
+            method: 'POST',
+            headers: {
+                'RequestVerificationToken': token
+            },
+            body: params
+        })
+            .then(function (response) {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(function (data) {
+                if (data && data.success) {
+                    window.location.reload();
+                } else {
+                    console.error('Move failed', data);
+                    alert('Move failed.');
+                }
+            })
+            .catch(function (error) {
+                console.error('Error moving member:', error);
+                alert('Error moving member.');
+            });
+    }
+
+    function initializeClusterContainer(container) {
+        var clusterId = container.getAttribute('data-cluster-id');
+        if (!clusterId) return;
+
+        container.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            container.classList.add('border-primary');
+        });
+
+        container.addEventListener('dragleave', function () {
+            container.classList.remove('border-primary');
+        });
+
+        container.addEventListener('drop', function (e) {
+            e.preventDefault();
+            container.classList.remove('border-primary');
+
+            var data = e.dataTransfer.getData('text/plain');
+            if (!data) return;
+
+            var payload;
+            try {
+                payload = JSON.parse(data);
+            } catch {
+                return;
+            }
+
+            if (!payload.productId || !payload.fromClusterId) return;
+
+            moveClusterMember(payload.productId, payload.fromClusterId, parseInt(clusterId), false, null);
+        });
+
+        var cards = container.querySelectorAll('.cluster-member-card');
+        cards.forEach(function (card) {
+            card.addEventListener('dragstart', onClusterMemberDragStart);
+        });
+    }
+
+    function initializeClusterHeaders() {
+        var headers = document.querySelectorAll('#clustersAccordion .accordion-button[data-cluster-id]');
+        headers.forEach(function (header) {
+            var clusterId = header.getAttribute('data-cluster-id');
+            if (!clusterId) return;
+
+            header.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                header.classList.add('border', 'border-3', 'border-primary');
+            });
+
+            header.addEventListener('dragleave', function () {
+                header.classList.remove('border', 'border-3', 'border-primary');
+            });
+
+            header.addEventListener('drop', function (e) {
+                e.preventDefault();
+                header.classList.remove('border', 'border-3', 'border-primary');
+
+                var data = e.dataTransfer.getData('text/plain');
+                if (!data) return;
+
+                var payload;
+                try {
+                    payload = JSON.parse(data);
+                } catch {
+                    return;
+                }
+
+                if (!payload.productId || !payload.fromClusterId) return;
+
+                moveClusterMember(payload.productId, payload.fromClusterId, parseInt(clusterId), false, null);
+            });
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         var accordionElement = document.getElementById('clustersAccordion');
         if (accordionElement) {
+            initializeClusterHeaders();
             accordionElement.addEventListener('show.bs.collapse', function (e) {
                 var collapseElement = e.target;
                 var url = collapseElement.getAttribute('data-url');
@@ -140,20 +310,54 @@
                 
                 if (url && container && !container.getAttribute('data-loaded')) {
                     fetch(url)
-                        .then(response => {
+                        .then(function (response) {
                             if (!response.ok) throw new Error('Network response was not ok');
                             return response.text();
                         })
-                        .then(html => {
+                        .then(function (html) {
                             container.innerHTML = html;
                             container.setAttribute('data-loaded', 'true');
                             container.classList.remove('text-center', 'py-4');
+                            initializeClusterContainer(container);
                         })
-                        .catch(error => {
+                        .catch(function (error) {
                             container.innerHTML = '<div class="text-danger fw-bold">Error loading members.</div>';
                             console.error('Error:', error);
                         });
                 }
+            });
+        }
+
+        var newClusterDropzone = document.getElementById('newClusterDropzone');
+        if (newClusterDropzone) {
+            var version = parseInt(newClusterDropzone.getAttribute('data-version') || '0');
+
+            newClusterDropzone.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                newClusterDropzone.classList.add('border-primary');
+            });
+
+            newClusterDropzone.addEventListener('dragleave', function () {
+                newClusterDropzone.classList.remove('border-primary');
+            });
+
+            newClusterDropzone.addEventListener('drop', function (e) {
+                e.preventDefault();
+                newClusterDropzone.classList.remove('border-primary');
+
+                var data = e.dataTransfer.getData('text/plain');
+                if (!data) return;
+
+                var payload;
+                try {
+                    payload = JSON.parse(data);
+                } catch {
+                    return;
+                }
+
+                if (!payload.productId || !payload.fromClusterId) return;
+
+                moveClusterMember(payload.productId, payload.fromClusterId, null, true, version);
             });
         }
     });

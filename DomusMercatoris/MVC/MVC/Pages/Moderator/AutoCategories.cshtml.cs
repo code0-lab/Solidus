@@ -106,10 +106,20 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
 
                 // Update clusters
                 item.ProductClusters.Clear();
-                if (Input.ProductClusterIds.Any())
+                var clusterIds = Input.ProductClusterIds
+                    .Where(id => id > 0)
+                    .Distinct()
+                    .ToList();
+
+                if (Input.ProductClusterIds.Contains(0))
+                {
+                    clusterIds.Clear();
+                }
+
+                if (clusterIds.Any())
                 {
                     var clusters = await _db.ProductClusters
-                        .Where(pc => Input.ProductClusterIds.Contains(pc.Id))
+                        .Where(pc => clusterIds.Contains(pc.Id))
                         .ToListAsync();
                     foreach (var c in clusters)
                     {
@@ -130,10 +140,20 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
                     CreatedAt = DateTime.UtcNow
                 };
 
-                if (Input.ProductClusterIds.Any())
+                var clusterIds = Input.ProductClusterIds
+                    .Where(id => id > 0)
+                    .Distinct()
+                    .ToList();
+
+                if (Input.ProductClusterIds.Contains(0))
+                {
+                    clusterIds.Clear();
+                }
+
+                if (clusterIds.Any())
                 {
                     var clusters = await _db.ProductClusters
-                        .Where(pc => Input.ProductClusterIds.Contains(pc.Id))
+                        .Where(pc => clusterIds.Contains(pc.Id))
                         .ToListAsync();
                     foreach (var c in clusters)
                     {
