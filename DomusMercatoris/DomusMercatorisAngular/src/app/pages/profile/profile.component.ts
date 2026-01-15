@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -11,4 +12,12 @@ import { AuthService } from '../../services/auth.service';
 })
 export class ProfileComponent {
   authService = inject(AuthService);
+  router = inject(Router);
+
+  logout() {
+    if (confirm('Are you sure you want to log out?')) {
+      this.authService.logout();
+      this.router.navigate(['/']);
+    }
+  }
 }

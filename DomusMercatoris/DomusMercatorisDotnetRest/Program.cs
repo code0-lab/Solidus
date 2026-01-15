@@ -43,6 +43,11 @@ builder.Services.AddScoped<SalesService>();
 builder.Services.AddScoped<ModeratorService>();
 builder.Services.AddScoped<UsersService>();
 
+// Common Services
+builder.Services.AddSingleton<EncryptionService>();
+builder.Services.AddScoped<CompanySettingsService>();
+builder.Services.AddHttpClient<IGeminiCommentService, GeminiCommentService>();
+
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 

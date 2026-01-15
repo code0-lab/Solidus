@@ -53,7 +53,8 @@ namespace DomusMercatorisDotnetRest.Controllers
         [HttpGet("product/{productId}")]
         public async Task<ActionResult<IEnumerable<CommentDto>>> GetByProductId(long productId)
         {
-            var comments = await _commentService.GetByProductIdAsync(productId);
+            var userId = GetUserId();
+            var comments = await _commentService.GetByProductIdAsync(productId, userId);
             return Ok(comments);
         }
 

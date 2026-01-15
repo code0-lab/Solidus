@@ -18,6 +18,7 @@ namespace DomusMercatoris.Data.Repositories
             return await _dbSet
                 .Include(c => c.User)
                 .Include(c => c.Product)
+                .Where(c => c.IsApproved)
                 .OrderByDescending(c => c.CreatedAt)
                 .ToListAsync();
         }
@@ -30,11 +31,22 @@ namespace DomusMercatoris.Data.Repositories
                 .FirstOrDefaultAsync(c => c.Id == id);
         }
 
-        public async Task<IEnumerable<Comment>> GetByProductIdWithDetailsAsync(long productId)
+        public async Task<IEnumerable<Comment>> GetByProductIdWithDetailsAsync(long productId, long? userId)
         {
-            return await _dbSet
+            var query = _dbSet
                 .Include(c => c.User)
-                .Where(c => c.ProductId == productId)
+                .Where(c => c.ProductId == productId);
+
+            if (userId.HasValue)
+            {
+                query = query.Where(c => c.IsApproved || c.UserId == userId.Value);
+            }
+            else
+            {
+                query = query.Where(c => c.IsApproved);
+            }
+
+            return await query
                 .OrderByDescending(c => c.CreatedAt)
                 .ToListAsync();
         }

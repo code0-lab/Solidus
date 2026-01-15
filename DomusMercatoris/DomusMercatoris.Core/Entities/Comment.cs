@@ -15,6 +15,7 @@ namespace DomusMercatoris.Core.Entities
         public Product? Product { get; set; }
 
         public bool IsApproved { get; set; } = false;
+        public int ModerationStatus { get; set; } = 0;
 
         public long UserId { get; set; }
         [ForeignKey("UserId")]

@@ -1,10 +1,13 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using DomusMercatorisDotnetMVC.Services;
 using DomusMercatoris.Core.Entities;
 using DomusMercatoris.Service.Services;
 using DomusMercatoris.Service.DTOs;
+using DomusMercatorisDotnetMVC.Dto.CommentsDto;
+using DomusMercatorisDotnetMVC.Dto.ProductDto;
+using DomusMercatorisDotnetMVC.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Security.Claims;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
@@ -13,15 +16,22 @@ namespace DomusMercatorisDotnetMVC.Pages
     {
         private readonly ProductService _productService;
         private readonly VariantProductService _variantService;
+        private readonly DomusMercatorisDotnetMVC.Services.CommentService _commentService;
+        private readonly UserService _userService;
+        private readonly GeminiCommentService _geminiCommentService;
 
-        public ProductDetailModel(ProductService productService, VariantProductService variantService)
+        public ProductDetailModel(ProductService productService, VariantProductService variantService, DomusMercatorisDotnetMVC.Services.CommentService commentService, UserService userService, GeminiCommentService geminiCommentService)
         {
             _productService = productService;
             _variantService = variantService;
+            _commentService = commentService;
+            _userService = userService;
+            _geminiCommentService = geminiCommentService;
         }
 
         public Product? Product { get; set; }
         public List<VariantProductDto> Variants { get; set; } = new();
+        public List<CommentsDto> Comments { get; set; } = new();
 
         public async Task<IActionResult> OnGetAsync(long id)
         {
@@ -37,8 +47,35 @@ namespace DomusMercatorisDotnetMVC.Pages
             }
 
             Variants = await _variantService.GetVariantsByProductIdAsync(id);
+            var comments = await _commentService.GetCommentsByProductIdAsync(id);
+
+            if (User.IsInRole("Manager"))
+            {
+                Comments = comments;
+            }
+            else
+            {
+                Comments = comments.Where(c => c.IsApproved).ToList();
+            }
 
             return Page();
+        }
+
+        public async Task<IActionResult> OnPostApproveCommentAsync(int commentId, long productId)
+        {
+            if (!User.IsInRole("Manager"))
+            {
+                return Forbid();
+            }
+
+            var comp = User.FindFirst("CompanyId")?.Value;
+            if (string.IsNullOrEmpty(comp) || !int.TryParse(comp, out var companyId))
+            {
+                return RedirectToPage("/Products");
+            }
+
+            await _commentService.SetApprovalAsync(commentId, true, companyId);
+            return RedirectToPage(new { id = productId });
         }
 
         public IActionResult OnPostDelete(long id)

@@ -3,6 +3,7 @@ using DomusMercatorisDotnetMVC.Dto.CommentsDto;
 using DomusMercatoris.Core.Entities;
 using DomusMercatoris.Data;
 using Microsoft.EntityFrameworkCore;
+using DomusMercatoris.Service.Services;
 
 namespace DomusMercatorisDotnetMVC.Services
 {
@@ -38,6 +39,7 @@ namespace DomusMercatorisDotnetMVC.Services
                 // Perform AI moderation
                 bool isApproved = await _geminiCommentService.ModerateCommentAsync(comment.Text, user.CompanyId);
                 comment.IsApproved = isApproved;
+                comment.ModerationStatus = isApproved ? 1 : 2;
             }
             else
             {
@@ -58,11 +60,58 @@ namespace DomusMercatorisDotnetMVC.Services
         {
             var comments = await _db.Comments
                 .Include(c => c.User)
+                .Include(c => c.Product)
                 .Where(c => c.ProductId == productId)
                 .OrderByDescending(c => c.CreatedAt)
                 .ToListAsync();
 
             return _mapper.Map<List<CommentsDto>>(comments);
+        }
+
+        public async Task<bool> SetApprovalAsync(int commentId, bool isApproved, int companyId)
+        {
+            var comment = await _db.Comments
+                .Include(c => c.Product)
+                .FirstOrDefaultAsync(c => c.Id == commentId && c.Product != null && c.Product.CompanyId == companyId);
+
+            if (comment == null)
+            {
+                return false;
+            }
+
+            comment.IsApproved = isApproved;
+            comment.ModerationStatus = isApproved ? 1 : 2;
+            await _db.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<List<CommentsDto>> GetLatestCommentsForCompanyAsync(int companyId, int take = 10)
+        {
+            if (take <= 0) take = 10;
+
+            var comments = await _db.Comments
+                .Include(c => c.User)
+                .Include(c => c.Product)
+                .Where(c => c.Product != null && c.Product.CompanyId == companyId)
+                .OrderByDescending(c => c.CreatedAt)
+                .Take(take)
+                .ToListAsync();
+
+            var result = comments
+                .Select(c => new CommentsDto
+                {
+                    Id = c.Id,
+                    ProductId = c.ProductId,
+                    UserId = c.UserId,
+                    UserName = c.User != null ? c.User.FirstName + " " + c.User.LastName : string.Empty,
+                    ProductName = c.Product != null ? c.Product.Name : string.Empty,
+                    Comment = c.Text,
+                    IsApproved = c.IsApproved,
+                    CreatedAt = c.CreatedAt
+                })
+                .ToList();
+
+            return result;
         }
     }
 }

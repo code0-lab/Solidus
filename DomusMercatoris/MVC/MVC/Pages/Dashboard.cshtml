@@ -40,4 +40,44 @@
             </div>
         </div>
     </div>
+    <div class="row g-3 mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Comments</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.RecentComments != null && Model.RecentComments.Count > 0)
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var c in Model.RecentComments)
+                            {
+                                <li class="list-group-item px-0 py-3">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div>
+                                            <div class="fw-bold text-dark">@c.UserName</div>
+                                            <div class="small text-muted">
+                                                <i class="bi bi-clock me-1"></i>@c.CreatedAt.ToLocalTime().ToString("g")
+                                                <span class="mx-2">•</span>
+                                                <a href="/Product/@c.ProductId" class="text-decoration-none fw-bold text-primary">
+                                                    <i class="bi bi-box-seam me-1"></i>@c.ProductName
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="bg-light p-3 rounded-3 border-start border-4 border-primary">
+                                        <p class="mb-0 text-secondary fst-italic">"@c.Comment"</p>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="text-muted">No comments for your products yet.</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

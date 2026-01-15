@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Authorization;
 using DomusMercatorisDotnetMVC.Services;
 using System.Linq;
+using DomusMercatorisDotnetMVC.Dto.CommentsDto;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
@@ -11,11 +12,13 @@ namespace DomusMercatorisDotnetMVC.Pages
     {
         private readonly ProductService _productService;
         private readonly UserService _userService;
+        private readonly CommentService _commentService;
 
-        public DashboardModel(ProductService productService, UserService userService)
+        public DashboardModel(ProductService productService, UserService userService, CommentService commentService)
         {
             _productService = productService;
             _userService = userService;
+            _commentService = commentService;
         }
 
         public int CompanyId { get; set; }
@@ -24,8 +27,9 @@ namespace DomusMercatorisDotnetMVC.Pages
         public int ManagerCount { get; set; }
         public string ManagerName { get; set; } = string.Empty;
         public string CompanyName { get; set; } = string.Empty;
+        public List<CommentsDto> RecentComments { get; set; } = new();
 
-        public void OnGet()
+        public async Task OnGetAsync()
         {
             var comp = User.FindFirst("CompanyId")?.Value;
             if (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var companyId))
@@ -52,6 +56,8 @@ namespace DomusMercatorisDotnetMVC.Pages
                 ManagerCount = users.Count(u => u.Roles?.Contains("Manager") ?? false);
                 WorkerCount = users.Count(u => !(u.Roles?.Contains("Manager") ?? false));
                 CompanyName = _userService.GetCompanyName(CompanyId) ?? string.Empty;
+                var comments = await _commentService.GetLatestCommentsForCompanyAsync(CompanyId, 5);
+                RecentComments = comments.Where(c => c.IsApproved).ToList();
             }
         }
     }

@@ -28,3 +28,7 @@
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
+
+.modal-overlay.auth-modal-overlay {
+  z-index: 1500;
+}

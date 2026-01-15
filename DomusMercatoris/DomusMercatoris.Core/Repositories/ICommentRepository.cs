@@ -8,6 +8,6 @@ namespace DomusMercatoris.Core.Repositories
     {
         Task<IEnumerable<Comment>> GetAllWithDetailsAsync();
         Task<Comment?> GetByIdWithDetailsAsync(int id);
-        Task<IEnumerable<Comment>> GetByProductIdWithDetailsAsync(long productId);
+        Task<IEnumerable<Comment>> GetByProductIdWithDetailsAsync(long productId, long? userId);
     }
 }

@@ -11,6 +11,7 @@ namespace DomusMercatoris.Service.DTOs
         public string UserName { get; set; } = string.Empty;
         public string Text { get; set; } = string.Empty;
         public bool IsApproved { get; set; } = false;
+        public int ModerationStatus { get; set; } = 0;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

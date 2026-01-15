@@ -16,10 +16,21 @@
             <label asp-for="GeminiApiKey" class="form-label fw-bold text-uppercase small text-muted" style="letter-spacing: 0.5px;">Gemini API Key</label>
             <div class="input-group">
                 <span class="input-group-text bg-white border-end-0"><i class="bi bi-key text-muted"></i></span>
-                <input type="text" class="form-control border-start-0 ps-0" asp-for="GeminiApiKey" placeholder="Paste your API key here">
+                <input type="password" class="form-control border-start-0 ps-0" asp-for="GeminiApiKey" id="geminiApiKeyInput" data-real-value="@Model.ExistingGeminiApiKey" placeholder="Paste your API key here">
+                <button type="button" class="btn btn-outline-secondary" id="toggleGeminiApiKey">
+                    <i class="bi bi-eye"></i>
+                </button>
             </div>
             <div class="form-text mt-2">
                 <i class="bi bi-info-circle me-1"></i> Required for product descriptions and comment moderation.
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label asp-for="CommentModerationPrompt" class="form-label fw-bold text-uppercase small text-muted" style="letter-spacing: 0.5px;">Comment Moderation Prompt</label>
+            <textarea class="form-control" asp-for="CommentModerationPrompt" rows="4" placeholder="Write how Gemini should evaluate customer comments (language, tone, rules, etc.)"></textarea>
+            <div class="form-text mt-2">
+                <i class="bi bi-info-circle me-1"></i> This prompt will be used when analyzing comments with Gemini for managers.
             </div>
         </div>
 
@@ -44,3 +55,26 @@
         </div>
     </div>
 </div>
+<script>
+    (function () {
+        var input = document.getElementById('geminiApiKeyInput');
+        var btn = document.getElementById('toggleGeminiApiKey');
+        if (!input || !btn) return;
+        var real = input.getAttribute('data-real-value') || '';
+        btn.addEventListener('click', function () {
+            if (input.type === 'password') {
+                if (real && input.value === '*****') {
+                    input.value = real;
+                }
+                input.type = 'text';
+                btn.innerHTML = '<i class="bi bi-eye-slash"></i>';
+            } else {
+                if (real) {
+                    input.value = '*****';
+                }
+                input.type = 'password';
+                btn.innerHTML = '<i class="bi bi-eye"></i>';
+            }
+        });
+    })();
+</script>

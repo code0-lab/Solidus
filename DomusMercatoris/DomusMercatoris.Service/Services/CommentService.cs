@@ -13,15 +13,18 @@ namespace DomusMercatoris.Service.Services
         private readonly ICommentRepository _commentRepository;
         private readonly IGenericRepository<Product> _productRepository;
         private readonly IMapper _mapper;
+        private readonly IGeminiCommentService _geminiCommentService;
 
         public CommentService(
             ICommentRepository commentRepository,
             IGenericRepository<Product> productRepository,
-            IMapper mapper)
+            IMapper mapper,
+            IGeminiCommentService geminiCommentService)
         {
             _commentRepository = commentRepository;
             _productRepository = productRepository;
             _mapper = mapper;
+            _geminiCommentService = geminiCommentService;
         }
 
         public async Task<IEnumerable<CommentDto>> GetAllAsync()
@@ -36,16 +39,16 @@ namespace DomusMercatoris.Service.Services
             return comment == null ? null : _mapper.Map<CommentDto>(comment);
         }
 
-        public async Task<IEnumerable<CommentDto>> GetByProductIdAsync(long productId)
+        public async Task<IEnumerable<CommentDto>> GetByProductIdAsync(long productId, long? userId)
         {
-            var comments = await _commentRepository.GetByProductIdWithDetailsAsync(productId);
+            var comments = await _commentRepository.GetByProductIdWithDetailsAsync(productId, userId);
             return _mapper.Map<IEnumerable<CommentDto>>(comments);
         }
 
         public async Task<CommentDto> CreateAsync(CreateCommentDto createDto, long userId)
         {
-            var productExists = await _productRepository.ExistsAsync(createDto.ProductId);
-            if (!productExists)
+            var product = await _productRepository.GetByIdAsync(createDto.ProductId);
+            if (product == null)
             {
                 throw new KeyNotFoundException("Product not found");
             }
@@ -53,7 +56,9 @@ namespace DomusMercatoris.Service.Services
             var comment = _mapper.Map<Comment>(createDto);
             comment.UserId = userId;
             comment.CreatedAt = DateTime.UtcNow;
-            comment.IsApproved = false;
+            var isApproved = await _geminiCommentService.ModerateCommentAsync(createDto.Text, product.CompanyId);
+            comment.IsApproved = isApproved;
+            comment.ModerationStatus = isApproved ? 1 : 2;
 
             await _commentRepository.AddAsync(comment);
             await _commentRepository.SaveChangesAsync();
@@ -80,6 +85,7 @@ namespace DomusMercatoris.Service.Services
             if (isAdmin)
             {
                 comment.IsApproved = updateDto.IsApproved;
+                comment.ModerationStatus = updateDto.IsApproved ? 1 : 2;
             }
 
             _commentRepository.Update(comment);

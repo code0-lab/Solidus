@@ -17,6 +17,8 @@ namespace DomusMercatorisDotnetMVC.Services
         private readonly IMapper _mapper;
         private readonly EncryptionService _encryptionService;
 
+        private const string GeminiCommentSeparator = "\n---COMMENT_PROMPT---\n";
+
         public UserService(DomusDbContext dbContext, IMapper mapper, EncryptionService encryptionService)
         {
             _dbContext = dbContext;
@@ -135,7 +137,25 @@ namespace DomusMercatorisDotnetMVC.Services
         public string? GetCompanyGeminiKey(int companyId)
         {
             var company = _dbContext.Companies.SingleOrDefault(c => c.CompanyId == companyId);
-            return string.IsNullOrEmpty(company?.GeminiApiKey) ? null : _encryptionService.Decrypt(company.GeminiApiKey);
+            if (string.IsNullOrEmpty(company?.GeminiApiKey)) return null;
+
+            var decrypted = _encryptionService.Decrypt(company.GeminiApiKey);
+            if (string.IsNullOrEmpty(decrypted)) return null;
+
+            var parts = decrypted.Split(GeminiCommentSeparator, 2, StringSplitOptions.None);
+            return parts.Length > 0 ? parts[0] : null;
+        }
+
+        public string? GetCompanyCommentPrompt(int companyId)
+        {
+            var company = _dbContext.Companies.SingleOrDefault(c => c.CompanyId == companyId);
+            if (string.IsNullOrEmpty(company?.GeminiApiKey)) return null;
+
+            var decrypted = _encryptionService.Decrypt(company.GeminiApiKey);
+            if (string.IsNullOrEmpty(decrypted)) return null;
+
+            var parts = decrypted.Split(GeminiCommentSeparator, 2, StringSplitOptions.None);
+            return parts.Length > 1 ? parts[1] : null;
         }
 
         public bool IsAiModerationEnabled(int companyId)
@@ -160,7 +180,38 @@ namespace DomusMercatorisDotnetMVC.Services
         {
             var company = _dbContext.Companies.SingleOrDefault(c => c.CompanyId == companyId);
             if (company == null) return false;
-            company.GeminiApiKey = _encryptionService.Encrypt(apiKey);
+
+            var existingPrompt = GetCompanyCommentPrompt(companyId) ?? string.Empty;
+            var composite = apiKey ?? string.Empty;
+            if (!string.IsNullOrEmpty(existingPrompt))
+            {
+                composite += GeminiCommentSeparator + existingPrompt;
+            }
+
+            company.GeminiApiKey = _encryptionService.Encrypt(composite);
+            _dbContext.SaveChanges();
+            return true;
+        }
+
+        public bool UpdateCompanyGeminiSettings(int companyId, string apiKey, string? commentPrompt)
+        {
+            var company = _dbContext.Companies.SingleOrDefault(c => c.CompanyId == companyId);
+            if (company == null) return false;
+
+            var existingKey = GetCompanyGeminiKey(companyId) ?? string.Empty;
+            var keyPart = apiKey;
+            if (string.IsNullOrWhiteSpace(apiKey) || apiKey == "*****")
+            {
+                keyPart = existingKey;
+            }
+
+            var composite = keyPart ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(commentPrompt))
+            {
+                composite += GeminiCommentSeparator + commentPrompt;
+            }
+
+            company.GeminiApiKey = _encryptionService.Encrypt(composite);
             _dbContext.SaveChanges();
             return true;
         }
