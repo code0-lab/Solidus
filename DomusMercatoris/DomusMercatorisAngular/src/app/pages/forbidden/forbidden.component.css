@@ -1,0 +1,303 @@
+@import url('https://fonts.googleapis.com/css2?family=Pinyon+Script&family=Russo+One&display=swap');
+
+@font-face {
+  font-family: 'Pricedown';
+  src: url('https://db.onlinewebfonts.com/t/2c837424683072f9d860d5402030d951.woff2') format('woff2');
+}
+
+:host {
+  display: block;
+  width: 100%;
+  min-height: 100vh;
+  /* Changed from height: 100vh to allow growth */
+  height: auto;
+  overflow-y: auto;
+  /* Allow scrolling if content is tall */
+  overflow-x: hidden;
+  font-family: 'Russo One', sans-serif;
+  color: white;
+  background: linear-gradient(to bottom, #111827, #000000);
+  /* from-gray-900 to-black */
+}
+
+.forbidden-container {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  /* Ensure it fills at least the screen */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 4rem 1rem 6rem 1rem;
+  /* Increased bottom padding to prevent button being cut off by footers */
+  box-sizing: border-box;
+}
+
+.scanlines {
+  background: linear-gradient(to bottom,
+      rgba(255, 255, 255, 0),
+      rgba(255, 255, 255, 0) 50%,
+      rgba(0, 0, 0, 0.2) 50%,
+      rgba(0, 0, 0, 0.2));
+  background-size: 100% 4px;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* HUD (Top Right) */
+.hud-container {
+  position: absolute;
+  top: 1.25rem;
+  /* top-5 */
+  right: 1.25rem;
+  /* right-5 */
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  transform-origin: top right;
+}
+
+.hud-time {
+  font-size: 1.875rem;
+  /* 3xl */
+  letter-spacing: 0.1em;
+  /* tracking-widest */
+  color: #A6C3E9;
+  text-shadow: 2px 2px 0px #000;
+  font-family: 'Pinyon Script', cursive;
+  /* Or Russo One based on pref, using Pinyon from MVC import */
+  font-family: 'Russo One', sans-serif;
+  /* Priority */
+  line-height: 1;
+}
+
+.hud-money {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.money-text {
+  color: #22c55e;
+  /* green-500 */
+  font-size: 1.5rem;
+  /* 2xl */
+  font-weight: bold;
+  text-shadow: 1px 1px 0 #000;
+  font-family: 'Pricedown', 'Russo One', sans-serif;
+}
+
+.weapon-icon {
+  margin-top: 0.5rem;
+  opacity: 0.9;
+}
+
+/* Wanted Stars */
+.wanted-stars {
+  display: flex;
+  gap: 0.25rem;
+  /* space-x-1 */
+  margin-top: 0.25rem;
+}
+
+.star-icon {
+  width: 2rem;
+  height: 2rem;
+  fill: currentColor;
+}
+
+.star-active {
+  color: white;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.star-inactive {
+  color: #374151;
+  /* gray-700 */
+}
+
+/* Main Content */
+.main-content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 56rem;
+  /* max-w-4xl */
+  padding: 0 1rem;
+  text-align: center;
+}
+
+.mission-failed-title {
+  font-family: 'Pricedown', cursive;
+  font-size: 4rem;
+  /* text-5xl -> 8xl conversionish */
+  margin-bottom: 0.5rem;
+  color: #C69C6D;
+  text-shadow:
+    3px 3px 0 #000,
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+    1px 1px 0 #000;
+  letter-spacing: 2px;
+  animation: pulse 2s infinite;
+}
+
+.mission-failed-subtitle {
+  font-family: 'Pricedown', cursive;
+  font-size: 2.25rem;
+  /* text-5xl equivalent */
+  margin-bottom: 2rem;
+  color: #9b1c1c;
+  /* text-red-700ish */
+  text-shadow:
+    2px 2px 0 #000,
+    -1px -1px 0 #000,
+    1px 1px 0 #000;
+  letter-spacing: 1px;
+}
+
+@media (min-width: 768px) {
+  .mission-failed-title {
+    font-size: 6rem;
+  }
+
+  .mission-failed-subtitle {
+    font-size: 3rem;
+  }
+}
+
+.image-container {
+  position: relative;
+  width: 16rem;
+  height: 16rem;
+  margin-bottom: 1.5rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  background-color: #1f2937;
+}
+
+@media (min-width: 768px) {
+  .image-container {
+    width: 24rem;
+    height: 24rem;
+  }
+}
+
+.smoke-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+  filter: contrast(1.1) brightness(0.9);
+  transition: transform 0.3s ease;
+}
+
+.smoke-img:hover {
+  transform: scale(1.02);
+}
+
+.image-vignette {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent, transparent);
+  pointer-events: none;
+}
+
+.subtitle-box {
+  background-color: rgba(0, 0, 0, 0.6);
+  padding: 10px 20px;
+  border-radius: 4px;
+  text-shadow: 1px 1px 2px black;
+  border: 2px solid rgba(0, 0, 0, 0.8);
+  margin-bottom: 2rem;
+  max-width: 42rem;
+  transform: scale(1);
+  transition: transform 0.3s;
+}
+
+.subtitle-box:hover {
+  transform: scale(1.05);
+}
+
+.quote-text {
+  color: #facc15;
+  /* yellow-400 */
+  font-size: 1.25rem;
+  /* text-xl/2xl */
+  line-height: 1.625;
+  letter-spacing: 0.05em;
+}
+
+.quote-author {
+  color: white;
+  font-weight: bold;
+  margin-right: 0.5rem;
+}
+
+.translation-text {
+  color: #d1d5db;
+  /* gray-300 */
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  font-style: italic;
+  opacity: 0.8;
+}
+
+.menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(0, 0, 0, 0.7);
+  color: #a8a8a8;
+  padding: 0.75rem 2rem;
+  border-radius: 0.25rem;
+  font-size: 1.25rem;
+  text-transform: uppercase;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  border: 1px solid #333;
+  transition: all 0.2s;
+}
+
+.menu-btn:hover {
+  color: #f0f0f0;
+  background: rgba(20, 20, 20, 0.9);
+  border-color: #c69c6d;
+  transform: scale(1.05);
+}
+
+.arrow-icon {
+  transition: color 0.2s;
+}
+
+.menu-btn:hover .arrow-icon {
+  color: #eab308;
+  /* yellow-500 */
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: .5;
+  }
+}

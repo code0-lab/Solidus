@@ -1,0 +1,161 @@
+:root {
+  --rain-color: #aed8ff;
+  --text-color: #ffffff;
+}
+
+body {
+  background-color: #050505;
+  overflow-x: hidden;
+  overflow-y: auto;
+  color: white;
+  margin: 0;
+  padding: 0;
+}
+
+.bg-scene {
+  position: relative;
+  width: 100%;
+  /* Using relative path to ensure build system resolves it correctly */
+  min-height: 100vh;
+  background: url('../../../assets/img/background-404.jpg') no-repeat center center fixed;
+  background-size: cover;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.bg-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.2);
+  /* Reduced opacity to make image less pale */
+  z-index: 1;
+}
+
+#rain-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.8;
+  /* Increased opacity for visibility */
+}
+
+.content-wrapper {
+  position: relative;
+  z-index: 10;
+  /* min-height: 100vh ensures it takes at least the full viewport height */
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  box-sizing: border-box;
+}
+
+.glitch-text {
+  color: #fff;
+  text-shadow:
+    0 0 5px #fff,
+    0 0 10px #fff,
+    0 0 20px #00ffff,
+    0 0 40px #00ffff,
+    0 0 80px #00ffff;
+  animation: flicker 1.5s infinite alternate;
+}
+
+@keyframes flicker {
+
+  0%,
+  19%,
+  21%,
+  23%,
+  25%,
+  54%,
+  56%,
+  100% {
+    text-shadow:
+      0 0 5px #fff,
+      0 0 10px #fff,
+      0 0 20px #00ffff,
+      0 0 40px #00ffff,
+      0 0 80px #00ffff;
+  }
+
+  20%,
+  24%,
+  55% {
+    text-shadow: none;
+    opacity: 0.8;
+    /* Dim slightly when "off" */
+  }
+}
+
+.subtitle {
+  letter-spacing: 0.2em;
+  color: #fff;
+  text-shadow:
+    0 0 5px #fff,
+    0 0 10px #aed8ff,
+    0 0 20px #aed8ff;
+}
+
+.pointing-target {
+  position: absolute;
+  top: 55%;
+  left: 58%;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+}
+
+.neon-button {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  border: 1px solid white;
+  padding: 15px 30px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+  backdrop-filter: blur(5px);
+}
+
+.neon-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow:
+    0 0 20px rgba(255, 255, 255, 0.3),
+    inset 0 0 10px rgba(255, 255, 255, 0.1);
+  transform: scale(1.05);
+}
+
+@media (max-width: 768px) {
+  .bg-scene {
+    background-position: center;
+  }
+
+  .pointing-target {
+    top: 60%;
+    left: 50%;
+  }
+
+  .content-wrapper {
+    align-items: center;
+  }
+
+  .text-container {
+    margin-left: 0 !important;
+    text-align: center;
+    margin-bottom: 200px;
+  }
+}

@@ -113,5 +113,32 @@ namespace DomusMercatorisDotnetMVC.Services
 
             return result;
         }
+
+        public async Task<(List<ProductCommentsSummaryDto> Items, int TotalCount)> GetProductsWithCommentsForCompanyAsync(int companyId, int pageNumber, int pageSize)
+        {
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 10;
+
+            var baseQuery = _db.Comments
+                .Include(c => c.Product)
+                .Where(c => c.Product != null && c.Product.CompanyId == companyId)
+                .GroupBy(c => new { c.ProductId, c.Product.Name });
+
+            var totalCount = await baseQuery.CountAsync();
+
+            var items = await baseQuery
+                .OrderByDescending(g => g.Count())
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(g => new ProductCommentsSummaryDto
+                {
+                    ProductId = g.Key.ProductId,
+                    ProductName = g.Key.Name,
+                    CommentCount = g.Count()
+                })
+                .ToListAsync();
+
+            return (items, totalCount);
+        }
     }
 }

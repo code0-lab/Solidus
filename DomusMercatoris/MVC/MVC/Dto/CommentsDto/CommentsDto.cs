@@ -8,8 +8,8 @@ namespace DomusMercatorisDotnetMVC.Dto.CommentsDto
         public int Id { get; set; }
         public long ProductId { get; set; }
         public long UserId { get; set; }
-        public string UserName { get; set; } = string.Empty; // Added for display purposes
-        public string ProductName { get; set; } = string.Empty; // Added for display context
+        public string UserName { get; set; } = string.Empty;
+        public string ProductName { get; set; } = string.Empty;
         public string Comment { get; set; } = string.Empty;
         public bool IsApproved { get; set; }
         public int ModerationStatus { get; set; }
@@ -25,5 +25,12 @@ namespace DomusMercatorisDotnetMVC.Dto.CommentsDto
         public string Comment { get; set; } = string.Empty;
         
         public long? UserId { get; set; } 
+    }
+
+    public class ProductCommentsSummaryDto
+    {
+        public long ProductId { get; set; }
+        public string ProductName { get; set; } = string.Empty;
+        public int CommentCount { get; set; }
     }
 }

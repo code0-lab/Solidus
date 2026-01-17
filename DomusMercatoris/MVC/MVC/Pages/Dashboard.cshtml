@@ -43,8 +43,9 @@
     <div class="row g-3 mt-4">
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Recent Comments</h5>
+                    <a asp-page="/Comments" class="btn btn-sm btn-outline-secondary">All comments</a>
                 </div>
                 <div class="card-body">
                     @if (Model.RecentComments != null && Model.RecentComments.Count > 0)

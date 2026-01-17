@@ -26,6 +26,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         authService.logout();
         authService.toggleLogin(); // Open login modal
         router.navigate(['/']); // Optional: redirect to home
+      } else if (error.status === 403) {
+        // Access denied
+        router.navigate(['/403']);
       }
       return throwError(() => error);
     })
