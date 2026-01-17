@@ -45,15 +45,21 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
             [Required]
             [StringLength(200)]
             public string Topic { get; set; } = string.Empty;
+
+            public string HtmlContent { get; set; } = string.Empty;
         }
 
-        public async Task OnGetAsync()
+        public async Task OnGetAsync(int? companyId)
         {
             Companies = await _db.Companies
                 .OrderBy(c => c.Name)
                 .ToListAsync();
 
-            if (Input.CompanyId == 0 && Companies.Count > 0)
+            if (companyId.HasValue && companyId.Value > 0)
+            {
+                Input.CompanyId = companyId.Value;
+            }
+            else if (Input.CompanyId == 0 && Companies.Count > 0)
             {
                 Input.CompanyId = Companies[0].CompanyId;
             }
@@ -124,6 +130,58 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
             Input.CompanyId = companyId;
             await LoadBannersAsync(companyId);
 
+            return Page();
+        }
+
+        public async Task<IActionResult> OnPostDeleteAsync(int id, int companyId)
+        {
+            await _bannerService.DeleteAsync(id, companyId);
+            Input.CompanyId = companyId;
+            await LoadBannersAsync(companyId);
+            return Page();
+        }
+
+        public async Task<IActionResult> OnPostManualCreateAsync()
+        {
+            Companies = await _db.Companies
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+
+            if (Input.CompanyId == 0)
+            {
+                ModelState.AddModelError(string.Empty, "Please select a company.");
+                await LoadBannersAsync(Input.CompanyId);
+                return Page();
+            }
+
+            if (string.IsNullOrWhiteSpace(Input.HtmlContent))
+            {
+                ModelState.AddModelError(string.Empty, "Please enter HTML content.");
+                await LoadBannersAsync(Input.CompanyId);
+                return Page();
+            }
+            
+            var dto = new CreateBannerDto
+            {
+                CompanyId = Input.CompanyId,
+                Topic = !string.IsNullOrWhiteSpace(Input.Topic) ? Input.Topic : "Manual Entry",
+                HtmlContent = Input.HtmlContent
+            };
+
+            await _bannerService.CreateAsync(dto);
+
+            Input.Topic = string.Empty;
+            Input.HtmlContent = string.Empty;
+            await LoadBannersAsync(Input.CompanyId);
+
+            return Page();
+        }
+
+        public async Task<IActionResult> OnPostUpdateContentAsync(int id, int companyId, string htmlContent)
+        {
+            await _bannerService.UpdateContentAsync(id, companyId, htmlContent);
+            Input.CompanyId = companyId;
+            await LoadBannersAsync(companyId);
             return Page();
         }
 

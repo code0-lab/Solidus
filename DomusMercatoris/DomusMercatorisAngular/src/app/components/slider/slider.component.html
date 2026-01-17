@@ -1,6 +1,6 @@
 @if (banner()) {
-  <div class="banner-wrapper">
-    <div class="banner-content" [innerHTML]="banner()!.htmlContent"></div>
-  </div>
+<div class="banner-wrapper">
+  <iframe [srcdoc]="safeHtml()" style="width: 100%; height: 750px; border: none; overflow: hidden;" scrolling="no"
+    title="AI Generated Banner"></iframe>
+</div>
 }
-

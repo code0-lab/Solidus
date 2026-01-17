@@ -61,11 +61,11 @@ namespace DomusMercatorisDotnetMVC.Services
             var json = JsonConvert.SerializeObject(requestBody);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key={apiKey}";
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key={apiKey}";
 
             try
             {
-                var response = await _httpClient.PostAsync(url, content);
+                var response = await SendRequestWithRetryAsync(url, content);
                 if (!response.IsSuccessStatusCode)
                 {
                     var error = await response.Content.ReadAsStringAsync();
@@ -95,12 +95,311 @@ namespace DomusMercatorisDotnetMVC.Services
             }
         }
 
+        private const string RetroSliderTemplate = @"
+<!DOCTYPE html>
+<html lang=""tr"">
+<head>
+    <meta charset=""UTF-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title>Retro AI Slider</title>
+    <style>
+        /* --- RESET & VARIABLES --- */
+        :root {
+            --bg-color: #e0e0e0;
+            --window-bg: #ffffff;
+            --main-black: #000000;
+            --shadow-hard: 8px 8px 0px rgba(0, 0, 0, 0.3);
+            --font-mono: 'Courier New', 'Monaco', monospace;
+            --accent-glitch: #ff00ff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: var(--font-mono);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- THE RETRO WINDOW CONTAINER --- */
+        .os-window {
+            width: 90%;
+            max-width: 900px;
+            background: var(--window-bg);
+            border: 3px solid var(--main-black);
+            box-shadow: var(--shadow-hard);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- TITLE BAR --- */
+        .title-bar {
+            background: var(--main-black);
+            color: var(--window-bg);
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--main-black);
+            user-select: none;
+        }
+
+        .title-text {
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 6px;
+        }
+
+        .control-dot {
+            width: 12px;
+            height: 12px;
+            background: var(--window-bg);
+            border: 1px solid var(--main-black);
+        }
+
+        /* --- VIEWPORT (MASK) --- */
+        .viewport {
+            position: relative;
+            width: 100%;
+            height: 450px; /* Banner Yüksekliği */
+            overflow: hidden;
+            background-color: #f4f4f4;
+        }
+
+        /* Scanline Overlay Effect */
+        .scanlines {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0,0,0,0) 0px,
+                rgba(0,0,0,0) 2px,
+                rgba(0,0,0,0.05) 3px
+            );
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* --- SLIDER TRACK --- */
+        .slider-track {
+            display: flex;
+            height: 100%;
+            width: 100%;
+            /* JS ile burayı manipüle edeceğiz */
+            transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .slide {
+            min-width: 100%;
+            height: 100%;
+            flex-shrink: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* --- CONTROL BAR --- */
+        .status-bar {
+            border-top: 3px solid var(--main-black);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #eeeeee;
+        }
+
+        .btn-retro {
+            background: var(--window-bg);
+            color: var(--main-black);
+            border: 2px solid var(--main-black);
+            padding: 10px 24px;
+            font-family: inherit;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 4px 4px 0px var(--main-black);
+            transition: all 0.1s;
+        }
+
+        .btn-retro:hover:not(:disabled) {
+            transform: translate(1px, 1px);
+            box-shadow: 3px 3px 0px var(--main-black);
+        }
+
+        .btn-retro:active:not(:disabled) {
+            transform: translate(4px, 4px);
+            box-shadow: 0px 0px 0px var(--main-black);
+        }
+
+        .btn-retro:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: translate(4px, 4px);
+        }
+
+        /* --- LOADING STATE --- */
+        .loading-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 768px) {
+            .viewport { height: 600px; } /* Mobilde daha uzun olsun */
+            .os-window { width: 95%; margin: 10px; }
+            .btn-retro { padding: 8px 16px; font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class=""os-window"">
+        <!-- Header -->
+        <div class=""title-bar"">
+            <span class=""title-text"">Gemini_Gen_UI.exe</span>
+            <div class=""window-controls"">
+                <div class=""control-dot""></div>
+                <div class=""control-dot""></div>
+            </div>
+        </div>
+
+        <!-- Görsel Alanı -->
+        <div class=""viewport"">
+            <!-- Loading Ekranı -->
+            <div class=""loading-overlay"" id=""loader"">
+                > SYSTEM_BOOTING...
+            </div>
+
+            <!-- TV Efekti -->
+            <div class=""scanlines""></div>
+            
+            <!-- Slaytların Dizildiği Ray -->
+            <div class=""slider-track"" id=""track"">
+                <!-- JS buraya slide'ları basacak -->
+            </div>
+        </div>
+
+        <!-- Kontroller -->
+        <div class=""status-bar"">
+            <div id=""status-text"">INDEX: 0/0</div>
+            <div style=""display: flex; gap: 10px;"">
+                <button class=""btn-retro"" id=""btn-prev"" disabled>&lt; PREV</button>
+                <button class=""btn-retro"" id=""btn-next"" disabled>NEXT &gt;</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. MOCK DATA (Gemini'den gelen veri buraya inject edilecek) ---
+        const geminiResponses = {{GEMINI_DATA_PLACEHOLDER}};
+
+        // --- 2. DEĞİŞKENLER ---
+        const track = document.getElementById('track');
+        const loader = document.getElementById('loader');
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        const statusText = document.getElementById('status-text');
+
+        let currentIndex = 0;
+        const totalSlides = geminiResponses.length;
+
+        // --- 3. BAŞLATMA FONKSİYONU ---
+        function initSlider() {
+            // Loading simülasyonu (1 saniye bekle)
+            setTimeout(() => {
+                renderSlides();
+                loader.style.display = 'none';
+                updateControls();
+            }, 1000);
+        }
+
+        // --- 4. HTML RENDER ---
+        function renderSlides() {
+            track.innerHTML = ''; // Temizle
+            
+            geminiResponses.forEach((htmlContent) => {
+                const slideDiv = document.createElement('div');
+                slideDiv.className = 'slide';
+                slideDiv.innerHTML = htmlContent; // Gemini HTML'ini göm
+                track.appendChild(slideDiv);
+            });
+        }
+
+        // --- 5. NAVİGASYON ---
+        function updateSliderPosition() {
+            const translateX = -(currentIndex * 100);
+            track.style.transform = `translateX(${translateX}%)`;
+            updateControls();
+        }
+
+        function updateControls() {
+            // Status yazısını güncelle
+            statusText.innerText = `INDEX: ${currentIndex + 1}/${totalSlides}`;
+
+            // Butonları aktif/pasif yap
+            btnPrev.disabled = currentIndex === 0;
+            btnNext.disabled = currentIndex === totalSlides - 1;
+        }
+
+        // Event Listeners
+        btnPrev.addEventListener('click', () => {
+            if (currentIndex > 0) {
+                currentIndex--;
+                updateSliderPosition();
+            }
+        });
+
+        btnNext.addEventListener('click', () => {
+            if (currentIndex < totalSlides - 1) {
+                currentIndex++;
+                updateSliderPosition();
+            }
+        });
+
+        // Uygulamayı Başlat
+        initSlider();
+
+    </script>
+</body>
+</html>";
+
         public async Task<string?> GenerateBannerHtml(string apiKey, string prompt)
         {
             if (string.IsNullOrEmpty(apiKey) || string.IsNullOrWhiteSpace(prompt))
             {
                 return null;
             }
+
+            // Prompt Gemini for a JSON array of 3 banner HTML snippets
+            var systemPrompt = @"You are a creative frontend developer specializing in retro/brutalist design. 
+Create 3 distinct, high-quality HTML banner contents based on the user's prompt.
+RETURN ONLY A JSON ARRAY OF STRINGS. No markdown formatting, no explanations.
+Examples: 
+[""<div style='...'>...</div>"", ""<div>...</div>"", ""<div>...</div>""]
+Each HTML string must be self-contained with inline CSS, ready to be placed inside a flex container.";
 
             var requestBody = new
             {
@@ -110,7 +409,7 @@ namespace DomusMercatorisDotnetMVC.Services
                     {
                         parts = new[]
                         {
-                            new { text = prompt }
+                            new { text = systemPrompt + "\n\nUser Prompt: " + prompt }
                         }
                     }
                 }
@@ -119,11 +418,11 @@ namespace DomusMercatorisDotnetMVC.Services
             var json = JsonConvert.SerializeObject(requestBody);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key={apiKey}";
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key={apiKey}";
 
             try
             {
-                var response = await _httpClient.PostAsync(url, content);
+                var response = await SendRequestWithRetryAsync(url, content);
                 if (!response.IsSuccessStatusCode)
                 {
                     var error = await response.Content.ReadAsStringAsync();
@@ -140,13 +439,63 @@ namespace DomusMercatorisDotnetMVC.Services
                 }
 
                 string text = result!.candidates[0].content.parts[0].text;
-                return text.Trim();
+                
+                // Sanitization to ensure we get a valid JS array
+                text = text.Trim();
+                if (text.StartsWith("```json")) text = text.Replace("```json", "").Replace("```", "");
+                if (text.StartsWith("```")) text = text.Replace("```", "");
+                text = text.Trim();
+
+                // Inject the JSON array into the template
+                // We assume 'text' is something like ["<div>...</div>", ...]
+                // If it's not valid JSON, the JS on the client side might fail, but this is a V1 implementation.
+                
+                string finalHtml = RetroSliderTemplate.Replace("{{GEMINI_DATA_PLACEHOLDER}}", text);
+                
+                return finalHtml;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Gemini Banner Exception: {ex.Message}");
                 return null;
             }
+        }
+
+        private async Task<HttpResponseMessage> SendRequestWithRetryAsync(string url, HttpContent content, int maxRetries = 3)
+        {
+            for (int i = 0; i <= maxRetries; i++)
+            {
+                // İlk istekten sonra içerik atıldığı veya tüketildiği için kopyalamamız gerekiyor.
+                // String içeriği için daha basit bir yol: yeniden oluşturmak.
+                // StringContent tipinde bir 'content' geçtiğimiz için, okumadan jenerik olarak kopyalamak kolay değil.
+                // Bu özel servis için bunun StringContent(json, Encoding.UTF8, "application/json") olduğunu biliyoruz.
+                // Çağıran tarafın JSON dizesini geçmesini sağlayalım VEYA burada okuyalım.
+
+                // Aslında, kopyalama karmaşıklığından kaçınmak veya basit tutmak için yeniden deneme işlemini metotların içinde yapalım.
+                // Ancak DRY prensibine uymak için, çağıranın yeni bir StringContent geçtiğini veya bizim onu yeniden yapılandırdığımızı varsayacağız.
+                // İçeriğin imha edilmesi (disposal) konusundaki güvenlik için yeniden deneme döngüsünü metotların içinde yapacak şekilde biraz refaktör edelim VEYA içeriği doğrudan okuyalım.
+                
+                var request = new HttpRequestMessage(HttpMethod.Post, url);
+                string json = await content.ReadAsStringAsync();
+                request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.SendAsync(request);
+
+                if (response.StatusCode != System.Net.HttpStatusCode.TooManyRequests)
+                {
+                    return response;
+                }
+
+                if (i == maxRetries)
+                {
+                    return response;
+                }
+
+                int delay = 2000 * (int)Math.Pow(2, i); // 2s, 4s, 8s
+                Console.WriteLine($"Token Limit Exceeded (429). Retrying in {delay}ms...");
+                await Task.Delay(delay);
+            }
+            return null!; // Should not happen
         }
     }
 }

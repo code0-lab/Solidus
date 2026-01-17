@@ -78,5 +78,30 @@ namespace DomusMercatoris.Service.Services
 
             return _mapper.Map<BannerDto>(banner);
         }
+
+        public async Task<bool> DeleteAsync(int id, int companyId)
+        {
+            var banner = await _context.Banners
+                .FirstOrDefaultAsync(b => b.Id == id && b.CompanyId == companyId);
+
+            if (banner == null) return false;
+
+            _context.Banners.Remove(banner);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<BannerDto?> UpdateContentAsync(int id, int companyId, string htmlContent)
+        {
+            var banner = await _context.Banners
+                .FirstOrDefaultAsync(b => b.Id == id && b.CompanyId == companyId);
+
+            if (banner == null) return null;
+
+            banner.HtmlContent = htmlContent;
+            await _context.SaveChangesAsync();
+
+            return _mapper.Map<BannerDto>(banner);
+        }
     }
 }

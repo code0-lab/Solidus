@@ -12,32 +12,63 @@
         <div class="col-12 col-lg-4">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-white fw-bold">
-                    Generate New Banner
+                    <ul class="nav nav-tabs card-header-tabs" id="createTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="generate-tab" data-bs-toggle="tab" data-bs-target="#generate" type="button" role="tab" aria-selected="true">Generate (AI)</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="manual-tab" data-bs-toggle="tab" data-bs-target="#manual" type="button" role="tab" aria-selected="false">Manual Create</button>
+                        </li>
+                    </ul>
                 </div>
                 <div class="card-body">
-                    <form method="post" asp-page-handler="Generate">
-                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-
-                        <div class="mb-3">
-                            <label asp-for="Input.CompanyId" class="form-label">Company</label>
-                            <select asp-for="Input.CompanyId" class="form-select">
-                                @foreach (var c in Model.Companies)
-                                {
-                                    <option value="@c.CompanyId">@c.Name</option>
-                                }
-                            </select>
+                    <div class="tab-content">
+                        <!-- AI GENERATE TAB -->
+                        <div class="tab-pane fade show active" id="generate" role="tabpanel" aria-labelledby="generate-tab">
+                            <form method="post" asp-page-handler="Generate">
+                                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                                <div class="mb-3">
+                                    <label asp-for="Input.CompanyId" class="form-label">Company</label>
+                                    <select asp-for="Input.CompanyId" class="form-select" onchange="window.location.href='?companyId='+this.value">
+                                        @foreach (var c in Model.Companies)
+                                        {
+                                            <option value="@c.CompanyId">@c.Name</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="Input.Topic" class="form-label">Banner Topic</label>
+                                    <input asp-for="Input.Topic" class="form-control" placeholder="Örnek: Cyberpunk indirim kampanyası" />
+                                    <span asp-validation-for="Input.Topic" class="text-danger"></span>
+                                </div>
+                                <button type="submit" class="btn btn-dark w-100">Generate with Gemini</button>
+                            </form>
                         </div>
-
-                        <div class="mb-3">
-                            <label asp-for="Input.Topic" class="form-label">Banner Topic</label>
-                            <input asp-for="Input.Topic" class="form-control" placeholder="Örnek: Cyberpunk indirim kampanyası" />
-                            <span asp-validation-for="Input.Topic" class="text-danger"></span>
+                        
+                        <!-- MANUAL CREATE TAB -->
+                        <div class="tab-pane fade" id="manual" role="tabpanel" aria-labelledby="manual-tab">
+                            <form method="post" asp-page-handler="ManualCreate">
+                                <div class="mb-3">
+                                    <label asp-for="Input.CompanyId" class="form-label">Company</label>
+                                    <select asp-for="Input.CompanyId" class="form-select">
+                                        @foreach (var c in Model.Companies)
+                                        {
+                                            <option value="@c.CompanyId">@c.Name</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="Input.Topic" class="form-label">Topic / Title (Optional)</label>
+                                    <input asp-for="Input.Topic" class="form-control" placeholder="Manual Entry" />
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="Input.HtmlContent" class="form-label">HTML Content</label>
+                                    <textarea asp-for="Input.HtmlContent" class="form-control font-monospace" rows="10" placeholder="Paste your HTML here..."></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Save Manual Banner</button>
+                            </form>
                         </div>
-
-                        <button type="submit" class="btn btn-dark w-100">
-                            Generate with Gemini
-                        </button>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -101,21 +132,39 @@
                                                 <button type="submit" class="btn btn-sm btn-outline-dark me-1">
                                                     @(b.IsApproved ? "Unapprove" : "Approve & Toggle")
                                                 </button>
+                                                </form>
+                                            <form method="post" asp-page-handler="Delete" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this banner?');">
+                                                <input type="hidden" name="id" value="@b.Id" />
+                                                <input type="hidden" name="companyId" value="@b.CompanyId" />
+                                                <button type="submit" class="btn btn-sm btn-outline-danger me-1">Delete</button>
                                             </form>
-                                            <button type="button"
-                                                    class="btn btn-sm btn-outline-secondary"
-                                                    data-bs-toggle="collapse"
-                                                    data-bs-target="#bannerPreview_@b.Id"
-                                                    aria-expanded="false"
-                                                    aria-controls="bannerPreview_@b.Id">
-                                                Preview
-                                            </button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#bannerPreview_@b.Id" aria-expanded="false" aria-controls="bannerPreview_@b.Id">Edit / Preview</button>
                                         </td>
                                     </tr>
                                     <tr class="collapse" id="bannerPreview_@b.Id">
                                         <td colspan="4">
                                             <div class="border p-3 bg-light">
-                                                @Html.Raw(b.HtmlContent)
+                                                <ul class="nav nav-tabs mb-3" id="previewTab_@b.Id" role="tablist">
+                                                    <li class="nav-item" role="presentation">
+                                                        <button class="nav-link active" id="view-tab-@b.Id" data-bs-toggle="tab" data-bs-target="#view-@b.Id" type="button" role="tab">Preview</button>
+                                                    </li>
+                                                    <li class="nav-item" role="presentation">
+                                                        <button class="nav-link" id="code-tab-@b.Id" data-bs-toggle="tab" data-bs-target="#code-@b.Id" type="button" role="tab">Edit Code</button>
+                                                    </li>
+                                                </ul>
+                                                <div class="tab-content" id="previewTabContent_@b.Id">
+                                                    <div class="tab-pane fade show active" id="view-@b.Id" role="tabpanel">
+                                                        <iframe srcdoc="@b.HtmlContent" style="width: 100%; height: 500px; border: none; background: #fff;" loading="lazy"></iframe>
+                                                    </div>
+                                                    <div class="tab-pane fade" id="code-@b.Id" role="tabpanel">
+                                                        <form method="post" asp-page-handler="UpdateContent">
+                                                            <input type="hidden" name="id" value="@b.Id" />
+                                                            <input type="hidden" name="companyId" value="@b.CompanyId" />
+                                                            <textarea name="htmlContent" class="form-control font-monospace mb-2" rows="15">@b.HtmlContent</textarea>
+                                                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                                                        </form>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </td>
                                     </tr>
