@@ -42,6 +42,7 @@ builder.Services.AddScoped<CompanyService>();
 builder.Services.AddScoped<SalesService>();
 builder.Services.AddScoped<ModeratorService>();
 builder.Services.AddScoped<UsersService>();
+builder.Services.AddScoped<BannerService>();
 
 // Common Services
 builder.Services.AddSingleton<EncryptionService>();

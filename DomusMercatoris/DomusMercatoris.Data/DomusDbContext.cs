@@ -27,6 +27,7 @@ namespace DomusMercatoris.Data
         public DbSet<ProductClusterMember> ProductClusterMembers { get; set; } = null!;
         public DbSet<ProductFeature> ProductFeatures { get; set; } = null!;
         public DbSet<AutoCategory> AutoCategories { get; set; } = null!;
+        public DbSet<Banner> Banners { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

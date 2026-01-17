@@ -4,6 +4,7 @@ import { ProductListComponent } from '../../components/product-list/product-list
 import { ProductDetailComponent } from '../../components/product-detail/product-detail.component';
 import { ProductService } from '../../services/product.service';
 import { Product } from '../../models/product.model';
+import { SliderComponent } from '../../components/slider/slider.component';
 
 @Component({
   selector: 'app-home',
@@ -11,7 +12,8 @@ import { Product } from '../../models/product.model';
   imports: [
     CommonModule, 
     ProductListComponent, 
-    ProductDetailComponent
+    ProductDetailComponent,
+    SliderComponent
   ],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css'

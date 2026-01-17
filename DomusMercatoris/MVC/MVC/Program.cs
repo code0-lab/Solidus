@@ -46,6 +46,7 @@ builder.Services.AddScoped<CargoService>();
 builder.Services.AddScoped<DomusMercatorisDotnetMVC.Services.CommentService>();
 builder.Services.AddHttpClient<GeminiService>();
 builder.Services.AddScoped<GeminiService>();
+builder.Services.AddScoped<BannerService>();
 // Shared Services
 builder.Services.AddScoped<CompanySettingsService>();
 builder.Services.AddHttpClient<GeminiCommentService>();

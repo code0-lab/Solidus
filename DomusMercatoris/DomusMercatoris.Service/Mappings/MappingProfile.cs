@@ -48,6 +48,8 @@ namespace DomusMercatoris.Service.Mappings
                 .ForMember(dest => dest.Quantity, opt => opt.MapFrom(src => src.Product.Quantity))
                 .ForMember(dest => dest.Images, opt => opt.MapFrom(src => src.Product.Images));
             CreateMap<CreateVariantProductDto, VariantProduct>();
+
+            CreateMap<Banner, BannerDto>();
         }
     }
 }

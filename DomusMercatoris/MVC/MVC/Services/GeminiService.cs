@@ -94,5 +94,59 @@ namespace DomusMercatorisDotnetMVC.Services
                 return null;
             }
         }
+
+        public async Task<string?> GenerateBannerHtml(string apiKey, string prompt)
+        {
+            if (string.IsNullOrEmpty(apiKey) || string.IsNullOrWhiteSpace(prompt))
+            {
+                return null;
+            }
+
+            var requestBody = new
+            {
+                contents = new[]
+                {
+                    new
+                    {
+                        parts = new[]
+                        {
+                            new { text = prompt }
+                        }
+                    }
+                }
+            };
+
+            var json = JsonConvert.SerializeObject(requestBody);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key={apiKey}";
+
+            try
+            {
+                var response = await _httpClient.PostAsync(url, content);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Gemini Banner API Error: {error}");
+                    return null;
+                }
+
+                var resultJson = await response.Content.ReadAsStringAsync();
+                dynamic? result = JsonConvert.DeserializeObject(resultJson);
+
+                if (result == null || result!.candidates == null || result!.candidates.Count == 0)
+                {
+                    return null;
+                }
+
+                string text = result!.candidates[0].content.parts[0].text;
+                return text.Trim();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Gemini Banner Exception: {ex.Message}");
+                return null;
+            }
+        }
     }
 }

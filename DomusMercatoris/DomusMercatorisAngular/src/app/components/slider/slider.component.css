@@ -1,0 +1,14 @@
+.banner-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.banner-content {
+  width: 100%;
+  max-width: 960px;
+  border: 2px solid black;
+  box-shadow: 4px 4px 0 black;
+  background: white;
+}

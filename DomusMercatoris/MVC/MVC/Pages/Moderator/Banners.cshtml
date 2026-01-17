@@ -1,0 +1,131 @@
+@page
+@model DomusMercatorisDotnetMVC.Pages.Moderator.BannersModel
+@{
+    ViewData["PageTitle"] = "Gemini Slider / Banner Management";
+    Layout = "_LayoutAuth";
+}
+
+<div class="container py-5">
+    <h3 class="mb-4">Gemini Slider / Banner Management</h3>
+
+    <div class="row g-4">
+        <div class="col-12 col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white fw-bold">
+                    Generate New Banner
+                </div>
+                <div class="card-body">
+                    <form method="post" asp-page-handler="Generate">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Input.CompanyId" class="form-label">Company</label>
+                            <select asp-for="Input.CompanyId" class="form-select">
+                                @foreach (var c in Model.Companies)
+                                {
+                                    <option value="@c.CompanyId">@c.Name</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Input.Topic" class="form-label">Banner Topic</label>
+                            <input asp-for="Input.Topic" class="form-control" placeholder="Örnek: Cyberpunk indirim kampanyası" />
+                            <span asp-validation-for="Input.Topic" class="text-danger"></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-dark w-100">
+                            Generate with Gemini
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-8">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
+                    <span>Banners</span>
+                    <span class="badge bg-secondary">@Model.Banners.Count</span>
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.Banners.Count == 0)
+                    {
+                        <div class="p-4 text-center text-muted">
+                            No banners defined for selected company.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Topic</th>
+                                        <th>Approved</th>
+                                        <th>Active</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var b in Model.Banners)
+                                    {
+                                    <tr>
+                                        <td>@b.Topic</td>
+                                        <td>
+                                            @if (b.IsApproved)
+                                            {
+                                                <span class="badge bg-success">Approved</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-warning text-dark">Pending</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (b.IsActive)
+                                            {
+                                                <span class="badge bg-primary">Active</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">Inactive</span>
+                                            }
+                                        </td>
+                                        <td class="text-end">
+                                            <form method="post" asp-page-handler="UpdateStatus" class="d-inline">
+                                                <input type="hidden" name="id" value="@b.Id" />
+                                                <input type="hidden" name="companyId" value="@b.CompanyId" />
+                                                <input type="hidden" name="isApproved" value="@(b.IsApproved ? "false" : "true")" />
+                                                <input type="hidden" name="isActive" value="@(b.IsActive ? "true" : "false")" />
+                                                <button type="submit" class="btn btn-sm btn-outline-dark me-1">
+                                                    @(b.IsApproved ? "Unapprove" : "Approve & Toggle")
+                                                </button>
+                                            </form>
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-secondary"
+                                                    data-bs-toggle="collapse"
+                                                    data-bs-target="#bannerPreview_@b.Id"
+                                                    aria-expanded="false"
+                                                    aria-controls="bannerPreview_@b.Id">
+                                                Preview
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr class="collapse" id="bannerPreview_@b.Id">
+                                        <td colspan="4">
+                                            <div class="border p-3 bg-light">
+                                                @Html.Raw(b.HtmlContent)
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
