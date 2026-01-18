@@ -143,7 +143,7 @@ namespace MVC.Services
             var dir = new DirectoryInfo(startPath);
             while (dir != null)
             {
-                if (Directory.Exists(Path.Combine(dir.FullName, "AI")) && Directory.Exists(Path.Combine(dir.FullName, "venv")))
+                if (Directory.Exists(Path.Combine(dir.FullName, "AI")))
                 {
                     return dir.FullName;
                 }
