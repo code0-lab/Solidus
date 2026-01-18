@@ -138,7 +138,14 @@
                                                 <input type="hidden" name="companyId" value="@b.CompanyId" />
                                                 <button type="submit" class="btn btn-sm btn-outline-danger me-1">Delete</button>
                                             </form>
-                                                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#bannerPreview_@b.Id" aria-expanded="false" aria-controls="bannerPreview_@b.Id">Edit / Preview</button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                        data-bs-toggle="collapse"
+                                                        data-bs-target="#bannerPreview_@b.Id"
+                                                        aria-expanded="false"
+                                                        aria-controls="bannerPreview_@b.Id"
+                                                        onclick="loadBannerContent(@b.Id, @b.CompanyId)">
+                                                    Edit / Preview
+                                                </button>
                                         </td>
                                     </tr>
                                     <tr class="collapse" id="bannerPreview_@b.Id">
@@ -154,13 +161,13 @@
                                                 </ul>
                                                 <div class="tab-content" id="previewTabContent_@b.Id">
                                                     <div class="tab-pane fade show active" id="view-@b.Id" role="tabpanel">
-                                                        <iframe srcdoc="@b.HtmlContent" style="width: 100%; height: 500px; border: none; background: #fff;" loading="lazy"></iframe>
+                                                        <iframe id="bannerIframe_@b.Id" style="width: 100%; height: 500px; border: none; background: #fff;" loading="lazy"></iframe>
                                                     </div>
                                                     <div class="tab-pane fade" id="code-@b.Id" role="tabpanel">
                                                         <form method="post" asp-page-handler="UpdateContent">
-                                                            <input type="hidden" name="id" value="@b.Id" />
-                                                            <input type="hidden" name="companyId" value="@b.CompanyId" />
-                                                            <textarea name="htmlContent" class="form-control font-monospace mb-2" rows="15">@b.HtmlContent</textarea>
+                                                            <input type="hidden" name="Edit.Id" value="@b.Id" />
+                                                            <input type="hidden" name="Edit.CompanyId" value="@b.CompanyId" />
+                                                            <textarea id="bannerCode_@b.Id" name="Edit.HtmlContent" class="form-control font-monospace mb-2" rows="15"></textarea>
                                                             <button type="submit" class="btn btn-primary">Save Changes</button>
                                                         </form>
                                                     </div>
@@ -178,3 +185,32 @@
         </div>
     </div>
 </div>
+
+<script>
+    function loadBannerContent(id, companyId) {
+        var iframe = document.getElementById('bannerIframe_' + id);
+        var textarea = document.getElementById('bannerCode_' + id);
+        if (!iframe || iframe.getAttribute('data-loaded') === 'true') {
+            return;
+        }
+        fetch('?handler=Content&id=' + encodeURIComponent(id) + '&companyId=' + encodeURIComponent(companyId))
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error('Failed to load banner content');
+                }
+                return response.text();
+            })
+            .then(function (html) {
+                iframe.srcdoc = html;
+                iframe.setAttribute('data-loaded', 'true');
+                if (textarea) {
+                    textarea.value = html;
+                }
+            })
+            .catch(function () {
+                if (textarea && textarea.value === '') {
+                    textarea.value = 'Error loading banner content.';
+                }
+            });
+    }
+</script>

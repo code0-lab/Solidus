@@ -1,34 +1,36 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using DomusMercatoris.Data;
 using DomusMercatorisDotnetMVC.Services;
 using DomusMercatoris.Service.Services;
 using DomusMercatoris.Service.DTOs;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using DomusMercatoris.Core.Entities;
+using System.Text.RegularExpressions;
+using Microsoft.Extensions.Configuration;
+using System.Linq;
 
 namespace DomusMercatorisDotnetMVC.Pages.Moderator
 {
     [Authorize(Roles = "Moderator,Rex")]
     public class BannersModel : PageModel
     {
-        private readonly DomusDbContext _db;
         private readonly UserService _userService;
         private readonly GeminiService _geminiService;
         private readonly BannerService _bannerService;
+        private readonly IConfiguration _configuration;
 
         public BannersModel(
-            DomusDbContext db,
             UserService userService,
             GeminiService geminiService,
-            BannerService bannerService)
+            BannerService bannerService,
+            IConfiguration configuration)
         {
-            _db = db;
             _userService = userService;
             _geminiService = geminiService;
             _bannerService = bannerService;
+            _configuration = configuration;
         }
 
         public List<BannerDto> Banners { get; set; } = new();
@@ -36,6 +38,9 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
 
         [BindProperty]
         public InputModel Input { get; set; } = new();
+
+        [BindProperty]
+        public EditModel Edit { get; set; } = new();
 
         public class InputModel
         {
@@ -49,11 +54,16 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
             public string HtmlContent { get; set; } = string.Empty;
         }
 
+        public class EditModel
+        {
+            public int Id { get; set; }
+            public int CompanyId { get; set; }
+            public string HtmlContent { get; set; } = string.Empty;
+        }
+
         public async Task OnGetAsync(int? companyId)
         {
-            Companies = await _db.Companies
-                .OrderBy(c => c.Name)
-                .ToListAsync();
+            await LoadSharedDataAsync();
 
             if (companyId.HasValue && companyId.Value > 0)
             {
@@ -69,9 +79,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
 
         public async Task<IActionResult> OnPostGenerateAsync()
         {
-            Companies = await _db.Companies
-                .OrderBy(c => c.Name)
-                .ToListAsync();
+            await LoadSharedDataAsync();
 
             if (!ModelState.IsValid)
             {
@@ -89,7 +97,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
 
             var prompt = BuildBannerPrompt(Input.Topic);
             var html = await _geminiService.GenerateBannerHtml(apiKey, prompt);
-            var cleanedHtml = CleanGeminiHtml(html);
+            var cleanedHtml = CleanGeminiHtml(html ?? string.Empty);
 
             if (string.IsNullOrWhiteSpace(cleanedHtml))
             {
@@ -115,9 +123,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
 
         public async Task<IActionResult> OnPostUpdateStatusAsync(int id, int companyId, bool isApproved, bool isActive)
         {
-            Companies = await _db.Companies
-                .OrderBy(c => c.Name)
-                .ToListAsync();
+            await LoadSharedDataAsync();
 
             var dto = new UpdateBannerStatusDto
             {
@@ -143,9 +149,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
 
         public async Task<IActionResult> OnPostManualCreateAsync()
         {
-            Companies = await _db.Companies
-                .OrderBy(c => c.Name)
-                .ToListAsync();
+            await LoadSharedDataAsync();
 
             if (Input.CompanyId == 0)
             {
@@ -177,12 +181,32 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
             return Page();
         }
 
-        public async Task<IActionResult> OnPostUpdateContentAsync(int id, int companyId, string htmlContent)
+        public async Task<IActionResult> OnPostUpdateContentAsync()
         {
-            await _bannerService.UpdateContentAsync(id, companyId, htmlContent);
-            Input.CompanyId = companyId;
-            await LoadBannersAsync(companyId);
+            await LoadSharedDataAsync();
+
+            await _bannerService.UpdateContentAsync(Edit.Id, Edit.CompanyId, Edit.HtmlContent ?? string.Empty);
+            Input.CompanyId = Edit.CompanyId;
+            await LoadBannersAsync(Edit.CompanyId);
             return Page();
+        }
+
+        public async Task<IActionResult> OnGetContentAsync(int id, int companyId)
+        {
+            var banners = await _bannerService.GetAllAsync(companyId);
+            var banner = banners.FirstOrDefault(b => b.Id == id);
+            if (banner == null)
+            {
+                return NotFound();
+            }
+
+            var html = banner.HtmlContent ?? string.Empty;
+            return Content(html, "text/html");
+        }
+
+        private async Task LoadSharedDataAsync()
+        {
+            Companies = await _userService.GetAllCompaniesAsync();
         }
 
         private async Task LoadBannersAsync(int companyId)
@@ -203,49 +227,40 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
 
             var cleaned = html.Trim();
 
-            if (cleaned.StartsWith("```"))
-            {
-                var firstNewLine = cleaned.IndexOf('\n');
-                if (firstNewLine >= 0 && firstNewLine + 1 < cleaned.Length)
-                {
-                    cleaned = cleaned.Substring(firstNewLine + 1);
-                }
-                else
-                {
-                    cleaned = cleaned.Substring(3);
-                }
-            }
-
-            var lastFenceIndex = cleaned.LastIndexOf("```", StringComparison.Ordinal);
-            if (lastFenceIndex >= 0)
-            {
-                cleaned = cleaned.Substring(0, lastFenceIndex);
-            }
+            cleaned = Regex.Replace(cleaned, @"^```[^\r\n]*\r?\n", string.Empty);
+            cleaned = Regex.Replace(cleaned, @"```[\s]*$", string.Empty);
 
             return cleaned.Trim();
         }
 
         private string BuildBannerPrompt(string userTopic)
         {
-            return
-                "DESIGN CONTEXT (Sitenin Tasarım Kuralları): <br/> " +
-                "Aşağıdaki CSS değişkenlerini ve kurallarını KESİNLİKLE kullanmalısın: " +
-                "- Ana Renk (Primary): #000000 " +
-                "- İkincil Renk: #ffffff " +
-                "- Font Ailesi: \"Geneva\", \"Chicago\", \"Monaco\", \"Courier New\", monospace " +
-                "- Köşe Yuvarlaklığı (Border Radius): 2px " +
-                "- Genel Stil: Retro Macintosh / 90’lar işletim sistemi arayüzü, siyah-beyaz ağırlıklı, piksel gölgeli pencereler, brutalist kutular, düşük radius’lu butonlar, aralarda neon/glitch efektleri ve oyun referansları (GTA, cyberpunk 404 yağmurlu sahne vb.) " +
-                "CONTENT (İçerik): <br/> " +
-                "Banner Konusu: \"" + userTopic + "\" (Kullanıcıdan gelen konu) <br/> " +
-                "Bu konuya uygun yaratıcı bir başlık, alt metin ve bir \"Call to Action\" butonu yaz. " +
-                "TECHNICAL CONSTRAINTS (Teknik Kısıtlamalar): " +
-                "1. Çıktı formatı: SADECE ham HTML kodu. (Markdown, ```html, açıklama metni YOK). " +
-                "2. Stil: CSS'i HTML elementlerinin içine \"inline style\" olarak yaz (style=\"...\"). Harici CSS dosyası kullanma. " +
-                "3. Layout: Flexbox kullanarak içeriği ortala veya split layout yap. " +
-                "4. Görsel: <img> etiketi için `https://picsum.photos/800/400` gibi placeholder servisleri kullan ama üzerine bir linear-gradient overlay ekle ki yazılar okunsun. " +
-                "5. Uyumluluk: Buton rengi ve yazı tipleri yukarıdaki 'DESIGN CONTEXT' ile birebir aynı olmalı. " +
-                "OUTPUT: <br/> " +
-                "Sadece HTML string'i döndür.";
+            var template = _configuration["BannerGeneration:PromptTemplate"];
+
+            if (string.IsNullOrWhiteSpace(template))
+            {
+                template =
+                    "DESIGN CONTEXT (Sitenin Tasarım Kuralları): <br/> " +
+                    "Aşağıdaki CSS değişkenlerini ve kurallarını KESİNLİKLE kullanmalısın: " +
+                    "- Ana Renk (Primary): #000000 " +
+                    "- İkincil Renk: #ffffff " +
+                    "- Font Ailesi: \"Geneva\", \"Chicago\", \"Monaco\", \"Courier New\", monospace " +
+                    "- Köşe Yuvarlaklığı (Border Radius): 2px " +
+                    "- Genel Stil: Retro Macintosh / 90’lar işletim sistemi arayüzü, siyah-beyaz ağırlıklı, piksel gölgeli pencereler, brutalist kutular, düşük radius’lu butonlar, aralarda neon/glitch efektleri ve oyun referansları (GTA, cyberpunk 404 yağmurlu sahne vb.) " +
+                    "CONTENT (İçerik): <br/> " +
+                    "Banner Konusu: \"{UserTopic}\" (Kullanıcıdan gelen konu) <br/> " +
+                    "Bu konuya uygun yaratıcı bir başlık, alt metin ve bir \"Call to Action\" butonu yaz. " +
+                    "TECHNICAL CONSTRAINTS (Teknik Kısıtlamalar): " +
+                    "1. Çıktı formatı: SADECE ham HTML kodu. (Markdown, ```html, açıklama metni YOK). " +
+                    "2. Stil: CSS'i HTML elementlerinin içine \"inline style\" olarak yaz (style=\"...\"). Harici CSS dosyası kullanma. " +
+                    "3. Layout: Flexbox kullanarak içeriği ortala veya split layout yap. " +
+                    "4. Görsel: <img> etiketi için `https://picsum.photos/800/400` gibi placeholder servisleri kullan ama üzerine bir linear-gradient overlay ekle ki yazılar okunsun. " +
+                    "5. Uyumluluk: Buton rengi ve yazı tipleri yukarıdaki 'DESIGN CONTEXT' ile birebir aynı olmalı. " +
+                    "OUTPUT: <br/> " +
+                    "Sadece HTML string'i döndür.";
+            }
+
+            return template.Replace("{UserTopic}", userTopic);
         }
     }
 }

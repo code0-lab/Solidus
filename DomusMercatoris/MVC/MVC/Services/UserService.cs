@@ -134,6 +134,13 @@ namespace DomusMercatorisDotnetMVC.Services
             return company?.Name;
         }
 
+        public async Task<List<Company>> GetAllCompaniesAsync()
+        {
+            return await _dbContext.Companies
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+        }
+
         public string? GetCompanyGeminiKey(int companyId)
         {
             var company = _dbContext.Companies.SingleOrDefault(c => c.CompanyId == companyId);

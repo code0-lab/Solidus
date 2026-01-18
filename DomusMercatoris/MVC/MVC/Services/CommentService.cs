@@ -122,7 +122,7 @@ namespace DomusMercatorisDotnetMVC.Services
             var baseQuery = _db.Comments
                 .Include(c => c.Product)
                 .Where(c => c.Product != null && c.Product.CompanyId == companyId)
-                .GroupBy(c => new { c.ProductId, c.Product.Name });
+                .GroupBy(c => new { c.ProductId, ProductName = c.Product!.Name });
 
             var totalCount = await baseQuery.CountAsync();
 
@@ -133,7 +133,7 @@ namespace DomusMercatorisDotnetMVC.Services
                 .Select(g => new ProductCommentsSummaryDto
                 {
                     ProductId = g.Key.ProductId,
-                    ProductName = g.Key.Name,
+                    ProductName = g.Key.ProductName,
                     CommentCount = g.Count()
                 })
                 .ToListAsync();
