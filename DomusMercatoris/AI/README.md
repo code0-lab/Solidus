@@ -218,44 +218,41 @@ The diagram below shows how the ASP.NET MVC application, the Python AI service, 
 ```mermaid
 flowchart LR
 
-subgraph Startup
-    A[ASP.NET MVC App] --> B[PythonRunnerService]
-    B --> C[Start AI/api.py via Uvicorn]
-    C --> D[FastAPI AI Service (port 5001)]
-end
+%% Startup
+A[ASP.NET MVC App] --> B[PythonRunnerService]
+B --> C[Start AI/api.py via Uvicorn]
+C --> D[FastAPI AI Service<br/>(port 5001)]
 
-subgraph FeatureExtraction
-    E[Admin / Moderator UI] --> F[Upload / Edit Product]
-    F --> G[ASP.NET MVC Controllers]
-    G --> H[ClusteringService.ExtractAndStoreFeaturesAsync]
+%% Feature extraction
+E[Admin / Moderator UI] --> F[Upload / Edit Product]
+F --> G[ASP.NET MVC Controllers]
+G --> H[ClusteringService.ExtractAndStoreFeaturesAsync]
 
-    H --> I[Read product images from wwwroot]
-    I --> J[HTTP POST /extract\nmultipart/form-data: files[]]
-    J --> D
+H --> I[Read product images from wwwroot]
+I --> J[HTTP POST /extract<br/>multipart/form-data: files[]]
+J --> D
 
-    D --> K[ResNet-based feature extractor]
-    K --> L[2048-dim feature vector]
+D --> K[ResNet-based feature extractor]
+K --> L[2048-dim feature vector]
 
-    L --> M[Return JSON: { \"vector\": [...] }]
-    M --> N[ClusteringService saves vector\n(ProductFeatures table)]
-    N --> O[(Database)]
-end
+L --> M[Return JSON: { vector: [...] }]
+M --> N[Save features in ProductFeatures]
+N --> O[(Database)]
 
-subgraph Clustering
-    P[Admin triggers clustering\nfrom MVC UI] --> Q[ClusteringService.RunClusteringAsync]
+%% Clustering
+P[Admin triggers clustering<br/>from MVC UI] --> Q[ClusteringService.RunClusteringAsync]
 
-    Q --> R[Load all feature vectors\nfrom ProductFeatures]
-    R --> S[Build feature matrix\n(features: List<List<float>>)]
+Q --> R[Load feature vectors<br/>from ProductFeatures]
+R --> S[Build feature matrix<br/>(features: List&lt;List&lt;float&gt;&gt;)]
 
-    S --> T[HTTP POST /cluster\nJSON: { features, k }]
-    T --> D
+S --> T[HTTP POST /cluster<br/>JSON: { features, k }]
+T --> D
 
-    D --> U[Run K-Means (sklearn)]
-    U --> V[Return JSON:\n{ \"labels\": [...], \"centroids\": [...] }]
+D --> U[Run K-Means (sklearn)]
+U --> V[Return JSON:<br/>{ labels: [...], centroids: [...] }]
 
-    V --> W[Update ProductClusters\nand ProductClusterMembers]
-    W --> O
+V --> W[Update ProductClusters<br/>and ProductClusterMembers]
+W --> O
 
-    O --> X[Admin / Frontend UIs\nread clustered products]
-end
+O --> X[UIs read clustered products]
 ```
