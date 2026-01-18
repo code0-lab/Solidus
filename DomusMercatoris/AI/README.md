@@ -216,43 +216,28 @@ When you need to add or update Python packages:
 The diagram below shows how the ASP.NET MVC application, the Python AI service, and the database interact.
 
 ```mermaid
-flowchart LR
+graph LR
+    A[ASP.NET MVC App] --> B[PythonRunnerService];
+    B --> C[Start AI/api.py with Uvicorn];
+    C --> D[FastAPI AI Service (port 5001)];
 
-%% Startup
-A[ASP.NET MVC App] --> B[PythonRunnerService]
-B --> C[Start AI/api.py via Uvicorn]
-C --> D[FastAPI AI Service<br/>(port 5001)]
+    E[Admin / Moderator UI] --> F[Upload or Edit Product];
+    F --> G[ASP.NET MVC Controllers];
+    G --> H[ClusteringService.ExtractAndStoreFeaturesAsync];
+    H --> I[Read product images from wwwroot];
+    I --> J[POST /extract to AI service];
+    J --> K[ResNet feature extractor];
+    K --> L[2048-dim feature vector];
+    L --> M[Save vector in ProductFeatures];
+    M --> N[(Database)];
 
-%% Feature extraction
-E[Admin / Moderator UI] --> F[Upload / Edit Product]
-F --> G[ASP.NET MVC Controllers]
-G --> H[ClusteringService.ExtractAndStoreFeaturesAsync]
-
-H --> I[Read product images from wwwroot]
-I --> J[HTTP POST /extract<br/>multipart/form-data: files[]]
-J --> D
-
-D --> K[ResNet-based feature extractor]
-K --> L[2048-dim feature vector]
-
-L --> M[Return JSON: { vector: [...] }]
-M --> N[Save features in ProductFeatures]
-N --> O[(Database)]
-
-%% Clustering
-P[Admin triggers clustering<br/>from MVC UI] --> Q[ClusteringService.RunClusteringAsync]
-
-Q --> R[Load feature vectors<br/>from ProductFeatures]
-R --> S[Build feature matrix<br/>(features: List&lt;List&lt;float&gt;&gt;)]
-
-S --> T[HTTP POST /cluster<br/>JSON: { features, k }]
-T --> D
-
-D --> U[Run K-Means (sklearn)]
-U --> V[Return JSON:<br/>{ labels: [...], centroids: [...] }]
-
-V --> W[Update ProductClusters<br/>and ProductClusterMembers]
-W --> O
-
-O --> X[UIs read clustered products]
+    P[Admin triggers clustering] --> Q[ClusteringService.RunClusteringAsync];
+    Q --> R[Load feature vectors from ProductFeatures];
+    R --> S[Build feature matrix];
+    S --> T[POST /cluster to AI service];
+    T --> U[Run K-Means clustering];
+    U --> V[Return labels and centroids];
+    V --> W[Update ProductClusters and ProductClusterMembers];
+    W --> N;
+    N --> X[UIs read clustered products];
 ```
