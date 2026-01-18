@@ -217,27 +217,27 @@ The diagram below shows how the ASP.NET MVC application, the Python AI service, 
 
 ```mermaid
 graph LR
-    A[ASP.NET MVC App] --> B[PythonRunnerService];
-    B --> C[Start AI/api.py with Uvicorn];
-    C --> D[FastAPI AI Service (port 5001)];
+  A[ASP.NET MVC App] --> B[PythonRunnerService]
+  B --> C[Start AI/api.py with Uvicorn]
+  C --> D[FastAPI AI Service port 5001]
 
-    E[Admin / Moderator UI] --> F[Upload or Edit Product];
-    F --> G[ASP.NET MVC Controllers];
-    G --> H[ClusteringService.ExtractAndStoreFeaturesAsync];
-    H --> I[Read product images from wwwroot];
-    I --> J[POST /extract to AI service];
-    J --> K[ResNet feature extractor];
-    K --> L[2048-dim feature vector];
-    L --> M[Save vector in ProductFeatures];
-    M --> N[(Database)];
+  E[Admin or Moderator UI] --> F[Upload or Edit Product]
+  F --> G[ASP.NET MVC Controllers]
+  G --> H[ClusteringService.ExtractAndStoreFeaturesAsync]
+  H --> I[Read product images from wwwroot]
+  I --> J[POST /extract to AI service]
+  J --> K[ResNet feature extractor]
+  K --> L[2048-dim feature vector]
+  L --> M[Save vector in ProductFeatures]
+  M --> N[(Database)]
 
-    P[Admin triggers clustering] --> Q[ClusteringService.RunClusteringAsync];
-    Q --> R[Load feature vectors from ProductFeatures];
-    R --> S[Build feature matrix];
-    S --> T[POST /cluster to AI service];
-    T --> U[Run K-Means clustering];
-    U --> V[Return labels and centroids];
-    V --> W[Update ProductClusters and ProductClusterMembers];
-    W --> N;
-    N --> X[UIs read clustered products];
+  P[Admin triggers clustering] --> Q[ClusteringService.RunClusteringAsync]
+  Q --> R[Load feature vectors from ProductFeatures]
+  R --> S[Build feature matrix]
+  S --> T[POST /cluster to AI service]
+  T --> U[Run K-Means clustering]
+  U --> V[Return labels and centroids]
+  V --> W[Update ProductClusters and ProductClusterMembers]
+  W --> N
+  N --> X[UIs read clustered products]
 ```
