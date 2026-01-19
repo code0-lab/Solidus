@@ -2,7 +2,7 @@
   width: 100%;
   display: flex;
   justify-content: center;
-  margin-bottom: 1.5rem;
+  margin: 0 auto 1.5rem;
 }
 
 .banner-content {
@@ -11,4 +11,24 @@
   border: 2px solid black;
   box-shadow: 4px 4px 0 black;
   background: white;
+}
+
+.banner-iframe {
+  width: 100%;
+  max-width: 1200px;
+  border: none;
+  overflow: hidden;
+  height: 260px;
+}
+
+@media (min-width: 1024px) {
+  .banner-iframe {
+    height: 320px;
+  }
+}
+
+@media (max-width: 768px) {
+  .banner-iframe {
+    height: 220px;
+  }
 }

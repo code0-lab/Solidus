@@ -10,16 +10,87 @@ using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using System.Net.Http;
 using System.Text;
+using Ganss.Xss;
 
 namespace DomusMercatorisDotnetMVC.Services
 {
     public class GeminiService
     {
         private readonly HttpClient _httpClient;
+        private readonly HtmlSanitizer _sanitizer;
 
         public GeminiService(HttpClient httpClient)
         {
             _httpClient = httpClient;
+            _sanitizer = new HtmlSanitizer();
+            _sanitizer.AllowedAttributes.Add("style");
+            _sanitizer.AllowedAttributes.Add("class");
+            _sanitizer.AllowedAttributes.Add("id");
+            _sanitizer.AllowedCssProperties.Add("display");
+            _sanitizer.AllowedCssProperties.Add("flex-direction");
+            _sanitizer.AllowedCssProperties.Add("justify-content");
+            _sanitizer.AllowedCssProperties.Add("align-items");
+            _sanitizer.AllowedCssProperties.Add("gap");
+            _sanitizer.AllowedCssProperties.Add("width");
+            _sanitizer.AllowedCssProperties.Add("height");
+            _sanitizer.AllowedCssProperties.Add("background");
+            _sanitizer.AllowedCssProperties.Add("color");
+            _sanitizer.AllowedCssProperties.Add("font-size");
+            _sanitizer.AllowedCssProperties.Add("font-weight");
+            _sanitizer.AllowedCssProperties.Add("border");
+            _sanitizer.AllowedCssProperties.Add("border-radius");
+            _sanitizer.AllowedCssProperties.Add("padding");
+            _sanitizer.AllowedCssProperties.Add("margin");
+            _sanitizer.AllowedCssProperties.Add("text-align");
+            _sanitizer.AllowedCssProperties.Add("text-decoration");
+            _sanitizer.AllowedCssProperties.Add("box-shadow");
+            _sanitizer.AllowedCssProperties.Add("transform");
+            _sanitizer.AllowedCssProperties.Add("cursor");
+            _sanitizer.AllowedCssProperties.Add("z-index");
+            _sanitizer.AllowedCssProperties.Add("position");
+            _sanitizer.AllowedCssProperties.Add("top");
+            _sanitizer.AllowedCssProperties.Add("left");
+            _sanitizer.AllowedCssProperties.Add("right");
+            _sanitizer.AllowedCssProperties.Add("bottom");
+            _sanitizer.AllowedCssProperties.Add("overflow");
+            _sanitizer.AllowedCssProperties.Add("background-color");
+            _sanitizer.AllowedCssProperties.Add("background-image");
+            _sanitizer.AllowedCssProperties.Add("background-size");
+            _sanitizer.AllowedCssProperties.Add("background-position");
+            _sanitizer.AllowedCssProperties.Add("background-repeat");
+            _sanitizer.AllowedCssProperties.Add("linear-gradient");
+
+            // URL Filtreleme (Whitelist: Sadece kendi domainimiz ve picsum.photos)
+            _sanitizer.FilterUrl += (sender, e) =>
+            {
+                if (string.IsNullOrWhiteSpace(e.OriginalUrl)) return;
+
+                // Relative URL'lere izin ver (Kendi domainimiz)
+                if (e.OriginalUrl.StartsWith("/") || e.OriginalUrl.StartsWith("#"))
+                {
+                    return; 
+                }
+
+                // Absolute URL kontrolü
+                if (Uri.TryCreate(e.OriginalUrl, UriKind.Absolute, out var uri))
+                {
+                    // Whitelist domains
+                    var allowedDomains = new[] { "picsum.photos", "fastly.picsum.photos", "via.placeholder.com" };
+                    
+                    if (allowedDomains.Any(d => uri.Host.Equals(d, StringComparison.OrdinalIgnoreCase) || uri.Host.EndsWith("." + d, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        return;
+                    }
+                }
+
+                // Güvenli değilse URL'i kaldır
+                e.SanitizedUrl = null; 
+            };
+        }
+
+        public string SanitizeHtml(string html)
+        {
+            return _sanitizer.Sanitize(html);
         }
 
         public async Task<string?> GenerateProductDescription(string apiKey, List<IFormFile> images)
@@ -95,14 +166,30 @@ namespace DomusMercatorisDotnetMVC.Services
             }
         }
 
-        private const string RetroSliderTemplate = @"
-<!DOCTYPE html>
+        public static string WrapInRetroTemplate(string jsonContent)
+        {
+            return RetroSliderTemplate.Replace("{{GEMINI_DATA_PLACEHOLDER}}", jsonContent);
+        }
+
+        public static string WrapRawHtmlInRetroTemplate(string rawHtml)
+        {
+            return $@"<!DOCTYPE html>
 <html lang=""tr"">
 <head>
     <meta charset=""UTF-8"">
     <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
-    <title>Retro AI Slider</title>
+    <title>Retro Banner</title>
     <style>
+{RetroCss}
+    </style>
+</head>
+<body>
+{rawHtml}
+</body>
+</html>";
+        }
+
+        private const string RetroCss = @"
         /* --- RESET & VARIABLES --- */
         :root {
             --bg-color: #e0e0e0;
@@ -175,7 +262,7 @@ namespace DomusMercatorisDotnetMVC.Services
         .viewport {
             position: relative;
             width: 100%;
-            height: 450px; /* Banner Yüksekliği */
+            height: 320px; /* Desktop Default */
             overflow: hidden;
             background-color: #f4f4f4;
         }
@@ -267,12 +354,23 @@ namespace DomusMercatorisDotnetMVC.Services
         }
 
         /* --- RESPONSIVE --- */
+        @media (max-width: 1024px) {
+            .viewport { height: 260px; }
+        }
         @media (max-width: 768px) {
-            .viewport { height: 600px; } /* Mobilde daha uzun olsun */
+            .viewport { height: 220px; }
             .os-window { width: 95%; margin: 10px; }
             .btn-retro { padding: 8px 16px; font-size: 12px; }
-        }
-    </style>
+        }";
+
+        private const string RetroSliderTemplate = @"
+<!DOCTYPE html>
+<html lang=""tr"">
+<head>
+    <meta charset=""UTF-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title>Retro AI Slider</title>
+    <style>" + RetroCss + @"    </style>
 </head>
 <body>
 
@@ -328,7 +426,6 @@ namespace DomusMercatorisDotnetMVC.Services
 
         // --- 3. BAŞLATMA FONKSİYONU ---
         function initSlider() {
-            // Loading simülasyonu (1 saniye bekle)
             setTimeout(() => {
                 renderSlides();
                 loader.style.display = 'none';
@@ -379,8 +476,20 @@ namespace DomusMercatorisDotnetMVC.Services
             }
         });
 
-        // Uygulamayı Başlat
+        // --- 6. LİNK YÖNLENDİRME ---
+        function handleLinkClicks() {
+            document.addEventListener('click', function (e) {
+                var anchor = e.target.closest('a');
+                if (!anchor) return;
+                var href = anchor.getAttribute('href');
+                if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+                e.preventDefault();
+                window.top.location.href = href;
+            });
+        }
+
         initSlider();
+        handleLinkClicks();
 
     </script>
 </body>
@@ -396,6 +505,14 @@ namespace DomusMercatorisDotnetMVC.Services
             // Prompt Gemini for a JSON array of 3 banner HTML snippets
             var systemPrompt = @"You are a creative frontend developer specializing in retro/brutalist design. 
 Create 3 distinct, high-quality HTML banner contents based on the user's prompt.
+The banners will be rendered in a full-width iframe with a viewport height of about 320px on desktop, 260px on medium screens, and 220px on mobile. 
+
+CRITICAL MOBILE REQUIREMENTS:
+1. Ensure all text wraps correctly on small screens (width < 350px).
+2. Do NOT use fixed widths (px) that exceed 300px. Use percentages (%) or flexbox.
+3. Images and containers must be responsive (max-width: 100%).
+4. Font sizes should adjust or be small enough to fit mobile screens.
+
 RETURN ONLY A JSON ARRAY OF STRINGS. No markdown formatting, no explanations.
 Examples: 
 [""<div style='...'>...</div>"", ""<div>...</div>"", ""<div>...</div>""]
@@ -446,11 +563,33 @@ Each HTML string must be self-contained with inline CSS, ready to be placed insi
                 if (text.StartsWith("```")) text = text.Replace("```", "");
                 text = text.Trim();
 
-                // Inject the JSON array into the template
-                // We assume 'text' is something like ["<div>...</div>", ...]
-                // If it's not valid JSON, the JS on the client side might fail, but this is a V1 implementation.
-                
-                string finalHtml = RetroSliderTemplate.Replace("{{GEMINI_DATA_PLACEHOLDER}}", text);
+                // Security: Parse and Sanitize each slide
+                try
+                {
+                    var slides = JsonConvert.DeserializeObject<List<string>>(text);
+                    if (slides != null)
+                    {
+                        for (int i = 0; i < slides.Count; i++)
+                        {
+                            slides[i] = SanitizeHtml(slides[i]);
+                        }
+                        text = JsonConvert.SerializeObject(slides);
+                    }
+                }
+                catch
+                {
+                    // If parsing fails, we proceed with raw text (might be single string or invalid JSON)
+                    // But in a strict security context, we might want to fail or sanitize the whole blob.
+                    // For now, let's just sanitize the whole blob as a fallback if it looks like HTML
+                    if (text.Contains("<"))
+                    {
+                         text = SanitizeHtml(text);
+                         // If it was a single string, we need to wrap it in array for the slider to work
+                         text = JsonConvert.SerializeObject(new[] { text });
+                    }
+                }
+
+                string finalHtml = WrapInRetroTemplate(text);
                 
                 return finalHtml;
             }

@@ -10,6 +10,7 @@ using DomusMercatoris.Core.Entities;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Configuration;
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace DomusMercatorisDotnetMVC.Pages.Moderator
 {
@@ -141,6 +142,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
 
         public async Task<IActionResult> OnPostDeleteAsync(int id, int companyId)
         {
+            await LoadSharedDataAsync();
             await _bannerService.DeleteAsync(id, companyId);
             Input.CompanyId = companyId;
             await LoadBannersAsync(companyId);
@@ -165,11 +167,16 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
                 return Page();
             }
             
+            // Security: Sanitize user input and wrap in safe template
+            var sanitizedContent = _geminiService.SanitizeHtml(Input.HtmlContent);
+            var json = JsonConvert.SerializeObject(new[] { sanitizedContent });
+            var finalHtml = GeminiService.WrapInRetroTemplate(json);
+            
             var dto = new CreateBannerDto
             {
                 CompanyId = Input.CompanyId,
                 Topic = !string.IsNullOrWhiteSpace(Input.Topic) ? Input.Topic : "Manual Entry",
-                HtmlContent = Input.HtmlContent
+                HtmlContent = finalHtml
             };
 
             await _bannerService.CreateAsync(dto);
@@ -185,7 +192,30 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
         {
             await LoadSharedDataAsync();
 
-            await _bannerService.UpdateContentAsync(Edit.Id, Edit.CompanyId, Edit.HtmlContent ?? string.Empty);
+            // 1. Sanitize the input to remove malicious scripts/tags
+            var rawContent = Edit.HtmlContent ?? string.Empty;
+            var sanitizedContent = _geminiService.SanitizeHtml(rawContent);
+
+            string finalHtml;
+
+            // 2. Smart Wrapping Logic
+            // If the content already contains the main container class "os-window", 
+            // it means the user is editing the FULL banner structure (manual edit mode).
+            // We should NOT wrap it in another RetroSliderTemplate (which would create nested windows).
+            // Instead, we just wrap it in a basic HTML shell with the necessary CSS.
+            if (sanitizedContent.Contains("os-window"))
+            {
+                finalHtml = GeminiService.WrapRawHtmlInRetroTemplate(sanitizedContent);
+            }
+            else
+            {
+                // If it doesn't contain "os-window", assume it's just the content for slides.
+                // We wrap it in the full slider template.
+                var json = JsonConvert.SerializeObject(new[] { sanitizedContent });
+                finalHtml = GeminiService.WrapInRetroTemplate(json);
+            }
+
+            await _bannerService.UpdateContentAsync(Edit.Id, Edit.CompanyId, finalHtml);
             Input.CompanyId = Edit.CompanyId;
             await LoadBannersAsync(Edit.CompanyId);
             return Page();

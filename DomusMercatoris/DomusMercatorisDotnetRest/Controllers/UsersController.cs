@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
-using DomusMercatoris.Data;
 using DomusMercatoris.Service.DTOs;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using DomusMercatorisDotnetRest.Services;
+using Microsoft.AspNetCore.Authorization;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace DomusMercatorisDotnetRest.Controllers
 {
@@ -11,13 +11,25 @@ namespace DomusMercatorisDotnetRest.Controllers
     [Route("api/[controller]")]
     public class UsersController : ControllerBase
     {
-        private readonly DomusDbContext _db;
         private readonly UsersService _usersService;
 
-        public UsersController(DomusDbContext db, UsersService usersService)
+        public UsersController(UsersService usersService)
         {
-            _db = db;
             _usersService = usersService;
+        }
+
+        private long? GetUserId()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)
+                               ?? User.FindFirst("sub")
+                               ?? User.FindFirst(JwtRegisteredClaimNames.Sub)
+                               ?? User.FindFirst("id");
+
+            if (userIdClaim != null && long.TryParse(userIdClaim.Value, out long userId))
+            {
+                return userId;
+            }
+            return null;
         }
 
         [HttpPost("login")]
@@ -47,6 +59,33 @@ namespace DomusMercatorisDotnetRest.Controllers
             if (user is null) return NotFound();
             return Ok(user);
         }
-        // Manual mapping and token/hash utilities moved to UsersService
+
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<ActionResult<UserDto>> Me()
+        {
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+
+            var user = await _usersService.GetByIdAsync(userId.Value);
+            if (user is null) return NotFound();
+
+            return Ok(user);
+        }
+
+        [HttpPut("me")]
+        [Authorize]
+        public async Task<ActionResult<UserDto>> UpdateMe([FromBody] UpdateUserProfileDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+
+            var updated = await _usersService.UpdateProfileAsync(userId.Value, dto);
+            if (updated is null) return NotFound();
+
+            return Ok(updated);
+        }
     }
 }

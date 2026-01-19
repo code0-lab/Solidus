@@ -11,7 +11,35 @@
           <p>{{ user.email }}</p>
         </div>
       </div>
-      
+
+      <div class="profile-fields">
+        <div class="field-group">
+          <label for="phone">Phone</label>
+          <input
+            id="phone"
+            type="tel"
+            [(ngModel)]="phone"
+            [disabled]="isSaving"
+            placeholder="Add your phone number">
+          <small class="field-hint">Leave empty and save to remove phone.</small>
+        </div>
+
+        <div class="field-group">
+          <label for="address">Address</label>
+          <textarea
+            id="address"
+            rows="3"
+            [(ngModel)]="address"
+            [disabled]="isSaving"
+            placeholder="Add your address"></textarea>
+          <small class="field-hint">Leave empty and save to remove address.</small>
+        </div>
+
+        <button class="save-btn" (click)="saveProfile()" [disabled]="isSaving">
+          {{ isSaving ? 'Saving...' : 'Save Changes' }}
+        </button>
+      </div>
+
       <button class="logout-btn" (click)="logout()">Log Out</button>
     </div>
   }

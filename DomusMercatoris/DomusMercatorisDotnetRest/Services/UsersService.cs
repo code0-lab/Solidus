@@ -68,6 +68,18 @@ namespace DomusMercatorisDotnetRest.Services
             return user is null ? null : _mapper.Map<UserDto>(user);
         }
 
+        public async Task<UserDto?> UpdateProfileAsync(long id, UpdateUserProfileDto dto)
+        {
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == id);
+            if (user is null) return null;
+
+            user.Phone = dto.Phone;
+            user.Address = dto.Address;
+
+            await _db.SaveChangesAsync();
+            return _mapper.Map<UserDto>(user);
+        }
+
         private string HashSha256(string input)
         {
             using var sha256 = SHA256.Create();
