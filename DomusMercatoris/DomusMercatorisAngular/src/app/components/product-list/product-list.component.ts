@@ -1,13 +1,12 @@
 import { Component, Input, Output, EventEmitter, inject, OnChanges, SimpleChanges, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 import { Product } from '../../models/product.model';
 import { CartService } from '../../services/cart.service';
 
 @Component({
   selector: 'app-product-list',
   standalone: true,
-  imports: [CommonModule, ScrollingModule],
+  imports: [CommonModule],
   templateUrl: './product-list.component.html',
   styleUrl: './product-list.component.css'
 })
@@ -20,11 +19,11 @@ export class ProductListComponent implements OnChanges, AfterViewInit, OnDestroy
   
   rows: Product[][] = [];
   cols = 3;
-  itemHeight = 320;
   private resizeObserver: ResizeObserver | null = null;
+  private intersectionObserver: IntersectionObserver | null = null;
   
-  @ViewChild(CdkVirtualScrollViewport) viewport!: CdkVirtualScrollViewport;
   @ViewChild('container') container!: ElementRef;
+  @ViewChild('sentinel') sentinel!: ElementRef;
 
   constructor() {}
 
@@ -35,11 +34,24 @@ export class ProductListComponent implements OnChanges, AfterViewInit, OnDestroy
       }
     });
     this.resizeObserver.observe(this.container.nativeElement);
+
+    this.intersectionObserver = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) {
+        this.loadMore.emit();
+      }
+    }, { threshold: 0.1 }); // Trigger when 10% of sentinel is visible
+    
+    if (this.sentinel) {
+      this.intersectionObserver.observe(this.sentinel.nativeElement);
+    }
   }
 
   ngOnDestroy() {
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
+    }
+    if (this.intersectionObserver) {
+      this.intersectionObserver.disconnect();
     }
   }
 
@@ -47,16 +59,12 @@ export class ProductListComponent implements OnChanges, AfterViewInit, OnDestroy
     let newCols = 1;
     if (width >= 1024) {
       newCols = 4;
-      this.itemHeight = 320;
     } else if (width >= 768) {
       newCols = 3;
-      this.itemHeight = 320;
-    } else if (width >= 400) { // Changed from 550 to 400 to allow 2 cols on most phones
+    } else if (width >= 400) {
       newCols = 2;
-      this.itemHeight = 290; // Card 270 + Padding 20
     } else {
       newCols = 1;
-      this.itemHeight = 350; // Card 330 + Padding 20
     }
     
     if (newCols !== this.cols) {
@@ -76,16 +84,6 @@ export class ProductListComponent implements OnChanges, AfterViewInit, OnDestroy
     this.rows = [];
     for (let i = 0; i < this.products.length; i += this.cols) {
       this.rows.push(this.products.slice(i, i + this.cols));
-    }
-  }
-
-  onScrollIndexChanged() {
-    if (!this.viewport) return;
-    const end = this.viewport.getRenderedRange().end;
-    const total = this.rows.length;
-    // If we are close to the end (e.g., within 7 rows)
-    if (end >= total - 7) {
-      this.loadMore.emit();
     }
   }
 

@@ -1,6 +1,6 @@
 <div #container class="list-container">
-  <cdk-virtual-scroll-viewport [itemSize]="itemHeight" minBufferPx="900" maxBufferPx="2000" (scrolledIndexChange)="onScrollIndexChanged()" class="viewport">
-    <div *cdkVirtualFor="let row of rows" class="product-row" [style.grid-template-columns]="'repeat(' + cols + ', 1fr)'">
+  @for (row of rows; track $index) {
+    <div class="product-row" [style.grid-template-columns]="'repeat(' + cols + ', 1fr)'">
       @for (product of row; track product.id) {
         <div class="product-card" (click)="selectProduct.emit(product)">
           <div class="card-image" [style.background-color]="product.bg">
@@ -15,5 +15,8 @@
         </div>
       }
     </div>
-  </cdk-virtual-scroll-viewport>
+  }
+  
+  <!-- Sentinel element for Intersection Observer -->
+  <div #sentinel class="sentinel"></div>
 </div>
