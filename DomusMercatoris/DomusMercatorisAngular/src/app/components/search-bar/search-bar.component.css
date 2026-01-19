@@ -1,135 +1,249 @@
+:host {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 10px 0;
+  pointer-events: none; /* Let clicks pass through unless on the bar */
+}
+
 .search-bar-container {
+  pointer-events: auto;
   display: flex;
   align-items: center;
-  gap: 6px;
-  position: relative;
-}
-.search {
-  height: 18px;
-  border: 1px solid black;
+  justify-content: center;
+  height: 44px;
+  background-color: #fff;
+  border: 3px solid #000;
   border-radius: 0;
-  padding: 0 4px;
-  font-size: 12px;
-  width: 150px;
-  font-family: var(--sys-font-family);
+  position: relative;
+  width: 50px; /* Collapsed width */
+  transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 6px 6px 0px #000;
+  overflow: hidden;
 }
-.icon {
-  min-width: 20px;
-  height: 20px;
-  font-size: 12px;
-  line-height: 18px;
-  padding: 0 5px;
+
+.search-bar-container.expanded {
+  width: 100%;
+  max-width: 800px;
+}
+
+.search-bar-container.dragging {
+  border-style: dashed;
+  background-color: #eee;
+}
+
+/* Toggle Button (Magnifier) */
+.search-toggle {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+  padding: 0;
+}
+
+.search-toggle:hover {
+  background-color: #eee;
+}
+
+.search-toggle svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Expanded Content */
+.search-content {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: stretch;
+}
+
+/* Scope Select */
+.search-scope {
+  background-color: #eee;
+  border-right: 3px solid #000;
+  display: flex;
+  align-items: center;
+}
+
+.search-scope select {
+  height: 100%;
   border: none;
   background: transparent;
-  box-shadow: none;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: bold;
+  font-family: monospace;
+  color: #000;
+  cursor: pointer;
+  outline: none;
+  max-width: 150px;
+  text-transform: uppercase;
+}
+
+/* Input Wrapper */
+.search-input-wrapper {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  position: relative;
+  background: white;
+}
+
+.search {
+  width: 100%;
+  height: 100%;
+  border: none;
+  padding: 0 12px;
+  font-size: 16px;
+  outline: none;
+  font-family: monospace;
+  font-weight: bold;
+  color: #000;
+}
+
+.search::placeholder {
+  color: #666;
+  text-transform: uppercase;
+  font-size: 14px;
+}
+
+/* Camera Button */
+.search-camera {
+  width: 50px;
+  background-color: #fff;
+  border: none;
+  border-left: 3px solid #000;
   cursor: pointer;
   display: flex;
   justify-content: center;
   align-items: center;
-}
-.icon-wrapper {
+  font-size: 20px;
   position: relative;
-  display: inline-flex;
-  align-items: center;
+  transition: background-color 0.2s;
 }
+
+.search-camera:hover {
+  background-color: #eee;
+}
+
+/* Submit Button */
+.search-submit {
+  width: 50px;
+  background-color: #000;
+  border: none;
+  border-left: 3px solid #000;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.2s;
+}
+
+.search-submit:hover {
+  background-color: #333;
+}
+
+.search-submit svg {
+  stroke: #fff;
+  width: 24px;
+  height: 24px;
+}
+
+/* Close Button */
+.search-close {
+  width: 40px;
+  background-color: #fff;
+  border: none;
+  border-left: 3px solid #000;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 20px;
+  font-weight: bold;
+  font-family: monospace;
+}
+
+.search-close:hover {
+  background-color: #eee;
+}
+
+/* Drag Overlay */
+.drag-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: monospace;
+  font-weight: bold;
+  font-size: 16px;
+  text-transform: uppercase;
+  z-index: 20;
+  pointer-events: none; /* Let drop event bubble to container */
+}
+
+/* Hint Tooltip */
 .hint {
   position: absolute;
-  top: 28px;
-  right: 0;
+  top: 55px;
+  left: 50%;
+  transform: translateX(-50%);
   background: white;
   color: black;
-  border: 1px solid black;
-  box-shadow: 2px 2px 0 black;
-  border-radius: 6px;
-  padding: 6px 8px;
+  border: 3px solid black;
+  box-shadow: 4px 4px 0 black;
+  padding: 8px 10px;
   font-size: 12px;
+  font-family: monospace;
+  font-weight: bold;
+  text-transform: uppercase;
   white-space: nowrap;
   z-index: 300;
   pointer-events: none;
 }
+
 .hint::before {
   content: "";
   position: absolute;
-  top: -6px;
-  right: 12px;
+  top: -9px;
+  left: 50%;
+  margin-left: -9px;
   width: 0;
   height: 0;
-  border-left: 6px solid transparent;
-  border-right: 6px solid transparent;
-  border-bottom: 6px solid black;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-bottom: 9px solid black;
 }
-.hint::after {
-  content: "";
-  position: absolute;
-  top: -5px;
-  right: 13px;
-  width: 0;
-  height: 0;
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-  border-bottom: 5px solid white;
-}
+
+/* Status Messages */
 .status {
-  margin-left: 6px;
-  font-size: 12px;
-}
-.status.error {
-  color: #c00;
-}
-.dropzone {
   position: absolute;
-  top: 26px;
-  right: 0;
-  width: clamp(240px, 60vw, 340px);
-  max-width: 95vw;
-  border: 1px dashed #333;
-  background: #fafafa;
-  padding: 10px;
-  z-index: 200;
-  box-sizing: border-box;
-  overflow-wrap: break-word;
-  box-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-}
-.dropzone.dragging {
-  background: #eefaff;
-  border-color: #007acc;
-}
-.dropzone-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-.select-btn {
-  border: 1px solid black;
-  background: white;
-  padding: 2px 8px;
+  top: 55px;
+  left: 0;
+  background: #fff;
+  padding: 4px 8px;
+  border: 3px solid #000;
+  box-shadow: 4px 4px 0 #000;
   font-size: 12px;
+  font-family: monospace;
+  font-weight: bold;
+  z-index: 100;
 }
 
-@media (max-width: 480px) {
-  .hint {
-    top: 26px;
-    right: 0;
-    font-size: 11px;
-    padding: 4px 6px;
-  }
-  .dropzone {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 90vw;
-    max-width: 320px;
-    right: auto;
-    z-index: 2000;
-    box-shadow: 0 0 0 1000px rgba(0,0,0,0.5); /* Backdrop effect */
-    border: 2px solid black;
-  }
-}
-
-@media (max-width: 360px) {
-    .dropzone {
-        width: 95vw;
-    }
+.status.error {
+  color: #fff;
+  background: #000;
+  border-color: #000;
 }

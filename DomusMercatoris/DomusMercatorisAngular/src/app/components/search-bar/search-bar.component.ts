@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, inject, OnDestroy } from '@angular/core';
+import { Component, ViewChild, ElementRef, inject, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -16,8 +16,8 @@ declare module 'heic2any';
   templateUrl: './search-bar.component.html',
   styleUrl: './search-bar.component.css'
 })
-export class SearchBarComponent implements OnDestroy {
-  private productService = inject(ProductService);
+export class SearchBarComponent implements OnInit, OnDestroy {
+  public productService = inject(ProductService);
   private searchService = inject(SearchService);
   private router = inject(Router);
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
@@ -30,9 +30,14 @@ export class SearchBarComponent implements OnDestroy {
   showHint = false;
   panelOpen = false;
   isDragging = false;
+  isExpanded = false;
   private readonly MAX_SIZE_BYTES = 17 * 1024 * 1024;
   private destroy$ = new Subject<void>();
   private destroyed = false;
+
+  ngOnInit() {
+    this.productService.fetchCategories();
+  }
 
   ngOnDestroy() {
     this.destroyed = true;
@@ -40,10 +45,28 @@ export class SearchBarComponent implements OnDestroy {
     this.destroy$.complete();
   }
 
+  toggleSearch() {
+    this.isExpanded = !this.isExpanded;
+    if (this.isExpanded) {
+      setTimeout(() => {
+        const input = document.querySelector('.search-bar-container input') as HTMLInputElement;
+        if (input) input.focus();
+      }, 100);
+    }
+  }
+
+
   goSearch() {
     const q = this.query?.trim();
     if (!q || q.length === 0) return;
-    this.searchService.searchProductsByName(q, 1, this.itemsPerPage, this.productService.selectedCompany());
+
+    // Reset filters for global search but keep category if selected
+    this.productService.selectedCompany.set(null);
+    this.productService.selectedBrand.set(null);
+    
+    const categoryId = this.productService.selectedCategory();
+
+    this.searchService.searchProductsByName(q, 1, this.itemsPerPage, null, null, categoryId);
     this.router.navigate(['/products/search']);
   }
 
@@ -124,7 +147,7 @@ export class SearchBarComponent implements OnDestroy {
       next: (res) => {
         if (this.destroyed) return;
         this.selectedClusterId = res.clusterId;
-        this.searchService.fetchProductsByCluster(res.clusterId, 1, this.itemsPerPage, this.productService.selectedCompany());
+        this.searchService.fetchProductsByCluster(res.clusterId, 1, this.itemsPerPage, this.productService.selectedCompany(), this.productService.selectedBrand());
         this.isClassifying = false;
         this.panelOpen = false; // Close the panel on success
         this.router.navigate(['/products/search']);

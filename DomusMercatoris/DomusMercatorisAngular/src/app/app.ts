@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { HeaderComponent } from './components/header/header.component';
+import { FooterComponent } from './components/footer/footer.component';
 import { AuthModalComponent } from './components/auth-modal/auth-modal.component';
 import { SpinnerComponent } from './components/spinner/spinner.component';
 import { AuthService } from './services/auth.service';
@@ -13,6 +14,7 @@ import { AuthService } from './services/auth.service';
     CommonModule, 
     RouterOutlet,
     HeaderComponent, 
+    FooterComponent,
     AuthModalComponent,
     SpinnerComponent
   ],

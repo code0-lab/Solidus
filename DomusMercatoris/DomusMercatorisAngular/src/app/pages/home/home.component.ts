@@ -41,7 +41,8 @@ export class HomeComponent {
     // but fetching ensures freshness.
     this.productService.fetchCategories();
     this.productService.fetchCompanies();
-    this.productService.fetchProducts(null, 1, this.itemsPerPage, null);
+    this.productService.fetchBrands();
+    this.productService.fetchProducts(null, 1, this.itemsPerPage, null, null);
   }
 
 
@@ -52,7 +53,7 @@ export class HomeComponent {
 
   selectCategory(id: number | null) {
     this.productService.selectedCategory.set(id);
-    this.productService.fetchProducts(id, 1, this.itemsPerPage, this.productService.selectedCompany());
+    this.productService.fetchProducts(id, 1, this.itemsPerPage, this.productService.selectedCompany(), this.productService.selectedBrand());
     this.isFilterOpen.set(false);
     this.currentPage.set(1); // Reset to first page when filtering
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -60,7 +61,25 @@ export class HomeComponent {
 
   selectCompany(id: number | null) {
     this.productService.selectedCompany.set(id);
-    this.productService.fetchProducts(this.productService.selectedCategory(), 1, this.itemsPerPage, id);
+    // Reset brand when company changes and fetch brands for the selected company
+    this.productService.selectedBrand.set(null);
+    this.productService.fetchBrands(id);
+    
+    this.productService.fetchProducts(
+      this.productService.selectedCategory(), 
+      1, 
+      this.itemsPerPage, 
+      id, 
+      null // brand is reset
+    );
+    this.isFilterOpen.set(false);
+    this.currentPage.set(1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  selectBrand(id: number | null) {
+    this.productService.selectedBrand.set(id);
+    this.productService.fetchProducts(this.productService.selectedCategory(), 1, this.itemsPerPage, this.productService.selectedCompany(), id);
     this.isFilterOpen.set(false);
     this.currentPage.set(1);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -85,6 +104,7 @@ export class HomeComponent {
       nextPage, 
       this.itemsPerPage,
       this.productService.selectedCompany(),
+      this.productService.selectedBrand(),
       true
     );
   }

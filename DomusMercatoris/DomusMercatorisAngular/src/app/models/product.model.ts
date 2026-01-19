@@ -27,6 +27,12 @@ export interface Category {
     name: string;
 }
 
+export interface Brand {
+    id: number;
+    name: string;
+    description?: string;
+}
+
 export interface Company {
     companyId: number;
     name: string;

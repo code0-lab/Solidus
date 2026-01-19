@@ -83,8 +83,8 @@ export class ProductListComponent implements OnChanges, AfterViewInit, OnDestroy
     if (!this.viewport) return;
     const end = this.viewport.getRenderedRange().end;
     const total = this.rows.length;
-    // If we are close to the end (e.g., within 5 rows)
-    if (end >= total - 3) {
+    // If we are close to the end (e.g., within 7 rows)
+    if (end >= total - 7) {
       this.loadMore.emit();
     }
   }

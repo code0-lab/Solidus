@@ -23,13 +23,16 @@ export class SearchService {
     return this.http.post<{ clusterId: number; clusterName?: string; version: number }>(`${this.apiUrl}/clustering/classify`, formData);
   }
 
-  fetchProductsByCluster(clusterId: number, pageNumber: number = 1, pageSize: number = 9, companyId?: number | null): void {
+  fetchProductsByCluster(clusterId: number, pageNumber: number = 1, pageSize: number = 9, companyId?: number | null, brandId?: number | null): void {
     const url = `${this.apiUrl}/products/by-cluster/${clusterId}`;
     let params = new HttpParams()
       .set('pageNumber', pageNumber)
       .set('pageSize', pageSize);
     if (companyId) {
       params = params.set('companyId', companyId);
+    }
+    if (brandId) {
+      params = params.set('brandId', brandId);
     }
     this.http.get<PaginatedResult<Product>>(url, { params })
       .subscribe({
@@ -41,7 +44,7 @@ export class SearchService {
       });
   }
 
-  searchProductsByName(query: string, pageNumber: number = 1, pageSize: number = 9, companyId?: number | null): void {
+  searchProductsByName(query: string, pageNumber: number = 1, pageSize: number = 9, companyId?: number | null, brandId?: number | null, categoryId?: number | null): void {
     const url = `${this.apiUrl}/products/search`;
     let params = new HttpParams()
       .set('query', query)
@@ -49,6 +52,12 @@ export class SearchService {
       .set('pageSize', pageSize);
     if (companyId) {
       params = params.set('companyId', companyId);
+    }
+    if (brandId) {
+      params = params.set('brandId', brandId);
+    }
+    if (categoryId) {
+      params = params.set('categoryId', categoryId);
     }
     this.productService.queryImageUrl.set(null);
     this.productService.loading.set(true);

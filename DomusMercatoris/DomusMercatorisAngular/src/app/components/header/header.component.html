@@ -9,6 +9,10 @@
       Solidus
     </div>
 
+    <div class="nav-center-desktop">
+      <app-search-bar></app-search-bar>
+    </div>
+
     <div class="nav-actions">
       <button class="icon" aria-label="cart" (click)="handleCartClick()" style="position: relative;">
         🛒
@@ -26,13 +30,11 @@
   </div>
 
   <div class="nav-content" [class.open]="isMobileMenuOpen">
-    <div class="nav-center">
+    <div class="nav-center-mobile">
       <app-search-bar></app-search-bar>
     </div>
     <nav class="nav-links">
-      <a routerLink="/" (click)="isMobileMenuOpen = false">Products</a>
-      <a href="#" (click)="isMobileMenuOpen = false">Collections</a>
-      <a href="#" (click)="isMobileMenuOpen = false">About</a>
+      <a routerLink="/" (click)="toggleMobileMenu()">HOME</a>
     </nav>
   </div>
 

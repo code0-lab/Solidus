@@ -23,6 +23,12 @@ namespace DomusMercatorisDotnetRest.Infrastructure
             return query;
         }
 
+        public static IQueryable<Product> ApplyBrandFilter(IQueryable<Product> query, int? brandId)
+        {
+            if (brandId.HasValue) query = query.Where(p => p.BrandId == brandId.Value);
+            return query;
+        }
+
         public static async Task<PaginatedResult<ProductDto>> PaginateAndMapAsync(
             IQueryable<Product> query,
             int pageNumber,

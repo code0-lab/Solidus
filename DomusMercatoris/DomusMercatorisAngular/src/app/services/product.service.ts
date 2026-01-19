@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Product, Category, Company, PaginatedResult } from '../models/product.model';
+import { Product, Category, Brand, Company, PaginatedResult } from '../models/product.model';
 import { Observable, tap, finalize } from 'rxjs';
 
 @Injectable({
@@ -17,8 +17,10 @@ export class ProductService {
   loading = signal<boolean>(false);
   totalCount = signal<number>(0);
   categories = signal<Category[]>([]);
+  brands = signal<Brand[]>([]);
   companies = signal<Company[]>([]);
   selectedCategory = signal<number | null>(null);
+  selectedBrand = signal<number | null>(null);
   selectedCompany = signal<number | null>(null);
   queryImageUrl = signal<string | null>(null);
 
@@ -32,13 +34,16 @@ export class ProductService {
     return this.http.post<{ clusterId: number; clusterName?: string; version: number }>(`${this.apiUrl}/clustering/classify`, formData);
   }
 
-  fetchProductsByCluster(clusterId: number, pageNumber: number = 1, pageSize: number = 9, companyId?: number | null): void {
+  fetchProductsByCluster(clusterId: number, pageNumber: number = 1, pageSize: number = 9, companyId?: number | null, brandId?: number | null): void {
     const url = `${this.apiUrl}/products/by-cluster/${clusterId}`;
     let params = new HttpParams()
       .set('pageNumber', pageNumber)
       .set('pageSize', pageSize);
     if (companyId) {
       params = params.set('companyId', companyId);
+    }
+    if (brandId) {
+      params = params.set('brandId', brandId);
     }
     this.http.get<PaginatedResult<Product>>(url, { params })
       .subscribe({
@@ -78,6 +83,18 @@ export class ProductService {
       });
   }
 
+  fetchBrands(companyId?: number | null): void {
+    let params = new HttpParams();
+    if (companyId) {
+      params = params.set('companyId', companyId);
+    }
+    this.http.get<Brand[]>(`${this.apiUrl}/brands`, { params })
+      .subscribe({
+        next: (data) => this.brands.set(data),
+        error: () => console.error('Failed to fetch brands')
+      });
+  }
+
   fetchCompanies(): void {
     this.http.get<Company[]>(`${this.apiUrl}/companies`)
       .subscribe({
@@ -86,7 +103,7 @@ export class ProductService {
       });
   }
 
-  fetchProducts(categoryId?: number | null, pageNumber: number = 1, pageSize: number = 9, companyId?: number | null, append: boolean = false): void {
+  fetchProducts(categoryId?: number | null, pageNumber: number = 1, pageSize: number = 9, companyId?: number | null, brandId?: number | null, append: boolean = false): void {
     const url = categoryId 
       ? `${this.apiUrl}/products/by-category/${categoryId}`
       : `${this.apiUrl}/products`;
@@ -97,6 +114,10 @@ export class ProductService {
 
     if (companyId) {
       params = params.set('companyId', companyId);
+    }
+
+    if (brandId) {
+      params = params.set('brandId', brandId);
     }
 
     this.loading.set(true);
@@ -139,7 +160,7 @@ export class ProductService {
     this.totalCount.set(data.totalCount);
   }
 
-  searchProductsByName(query: string, pageNumber: number = 1, pageSize: number = 9, companyId?: number | null): void {
+  searchProductsByName(query: string, pageNumber: number = 1, pageSize: number = 9, companyId?: number | null, brandId?: number | null, categoryId?: number | null): void {
     const url = `${this.apiUrl}/products/search`;
     let params = new HttpParams()
       .set('query', query)
@@ -147,6 +168,12 @@ export class ProductService {
       .set('pageSize', pageSize);
     if (companyId) {
       params = params.set('companyId', companyId);
+    }
+    if (brandId) {
+      params = params.set('brandId', brandId);
+    }
+    if (categoryId) {
+      params = params.set('categoryId', categoryId);
     }
     this.queryImageUrl.set(null);
     this.loading.set(true);

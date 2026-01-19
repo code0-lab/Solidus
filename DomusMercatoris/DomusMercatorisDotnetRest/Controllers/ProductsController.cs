@@ -29,9 +29,9 @@ namespace DomusMercatorisDotnetRest.Controllers
         private Task<PaginatedResult<ProductDto>> PaginateAndMapAsync(IQueryable<Product> query, int pageNumber, int pageSize) => ProductQueryHelper.PaginateAndMapAsync(query, pageNumber, pageSize, _mapper);
 
         [HttpGet]
-        public async Task<ActionResult<PaginatedResult<ProductDto>>> GetAll([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 9, [FromQuery] int? companyId = null)
+        public async Task<ActionResult<PaginatedResult<ProductDto>>> GetAll([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 9, [FromQuery] int? companyId = null, [FromQuery] int? brandId = null)
         {
-            var result = await _productService.GetAllAsync(pageNumber, pageSize, companyId);
+            var result = await _productService.GetAllAsync(pageNumber, pageSize, companyId, brandId);
             return Ok(result);
         }
 
@@ -44,16 +44,16 @@ namespace DomusMercatorisDotnetRest.Controllers
         }
 
         [HttpGet("by-category/{categoryId:int}")]
-        public async Task<ActionResult<PaginatedResult<ProductDto>>> GetByCategory(int categoryId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 9, [FromQuery] int? companyId = null)
+        public async Task<ActionResult<PaginatedResult<ProductDto>>> GetByCategory(int categoryId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 9, [FromQuery] int? companyId = null, [FromQuery] int? brandId = null)
         {
-            var result = await _productService.GetByCategoryAsync(categoryId, pageNumber, pageSize, companyId);
+            var result = await _productService.GetByCategoryAsync(categoryId, pageNumber, pageSize, companyId, brandId);
             return Ok(result);
         }
 
         [HttpGet("by-cluster/{clusterId:int}")]
-        public async Task<ActionResult<PaginatedResult<ProductDto>>> GetByCluster(int clusterId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 9, [FromQuery] int? companyId = null)
+        public async Task<ActionResult<PaginatedResult<ProductDto>>> GetByCluster(int clusterId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 9, [FromQuery] int? companyId = null, [FromQuery] int? brandId = null)
         {
-            var result = await _productService.GetByClusterAsync(clusterId, pageNumber, pageSize, companyId);
+            var result = await _productService.GetByClusterAsync(clusterId, pageNumber, pageSize, companyId, brandId);
             return Ok(result);
         }
 
@@ -64,13 +64,15 @@ namespace DomusMercatorisDotnetRest.Controllers
         /// <param name="pageNumber">Page number (default 1)</param>
         /// <param name="pageSize">Page size (default 9)</param>
         /// <param name="companyId">Optional company filter</param>
+        /// <param name="brandId">Optional brand filter</param>
         [HttpGet("search")]
         [ProducesResponseType(typeof(PaginatedResult<ProductDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<PaginatedResult<ProductDto>>> Search(
             [FromQuery] string query,
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 9,
-            [FromQuery] int? companyId = null)
+            [FromQuery] int? companyId = null,
+            [FromQuery] int? brandId = null)
         {
             var q = (query ?? string.Empty).Trim();
             if (string.IsNullOrEmpty(q))
@@ -86,7 +88,7 @@ namespace DomusMercatorisDotnetRest.Controllers
 
             q = q.ToLower();
 
-            var result = await _productService.SearchAsync(q, pageNumber, pageSize, companyId);
+            var result = await _productService.SearchAsync(q, pageNumber, pageSize, companyId, brandId);
             return Ok(result);
         }
 

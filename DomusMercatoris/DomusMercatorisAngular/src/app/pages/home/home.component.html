@@ -24,6 +24,13 @@
               <li [class.active]="productService.selectedCompany() === c.companyId" (click)="selectCompany(c.companyId)">{{ c.name }}</li>
             }
           </ul>
+          <div class="filter-header mt-3" style="margin-top: 1rem; border-top: 1px solid #eee; padding-top: 0.5rem;">Brands</div>
+          <ul>
+            <li [class.active]="productService.selectedBrand() === null" (click)="selectBrand(null)">All</li>
+            @for (b of productService.brands(); track b.id) {
+              <li [class.active]="productService.selectedBrand() === b.id" (click)="selectBrand(b.id)">{{ b.name }}</li>
+            }
+          </ul>
         </div>
       }
     </div>

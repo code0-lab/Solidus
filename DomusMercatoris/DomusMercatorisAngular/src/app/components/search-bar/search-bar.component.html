@@ -1,29 +1,80 @@
-<div class="search-bar-container">
-  <input class="search" type="search" placeholder="Search..." [(ngModel)]="query" (keydown.enter)="goSearch()" />
-  <div class="icon-wrapper" (mouseenter)="showHint = true" (mouseleave)="showHint = false">
-    <button 
-      class="icon" 
-      type="button" 
-      (click)="togglePanel()" 
-      aria-label="search via photograph">📷</button>
-    @if (showHint) {
-      <span class="hint" role="tooltip">Search via photograph</span>
-    }
-  </div>
-  @if (panelOpen) {
-    <div 
-      class="dropzone" 
-      [class.dragging]="isDragging"
-      (dragover)="onDragOver($event)" 
-      (dragleave)="onDragLeave($event)" 
-      (drop)="onDrop($event)">
-      <div class="dropzone-content">
-        <div>Drag & drop photo or choose</div>
-        <button type="button" class="select-btn" (click)="openSelectDialog()">Choose</button>
-      </div>
-      <input #fileInput type="file" accept="image/*" (change)="onImageSelected($event)" style="display: none;" />
-    </div>
+<div 
+  class="search-bar-container" 
+  [class.expanded]="isExpanded"
+  [class.dragging]="isDragging"
+  (dragover)="onDragOver($event)" 
+  (dragleave)="onDragLeave($event)" 
+  (drop)="onDrop($event)">
+
+  <!-- Toggle Button (Visible when NOT expanded) -->
+  @if (!isExpanded) {
+    <button class="search-toggle" (click)="toggleSearch()" aria-label="Open Search">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+    </button>
   }
+
+  <!-- Expanded Content -->
+  @if (isExpanded) {
+    <div class="search-content">
+      <div class="search-scope">
+        <select [ngModel]="productService.selectedCategory()" (ngModelChange)="productService.selectedCategory.set($event)">
+          <option [ngValue]="null">All Categories</option>
+          @for (cat of productService.categories(); track cat.id) {
+            <option [ngValue]="cat.id">{{ cat.name }}</option>
+          }
+        </select>
+      </div>
+      
+      <div class="search-input-wrapper">
+        <input 
+          class="search" 
+          type="search" 
+          placeholder="Search or Drop Image" 
+          [(ngModel)]="query" 
+          (keydown.enter)="goSearch()" 
+        />
+      </div>
+
+      <button class="search-submit" (click)="goSearch()" aria-label="Go">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </button>
+
+      <button 
+        class="search-camera" 
+        type="button" 
+        (click)="openSelectDialog()" 
+        aria-label="search via photograph"
+        (mouseenter)="showHint = true" 
+        (mouseleave)="showHint = false">
+        📷
+        @if (showHint) {
+          <span class="hint" role="tooltip">Search via photograph</span>
+        }
+      </button>
+
+      <!-- Close Button -->
+      <button class="search-close" (click)="toggleSearch()" aria-label="Close Search">
+        ✕
+      </button>
+    </div>
+
+    <!-- Hidden File Input for Click Selection -->
+    <input #fileInput type="file" accept="image/*" (change)="onImageSelected($event)" style="display: none;" />
+    
+    <!-- Drag Overlay -->
+    @if (isDragging) {
+      <div class="drag-overlay">
+        <span>Drop image to search</span>
+      </div>
+    }
+  }
+
   @if (isClassifying) {
     <span class="status">Classifying...</span>
   }
