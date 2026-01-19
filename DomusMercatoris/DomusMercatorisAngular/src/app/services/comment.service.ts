@@ -9,13 +9,8 @@ import { Observable, tap } from 'rxjs';
 export class CommentService {
   private http = inject(HttpClient);
   
-  private get baseUrl(): string {
-    const host = window.location.hostname;
-    return `http://${host}:5280`;
-  }
-
   private get apiUrl(): string {
-    return `${this.baseUrl}/api/comments`;
+    return `/api/comments`;
   }
 
   comments = signal<Comment[]>([]);

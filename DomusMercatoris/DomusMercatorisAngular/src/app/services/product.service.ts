@@ -9,11 +9,6 @@ import { Observable, tap, finalize } from 'rxjs';
 export class ProductService {
   private http = inject(HttpClient);
   
-  private get baseUrl(): string {
-    // Return current origin (e.g. http://localhost:4200 or http://172.20.10.2:4200)
-    return window.location.origin;
-  }
-
   private get apiUrl(): string {
     return `/api`;
   }
@@ -205,7 +200,7 @@ export class ProductService {
       // Ensure we don't have double slashes
       const cleanPath = img.startsWith('/') ? img : `/${img}`;
       
-      return `${this.baseUrl}${cleanPath}`;
+      return cleanPath;
     }
   }
 

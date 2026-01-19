@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { HeaderComponent } from './components/header/header.component';
 import { AuthModalComponent } from './components/auth-modal/auth-modal.component';
+import { SpinnerComponent } from './components/spinner/spinner.component';
 import { AuthService } from './services/auth.service';
 
 @Component({
@@ -12,7 +13,8 @@ import { AuthService } from './services/auth.service';
     CommonModule, 
     RouterOutlet,
     HeaderComponent, 
-    AuthModalComponent
+    AuthModalComponent,
+    SpinnerComponent
   ],
   templateUrl: './app.html',
   styleUrl: './app.css'

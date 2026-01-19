@@ -36,13 +36,8 @@ export interface SaleResponse {
 export class SalesService {
   private http = inject(HttpClient);
   
-  private get baseUrl(): string {
-    const host = window.location.hostname;
-    return `http://${host}:5280`;
-  }
-
   private get apiUrl(): string {
-    return `${this.baseUrl}/api`;
+    return `/api`;
   }
 
   checkout(payload: CheckoutPayload): Observable<SaleResponse> {
