@@ -50,6 +50,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
             if (editId.HasValue)
             {
                 var item = await _db.AutoCategories
+                    .AsNoTracking()
                     .Include(ac => ac.ProductClusters)
                     .FirstOrDefaultAsync(ac => ac.Id == editId.Value);
 
@@ -80,92 +81,110 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
                 return Page();
             }
 
-            if (editId.HasValue)
+            try
             {
-                // Update
-                var item = await _db.AutoCategories
-                    .Include(ac => ac.ProductClusters)
-                    .FirstOrDefaultAsync(ac => ac.Id == editId.Value);
-
-                if (item == null) return NotFound();
-
-                // Prevent circular reference
-                if (Input.ParentId.HasValue && Input.ParentId.Value == item.Id)
+                if (editId.HasValue)
                 {
-                     ModelState.AddModelError("Input.ParentId", "A category cannot be its own parent.");
-                     await LoadDataAsync();
-                     IsEditing = true;
-                     EditId = editId;
-                     return Page();
-                }
+                    // Update
+                    var item = await _db.AutoCategories
+                        .Include(ac => ac.ProductClusters)
+                        .FirstOrDefaultAsync(ac => ac.Id == editId.Value);
 
-                item.Name = Input.Name;
-                item.Description = Input.Description;
-                item.ParentId = Input.ParentId;
-                item.UpdatedAt = DateTime.UtcNow;
+                    if (item == null) return NotFound();
 
-                // Update clusters
-                item.ProductClusters.Clear();
-                var clusterIds = Input.ProductClusterIds
-                    .Where(id => id > 0)
-                    .Distinct()
-                    .ToList();
-
-                if (Input.ProductClusterIds.Contains(0))
-                {
-                    clusterIds.Clear();
-                }
-
-                if (clusterIds.Any())
-                {
-                    var clusters = await _db.ProductClusters
-                        .Where(pc => clusterIds.Contains(pc.Id))
-                        .ToListAsync();
-                    foreach (var c in clusters)
+                    // Prevent circular reference
+                    if (Input.ParentId.HasValue && Input.ParentId.Value == item.Id)
                     {
-                        item.ProductClusters.Add(c);
+                         ModelState.AddModelError("Input.ParentId", "A category cannot be its own parent.");
+                         await LoadDataAsync();
+                         IsEditing = true;
+                         EditId = editId;
+                         return Page();
                     }
+
+                    item.Name = Input.Name;
+                    item.Description = Input.Description;
+                    item.ParentId = Input.ParentId;
+                    item.UpdatedAt = DateTime.UtcNow;
+
+                    // Update clusters
+                    await UpdateProductClustersAsync(item, Input.ProductClusterIds);
+
+                    _db.AutoCategories.Update(item);
+                }
+                else
+                {
+                    // Create
+                    var newItem = new AutoCategory
+                    {
+                        Name = Input.Name,
+                        Description = Input.Description,
+                        ParentId = Input.ParentId,
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    await UpdateProductClustersAsync(newItem, Input.ProductClusterIds);
+
+                    _db.AutoCategories.Add(newItem);
                 }
 
-                _db.AutoCategories.Update(item);
+                await _db.SaveChangesAsync();
             }
-            else
+            catch (DbUpdateException ex)
             {
-                // Create
-                var newItem = new AutoCategory
-                {
-                    Name = Input.Name,
-                    Description = Input.Description,
-                    ParentId = Input.ParentId,
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                var clusterIds = Input.ProductClusterIds
-                    .Where(id => id > 0)
-                    .Distinct()
-                    .ToList();
-
-                if (Input.ProductClusterIds.Contains(0))
-                {
-                    clusterIds.Clear();
-                }
-
-                if (clusterIds.Any())
-                {
-                    var clusters = await _db.ProductClusters
-                        .Where(pc => clusterIds.Contains(pc.Id))
-                        .ToListAsync();
-                    foreach (var c in clusters)
-                    {
-                        newItem.ProductClusters.Add(c);
-                    }
-                }
-
-                _db.AutoCategories.Add(newItem);
+                // Log error (if logger available)
+                ModelState.AddModelError("", "An error occurred while saving changes. Please try again.");
+                await LoadDataAsync();
+                IsEditing = editId.HasValue;
+                EditId = editId;
+                return Page();
             }
 
-            await _db.SaveChangesAsync();
             return RedirectToPage();
+        }
+
+        private async Task UpdateProductClustersAsync(AutoCategory item, List<int> inputClusterIds)
+        {
+            item.ProductClusters ??= new List<ProductCluster>();
+
+            // 1. Gelen ID listesini temizle
+            var targetClusterIds = new HashSet<int>(
+                inputClusterIds.Where(id => id > 0)
+            );
+
+            if (inputClusterIds.Contains(0))
+            {
+                targetClusterIds.Clear();
+            }
+
+            // 2. Silinecekleri belirle (Mevcutta var ama hedefte yok)
+            // Not: ToList() ile kopyasını alıyoruz ki iterasyon sırasında koleksiyon değişmesin
+            var toRemove = item.ProductClusters
+                .Where(pc => !targetClusterIds.Contains(pc.Id))
+                .ToList();
+
+            foreach (var cluster in toRemove)
+            {
+                item.ProductClusters.Remove(cluster);
+            }
+
+            // 3. Eklenecekleri belirle (Hedefte var ama mevcutta yok)
+            var existingIds = new HashSet<int>(item.ProductClusters.Select(pc => pc.Id));
+            var idsToAdd = targetClusterIds
+                .Where(id => !existingIds.Contains(id))
+                .ToList();
+
+            if (idsToAdd.Any())
+            {
+                var clustersToAdd = await _db.ProductClusters
+                    .Where(pc => idsToAdd.Contains(pc.Id))
+                    .ToListAsync();
+                
+                foreach (var c in clustersToAdd)
+                {
+                    item.ProductClusters.Add(c);
+                }
+            }
         }
 
         public async Task<IActionResult> OnPostDeleteAsync(int id)
@@ -173,8 +192,17 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
             var item = await _db.AutoCategories.FindAsync(id);
             if (item != null)
             {
-                _db.AutoCategories.Remove(item);
-                await _db.SaveChangesAsync();
+                try 
+                {
+                    _db.AutoCategories.Remove(item);
+                    await _db.SaveChangesAsync();
+                }
+                catch (DbUpdateException)
+                {
+                    // Handle potential foreign key constraints
+                    // For now, just redirect, or we could return with an error message in TempData
+                    TempData["ErrorMessage"] = "Cannot delete category because it is in use.";
+                }
             }
             return RedirectToPage();
         }
@@ -182,20 +210,13 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
         private async Task LoadDataAsync()
         {
             AutoCategories = await _db.AutoCategories
+                .AsNoTracking()
                 .Include(ac => ac.ProductClusters)
                 .OrderByDescending(ac => ac.CreatedAt)
                 .ToListAsync();
 
-            // Load clusters - prioritize latest version
-            // Actually, we should probably allow selecting from any cluster if needed, 
-            // but sticking to the latest version logic is fine for now unless specified otherwise.
-            // Let's load all unique clusters grouped by name/version or just all of them.
-            // For now, let's keep the logic of "latest version" or "all if no versions".
-            // But maybe user wants to assign to older clusters too? 
-            // The prompt implies "insufficient training data", so maybe we just want to see all clusters.
-            // Let's just load ALL clusters for now to be safe, sorted by Name.
-            
             ProductClusters = await _db.ProductClusters
+                .AsNoTracking()
                 .OrderBy(c => c.Name)
                 .ThenByDescending(c => c.Version)
                 .ToListAsync();

@@ -588,24 +588,59 @@
 })();
 
 function acceptAutoCategory(btn, id) {
-    document.getElementById('Product_AutoCategoryId').value = id;
-    btn.className = 'btn btn-secondary';
-    btn.textContent = 'Selected';
-    btn.disabled = true;
+    const input = document.getElementById('Product_AutoCategoryId');
     
-    // Optional: Update UI to show "Pending Save"
-    const badge = btn.previousElementSibling.querySelector('.badge');
-    if(badge) {
-        badge.className = 'badge bg-success mt-1';
-        badge.textContent = 'Accepted (Pending Save)';
+    if (btn.dataset.accepted === 'true') {
+        // Undo Accept
+        input.value = '';
+        btn.className = 'btn btn-success';
+        btn.textContent = 'Accept Suggestion';
+        delete btn.dataset.accepted;
+        
+        // Revert badge
+        const badge = btn.previousElementSibling.querySelector('.badge');
+        if(badge) {
+            badge.className = 'badge bg-warning text-dark mt-1';
+            badge.textContent = 'Suggestion';
+        }
+    } else {
+        // Accept
+        input.value = id;
+        btn.className = 'btn btn-outline-secondary';
+        btn.textContent = 'Undo';
+        btn.dataset.accepted = 'true';
+        
+        // Update badge
+        const badge = btn.previousElementSibling.querySelector('.badge');
+        if(badge) {
+            badge.className = 'badge bg-success mt-1';
+            badge.textContent = 'Accepted (Pending Save)';
+        }
     }
 }
 
 function clearAutoCategory(btn) {
-    document.getElementById('Product_AutoCategoryId').value = '';
-    btn.closest('.d-flex').style.opacity = '0.5';
-    btn.disabled = true;
-    btn.textContent = 'Removed';
+    const input = document.getElementById('Product_AutoCategoryId');
+    const container = btn.closest('.d-flex');
+    
+    if (btn.dataset.removed === 'true') {
+        // Undo Remove
+        input.value = btn.dataset.originalId;
+        container.style.opacity = '1';
+        btn.textContent = 'Remove';
+        btn.classList.remove('btn-outline-secondary');
+        btn.classList.add('btn-outline-danger');
+        delete btn.dataset.removed;
+    } else {
+        // Do Remove
+        btn.dataset.originalId = input.value;
+        btn.dataset.removed = 'true';
+        input.value = '';
+        container.style.opacity = '0.5';
+        btn.textContent = 'Undo';
+        btn.classList.remove('btn-outline-danger');
+        btn.classList.add('btn-outline-secondary');
+    }
 }
 </script>
 <style>
