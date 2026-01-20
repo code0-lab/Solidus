@@ -1,18 +1,34 @@
 import { Routes } from '@angular/router';
-import { HomeComponent } from './pages/home/home.component';
-import { ProfileComponent } from './pages/profile/profile.component';
 import { authGuard } from './guards/auth.guard';
-import { SearchComponent } from './pages/search/search.component';
-import { ForbiddenComponent } from './pages/forbidden/forbidden.component';
-import { NotFoundComponent } from './pages/not-found/not-found.component';
-import { ServerErrorComponent } from './pages/server-error/server-error.component';
 
 export const routes: Routes = [
-  { path: '', component: HomeComponent },
-  { path: 'search', component: SearchComponent },
-  { path: 'products/search', component: SearchComponent },
-  { path: 'profile', component: ProfileComponent, canActivate: [authGuard] },
-  { path: '403', component: ForbiddenComponent },
-  { path: '500', component: ServerErrorComponent },
-  { path: '**', component: NotFoundComponent }
+  { 
+    path: '', 
+    loadComponent: () => import('./pages/home/home.component').then(m => m.HomeComponent) 
+  },
+  { 
+    path: 'search', 
+    loadComponent: () => import('./pages/search/search.component').then(m => m.SearchComponent) 
+  },
+  { 
+    path: 'products/search', 
+    loadComponent: () => import('./pages/search/search.component').then(m => m.SearchComponent) 
+  },
+  { 
+    path: 'profile', 
+    loadComponent: () => import('./pages/profile/profile.component').then(m => m.ProfileComponent),
+    canActivate: [authGuard] 
+  },
+  { 
+    path: '403', 
+    loadComponent: () => import('./pages/forbidden/forbidden.component').then(m => m.ForbiddenComponent) 
+  },
+  { 
+    path: '500', 
+    loadComponent: () => import('./pages/server-error/server-error.component').then(m => m.ServerErrorComponent) 
+  },
+  { 
+    path: '**', 
+    loadComponent: () => import('./pages/not-found/not-found.component').then(m => m.NotFoundComponent) 
+  }
 ];

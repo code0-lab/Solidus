@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -10,7 +10,8 @@ import { SearchBarComponent } from '../search-bar/search-bar.component';
   standalone: true,
   imports: [CommonModule, RouterLink, SearchBarComponent],
   templateUrl: './header.component.html',
-  styleUrl: './header.component.css'
+  styleUrl: './header.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HeaderComponent {
   authService = inject(AuthService);

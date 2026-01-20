@@ -12,15 +12,18 @@
         </div>
       </div>
 
-      <div class="profile-fields">
+      <div class="profile-fields" [formGroup]="profileForm">
         <div class="field-group">
           <label for="phone">Phone</label>
           <input
             id="phone"
             type="tel"
-            [(ngModel)]="phone"
-            [disabled]="isSaving"
+            formControlName="phone"
+            [class.invalid]="profileForm.get('phone')?.invalid && profileForm.get('phone')?.touched"
             placeholder="Add your phone number">
+          @if (profileForm.get('phone')?.invalid && profileForm.get('phone')?.touched) {
+            <small class="error-msg">Please enter a valid phone number (digits, space, +).</small>
+          }
           <small class="field-hint">Leave empty and save to remove phone.</small>
         </div>
 
@@ -29,18 +32,29 @@
           <textarea
             id="address"
             rows="3"
-            [(ngModel)]="address"
-            [disabled]="isSaving"
+            formControlName="address"
             placeholder="Add your address"></textarea>
           <small class="field-hint">Leave empty and save to remove address.</small>
         </div>
 
-        <button class="save-btn" (click)="saveProfile()" [disabled]="isSaving">
-          {{ isSaving ? 'Saving...' : 'Save Changes' }}
+        <button class="save-btn" (click)="saveProfile()" [disabled]="isSaving() || profileForm.invalid || !hasChanges">
+          {{ isSaving() ? 'Saving...' : 'Save Changes' }}
         </button>
       </div>
 
       <button class="logout-btn" (click)="logout()">Log Out</button>
+
+      @if (showLogoutConfirm()) {
+        <div class="confirm-overlay">
+          <div class="confirm-box">
+            <p>Are you sure you want to log out?</p>
+            <div class="confirm-actions">
+              <button class="cancel-btn" (click)="cancelLogout()">Cancel</button>
+              <button class="confirm-btn" (click)="confirmLogout()">Yes, Log Out</button>
+            </div>
+          </div>
+        </div>
+      }
     </div>
   }
 </div>

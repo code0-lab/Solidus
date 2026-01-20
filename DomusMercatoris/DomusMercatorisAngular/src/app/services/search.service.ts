@@ -3,6 +3,9 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, finalize } from 'rxjs';
 import { ProductService } from './product.service';
 import { PaginatedResult, Product } from '../models/product.model';
+import { environment } from '../../environments/environment';
+
+declare module 'heic2any';
 
 @Injectable({ providedIn: 'root' })
 export class SearchService {
@@ -10,7 +13,48 @@ export class SearchService {
   private productService = inject(ProductService);
 
   private get apiUrl(): string {
-    return `/api`;
+    return environment.apiUrl;
+  }
+
+  validateFile(file: File): { valid: boolean; error?: string } {
+    const MAX_SIZE_BYTES = 17 * 1024 * 1024;
+    const isImageMime = file.type && file.type.startsWith('image/');
+    const validExtensions = /\.(jpg|jpeg|png|webp|gif|bmp|heic|heif)$/i;
+    const hasValidExtension = validExtensions.test(file.name);
+
+    if (!isImageMime && !hasValidExtension) {
+       if (file.type && !file.type.startsWith('image/')) {
+         return { valid: false, error: 'Only images are accepted.' };
+       }
+    }
+
+    if (file.size > MAX_SIZE_BYTES) {
+      return { valid: false, error: 'Image exceeds 17MB limit.' };
+    }
+    return { valid: true };
+  }
+
+  async processImage(file: File): Promise<File> {
+    if (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) {
+      try {
+        const heic2anyModule = await import('heic2any');
+        // @ts-ignore
+        const heic2any = heic2anyModule.default || heic2anyModule;
+        
+        const convertedBlob = await heic2any({
+          blob: file,
+          toType: 'image/jpeg',
+          quality: 0.8
+        });
+        
+        const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+        return new File([blob as Blob], file.name.replace(/\.hei[cf]$/i, '.jpg'), { type: 'image/jpeg' });
+      } catch (err) {
+        console.error('HEIC conversion failed:', err);
+        throw new Error('Could not process HEIC image.');
+      }
+    }
+    return file;
   }
 
   classifyImage(file: File): Observable<{ clusterId: number; clusterName?: string; version: number }> {

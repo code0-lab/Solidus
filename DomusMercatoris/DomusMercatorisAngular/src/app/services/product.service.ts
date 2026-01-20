@@ -2,6 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Product, Category, Brand, Company, PaginatedResult } from '../models/product.model';
 import { Observable, tap, finalize } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -10,7 +11,7 @@ export class ProductService {
   private http = inject(HttpClient);
   
   private get apiUrl(): string {
-    return `/api`;
+    return environment.apiUrl;
   }
 
   products = signal<Product[]>([]);

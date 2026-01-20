@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface SaleItem {
   productId: number;
@@ -37,7 +38,7 @@ export class SalesService {
   private http = inject(HttpClient);
   
   private get apiUrl(): string {
-    return `/api`;
+    return environment.apiUrl;
   }
 
   checkout(payload: CheckoutPayload): Observable<SaleResponse> {

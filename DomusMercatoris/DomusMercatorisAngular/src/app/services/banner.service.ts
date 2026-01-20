@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Banner } from '../models/banner.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -11,7 +12,7 @@ export class BannerService {
   banner = signal<Banner | null>(null);
 
   private get apiUrl(): string {
-    return `/api`;
+    return environment.apiUrl;
   }
 
   loadActiveBanner(): void {

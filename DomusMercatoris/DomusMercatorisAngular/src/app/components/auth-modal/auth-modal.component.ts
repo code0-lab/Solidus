@@ -2,6 +2,8 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
+import { ToastService } from '../../services/toast.service';
+import { Company } from '../../models/user.model';
 
 @Component({
   selector: 'app-auth-modal',
@@ -12,7 +14,8 @@ import { AuthService } from '../../services/auth.service';
 })
 export class AuthModalComponent implements OnInit {
   authService = inject(AuthService);
-  companies: any[] = [];
+  toastService = inject(ToastService);
+  companies: Company[] = [];
 
   email = '';
   password = '';
@@ -47,18 +50,18 @@ export class AuthModalComponent implements OnInit {
 
   login() {
     if (!this.email || !this.password) {
-      alert('Please enter email and password.');
+      this.toastService.error('Please enter email and password.');
       return;
     }
 
     this.authService.login({ email: this.email, password: this.password }).subscribe({
       next: () => {
-        alert('Login successful!');
+        this.toastService.success('Login successful!');
         this.email = '';
         this.password = '';
       },
       error: (err) => {
-        alert('Login failed: ' + (err.error?.message || 'Unknown error'));
+        this.toastService.error('Login failed: ' + (err.error?.message || 'Unknown error'));
       }
     });
   }
@@ -66,18 +69,18 @@ export class AuthModalComponent implements OnInit {
   register() {
     const data = this.registerData;
     if (!data.firstName || !data.lastName || !data.email || !data.password) {
-      alert('Please fill in all fields.');
+      this.toastService.error('Please fill in all fields.');
       return;
     }
 
     this.authService.register(data).subscribe({
       next: () => {
-        alert('Registration successful! You can now log in.');
+        this.toastService.success('Registration successful! You can now log in.');
         this.authService.isRegisterMode.set(false);
         this.email = data.email;
       },
       error: (err) => {
-        alert('Registration failed: ' + (err.error?.message || 'Unknown error'));
+        this.toastService.error('Registration failed: ' + (err.error?.message || 'Unknown error'));
       }
     });
   }

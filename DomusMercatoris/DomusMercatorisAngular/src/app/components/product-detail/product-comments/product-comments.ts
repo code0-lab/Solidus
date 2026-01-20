@@ -3,6 +3,7 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CommentService } from '../../../services/comment.service';
 import { AuthService } from '../../../services/auth.service';
+import { ToastService } from '../../../services/toast.service';
 
 @Component({
   selector: 'app-product-comments',
@@ -16,6 +17,7 @@ export class ProductCommentsComponent implements OnChanges {
 
   commentService = inject(CommentService);
   authService = inject(AuthService);
+  toastService = inject(ToastService);
   newCommentText = signal('');
 
   ngOnChanges(changes: SimpleChanges) {
@@ -29,7 +31,7 @@ export class ProductCommentsComponent implements OnChanges {
     if (!text.trim()) return;
 
     if (!this.authService.currentUser()) {
-      alert('You must be logged in to post a comment.');
+      this.toastService.info('You must be logged in to post a comment.');
       this.authService.toggleLogin();
       return;
     }
@@ -37,11 +39,11 @@ export class ProductCommentsComponent implements OnChanges {
     this.commentService.createComment({ productId: this.productId, text }).subscribe({
       next: () => {
         this.newCommentText.set('');
-        alert('Your comment has been added!');
+        this.toastService.success('Your comment has been added!');
       },
       error: (err) => {
         console.error(err);
-        alert('Error adding comment.');
+        this.toastService.error('Error adding comment.');
       }
     });
   }

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Product, VariantProduct } from '../../../models/product.model';
 import { CartService } from '../../../services/cart.service';
+import { ToastService } from '../../../services/toast.service';
 
 @Component({
   selector: 'app-product-detail-info',
@@ -18,6 +19,7 @@ export class ProductDetailInfoComponent {
   
   private sanitizer = inject(DomSanitizer);
   private cartService = inject(CartService);
+  private toastService = inject(ToastService);
   isDescriptionExpanded = signal(false);
 
   currentPrice = computed(() => {
@@ -42,6 +44,6 @@ export class ProductDetailInfoComponent {
 
   onAddToCart() {
     this.cartService.add(this.product, this.selectedVariant || undefined);
-    alert('Added to cart.');
+    this.toastService.success('Added to cart.');
   }
 }

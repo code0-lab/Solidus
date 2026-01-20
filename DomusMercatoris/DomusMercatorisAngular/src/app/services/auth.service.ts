@@ -1,8 +1,9 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { User, LoginResponse, UserProfileDto } from '../models/user.model';
+import { User, LoginResponse, UserProfileDto, LoginRequest, RegisterRequest, Company, UpdateProfileRequest } from '../models/user.model';
 import { Observable, tap } from 'rxjs';
 import { jwtDecode } from 'jwt-decode';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -11,11 +12,11 @@ export class AuthService {
   private http = inject(HttpClient);
   
   private get apiUrl(): string {
-    return `/api/users`;
+    return `${environment.apiUrl}/users`;
   }
 
   private get companiesUrl(): string {
-    return `/api/companies`;
+    return `${environment.apiUrl}/companies`;
   }
 
   private readonly USER_KEY = 'user';
@@ -29,8 +30,8 @@ export class AuthService {
     this.loadUser();
   }
 
-  getCompanies(): Observable<any[]> {
-    return this.http.get<any[]>(this.companiesUrl);
+  getCompanies(): Observable<Company[]> {
+    return this.http.get<Company[]>(this.companiesUrl);
   }
 
   private loadUser() {
@@ -66,26 +67,34 @@ export class AuthService {
     }
   }
 
-  login(credentials: any): Observable<LoginResponse> {
+  private saveUserToStorage(user: User) {
+    this.currentUser.set(user);
+    localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+  }
+
+  private mapToUser(profile: UserProfileDto, token: string): User {
+    return {
+      id: profile.id,
+      email: profile.email,
+      token: token,
+      firstName: profile.firstName,
+      lastName: profile.lastName,
+      phone: profile.phone ?? null,
+      address: profile.address ?? null
+    };
+  }
+
+  login(credentials: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.apiUrl}/login`, credentials).pipe(
       tap(response => {
-        const user: User = { 
-          id: response.user.id,
-          email: response.user.email, 
-          token: response.token,
-          firstName: response.user.firstName,
-          lastName: response.user.lastName,
-          phone: response.user.phone ?? null,
-          address: response.user.address ?? null
-        };
-        this.currentUser.set(user);
-        localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+        const user = this.mapToUser(response.user, response.token);
+        this.saveUserToStorage(user);
         this.closeLogin();
       })
     );
   }
 
-  register(data: any): Observable<any> {
+  register(data: RegisterRequest): Observable<any> {
     return this.http.post(`${this.apiUrl}/register`, data);
   }
 
@@ -96,13 +105,9 @@ export class AuthService {
 
   // Modal State Management
   toggleLogin() {
-    if (this.currentUser()) {
-      if (confirm('Are you sure you want to logout?')) {
-        this.logout();
-      }
-    } else {
-      this.isLoginOpen.set(!this.isLoginOpen());
-      this.isRegisterMode.set(false);
+    this.isLoginOpen.set(!this.isLoginOpen());
+    if (this.isLoginOpen()) {
+        this.isRegisterMode.set(false);
     }
   }
 
@@ -122,44 +127,24 @@ export class AuthService {
   fetchProfile(): Observable<UserProfileDto> {
     return this.http.get<UserProfileDto>(`${this.apiUrl}/me`).pipe(
       tap(profile => {
-        const current = this.currentUser();
-        const updated: User = {
-          ...(current ?? { token: '' } as User),
-          id: profile.id,
-          email: profile.email,
-          firstName: profile.firstName,
-          lastName: profile.lastName,
-          phone: profile.phone ?? null,
-          address: profile.address ?? null
-        };
-        if (!updated.token && current?.token) {
-          updated.token = current.token;
-        }
-        this.currentUser.set(updated);
-        localStorage.setItem(this.USER_KEY, JSON.stringify(updated));
+        this.updateUserFromProfile(profile);
       })
     );
   }
 
-  updateProfile(payload: { phone?: string | null; address?: string | null }): Observable<UserProfileDto> {
+  updateProfile(payload: UpdateProfileRequest): Observable<UserProfileDto> {
     return this.http.put<UserProfileDto>(`${this.apiUrl}/me`, payload).pipe(
       tap(profile => {
-        const current = this.currentUser();
-        const updated: User = {
-          ...(current ?? { token: '' } as User),
-          id: profile.id,
-          email: profile.email,
-          firstName: profile.firstName,
-          lastName: profile.lastName,
-          phone: profile.phone ?? null,
-          address: profile.address ?? null
-        };
-        if (!updated.token && current?.token) {
-          updated.token = current.token;
-        }
-        this.currentUser.set(updated);
-        localStorage.setItem(this.USER_KEY, JSON.stringify(updated));
+        this.updateUserFromProfile(profile);
       })
     );
+  }
+
+  private updateUserFromProfile(profile: UserProfileDto) {
+    const current = this.currentUser();
+    const token = current?.token ?? '';
+    const updated = this.mapToUser(profile, token);
+    
+    this.saveUserToStorage(updated);
   }
 }

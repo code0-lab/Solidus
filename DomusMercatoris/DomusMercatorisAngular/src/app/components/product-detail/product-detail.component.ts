@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, inject, signal, OnChanges, SimpleChanges, computed } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, OnChanges, signal, computed, ChangeDetectionStrategy, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Product, VariantProduct } from '../../models/product.model';
 import { CommentService } from '../../services/comment.service';
@@ -10,7 +10,8 @@ import { ProductCommentsComponent } from './product-comments/product-comments';
   standalone: true,
   imports: [CommonModule, ProductDetailInfoComponent, ProductCommentsComponent],
   templateUrl: './product-detail.component.html',
-  styleUrl: './product-detail.component.css'
+  styleUrl: './product-detail.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProductDetailComponent implements OnChanges {
   @Input({ required: true }) product!: Product;
