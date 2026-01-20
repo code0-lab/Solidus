@@ -44,7 +44,12 @@
                                     var roots = Model.AutoCategories.Where(c => c.ParentId == null).OrderBy(c => c.Name);
                                     foreach(var root in roots)
                                     {
-                                        <partial name="_AutoCategoryOption" model="root" view-data='@(new ViewDataDictionary(ViewData) { { "Depth", 0 }, { "AllCats", Model.AutoCategories }, { "ExcludeId", Model.EditId } })' />
+                                        <partial name="_AutoCategoryOption" model="root" view-data='@(new ViewDataDictionary(ViewData) { 
+                                            { "Depth", 0 }, 
+                                            { "AllCats", Model.AutoCategories }, 
+                                            { "ExcludeId", Model.EditId },
+                                            { "SelectedParentId", Model.Input.ParentId }
+                                        })' />
                                     }
                                 }
                             </select>
@@ -52,20 +57,44 @@
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="Input.ProductClusterIds" class="form-label">Product Clusters</label>
-                            <select asp-for="Input.ProductClusterIds" class="form-select" multiple style="height: 150px;">
-                                <option value="0">-- null -- (no cluster)</option>
-                                @foreach (var cluster in Model.ProductClusters)
-                                {
-                                    <option value="@cluster.Id">@cluster.Name (v@(cluster.Version))</option>
-                                }
-                            </select>
+                            <label class="form-label">Product Clusters</label>
+                            <div class="card border">
+                                <div class="card-header bg-light p-2">
+                                    <input type="text" id="clusterSearch" class="form-control form-control-sm" placeholder="Search clusters..." onkeyup="filterClusters()">
+                                </div>
+                                <div class="card-body p-0" style="height: 200px; overflow-y: auto;">
+                                    <div class="list-group list-group-flush" id="clusterList">
+                                        <div class="list-group-item p-2">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" value="0" id="cluster_0" name="Input.ProductClusterIds" 
+                                                       @(Model.Input.ProductClusterIds != null && Model.Input.ProductClusterIds.Contains(0) ? "checked" : "")>
+                                                <label class="form-check-label text-muted fst-italic" for="cluster_0">
+                                                    -- null -- (no cluster)
+                                                </label>
+                                            </div>
+                                        </div>
+                                        @foreach (var cluster in Model.ProductClusters)
+                                        {
+                                            <div class="list-group-item p-2 cluster-item">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" value="@cluster.Id" id="cluster_@cluster.Id" name="Input.ProductClusterIds"
+                                                           @(Model.Input.ProductClusterIds != null && Model.Input.ProductClusterIds.Contains(cluster.Id) ? "checked" : "")>
+                                                    <label class="form-check-label" for="cluster_@cluster.Id">
+                                                        @cluster.Name <span class="badge bg-light text-dark border ms-1">v@(cluster.Version)</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
                             <span asp-validation-for="Input.ProductClusterIds" class="text-danger"></span>
-                            <div class="form-text">Select one or more clusters using Ctrl/Cmd + Click.</div>
+                            <div class="form-text"><i class="bi bi-search"></i> Use the search box to find clusters. Multiple selections allowed.</div>
                         </div>
 
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                                 @(Model.IsEditing ? "Update Auto Category" : "Create Auto Category")
                             </button>
                             @if (Model.IsEditing)
@@ -83,7 +112,13 @@
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
                     <span>Existing Auto Categories</span>
-                    <span class="badge bg-secondary">@Model.AutoCategories.Count</span>
+                    <div class="d-flex align-items-center gap-2">
+                         <div class="input-group input-group-sm" style="width: 200px;">
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-search"></i></span>
+                            <input type="text" id="categorySearch" class="form-control border-start-0" placeholder="Filter categories..." onkeyup="filterCategories()">
+                        </div>
+                        <span class="badge bg-secondary">@Model.AutoCategories.Count</span>
+                    </div>
                 </div>
                 <div class="card-body p-0">
                     @if (Model.AutoCategories.Count == 0)
@@ -121,3 +156,155 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        // Cluster Search Filter
+        function filterClusters() {
+            var input = document.getElementById('clusterSearch');
+            var filter = input.value.toLowerCase();
+            var list = document.getElementById("clusterList");
+            var items = list.getElementsByClassName('cluster-item');
+
+            for (var i = 0; i < items.length; i++) {
+                var label = items[i].querySelector("label").innerText;
+                if (label.toLowerCase().indexOf(filter) > -1) {
+                    items[i].style.display = "";
+                } else {
+                    items[i].style.display = "none";
+                }
+            }
+        }
+
+        // Category Table Filter (Updated for Tree)
+        function filterCategories() {
+            var input = document.getElementById('categorySearch');
+            var filter = input.value.toLowerCase();
+            var table = document.querySelector("table tbody");
+            var trs = table.getElementsByTagName("tr");
+
+            if (filter.length === 0) {
+                // Reset to initial tree state
+                for (var i = 0; i < trs.length; i++) {
+                    var depth = trs[i].getAttribute('data-depth');
+                    var btn = trs[i].querySelector('.tree-toggle i');
+                    
+                    // Reset icons
+                    if (btn) {
+                        btn.classList.remove('bi-chevron-down');
+                        btn.classList.add('bi-chevron-right');
+                    }
+                    
+                    // Reset visibility
+                    if (depth && parseInt(depth) > 0) {
+                        trs[i].classList.add('d-none');
+                    } else {
+                        trs[i].classList.remove('d-none');
+                    }
+                    // Remove inline style from previous filter
+                    trs[i].style.display = ""; 
+                }
+                return;
+            }
+
+            // Flat filter mode
+            for (var i = 0; i < trs.length; i++) {
+                var nameCol = trs[i].getElementsByTagName("td")[0];
+                if (nameCol) {
+                    var txtValue = nameCol.textContent || nameCol.innerText;
+                    
+                    if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                        trs[i].classList.remove('d-none');
+                        trs[i].style.display = "";
+                    } else {
+                        trs[i].style.display = "none";
+                    }
+                }       
+            }
+        }
+
+        // Tree View Toggle Logic
+        document.addEventListener('click', function(e) {
+            var btn = e.target.closest('.tree-toggle');
+            if (btn) {
+                e.preventDefault();
+                var rowId = btn.getAttribute('data-target');
+                var icon = btn.querySelector('i');
+                var isExpanded = icon.classList.contains('bi-chevron-down');
+                
+                if (isExpanded) {
+                    // Collapse
+                    icon.classList.remove('bi-chevron-down');
+                    icon.classList.add('bi-chevron-right');
+                    hideDescendants(rowId);
+                } else {
+                    // Expand
+                    icon.classList.remove('bi-chevron-right');
+                    icon.classList.add('bi-chevron-down');
+                    showChildren(rowId);
+                }
+            }
+        });
+
+        function showChildren(parentId) {
+            var rows = document.querySelectorAll(`tr[data-parent-id="${parentId}"]`);
+            rows.forEach(row => {
+                row.classList.remove('d-none');
+            });
+        }
+
+        function hideDescendants(parentId) {
+            var rows = document.querySelectorAll(`tr[data-parent-id="${parentId}"]`);
+            rows.forEach(row => {
+                row.classList.add('d-none');
+                
+                // Reset icon if it was expanded
+                var btn = row.querySelector('.tree-toggle');
+                if (btn) {
+                    var icon = btn.querySelector('i');
+                    if (icon.classList.contains('bi-chevron-down')) {
+                        icon.classList.remove('bi-chevron-down');
+                        icon.classList.add('bi-chevron-right');
+                    }
+                }
+                
+                // Recursively hide its children
+                var childId = row.getAttribute('data-id');
+                hideDescendants(childId);
+            });
+        }
+
+        // Form Submit Loading State
+        document.querySelector("form").addEventListener("submit", function(e) {
+            if (!this.checkValidity()) return; // Let HTML5 validation handle it first
+            
+            var btn = document.getElementById("submitBtn");
+            var spinner = btn.querySelector(".spinner-border");
+            
+            btn.disabled = true;
+            spinner.classList.remove("d-none");
+        });
+
+        // Exclusive Null Checkbox Logic
+        var nullCheckbox = document.getElementById('cluster_0');
+        if (nullCheckbox) {
+            var otherCheckboxes = document.querySelectorAll('input[name="Input.ProductClusterIds"]:not(#cluster_0)');
+            
+            // When "null" is checked, uncheck others
+            nullCheckbox.addEventListener('change', function() {
+                if(this.checked) {
+                    otherCheckboxes.forEach(function(cb) { cb.checked = false; });
+                }
+            });
+
+            // When others are checked, uncheck "null"
+            otherCheckboxes.forEach(function(cb) {
+                cb.addEventListener('change', function() {
+                    if(this.checked) {
+                        nullCheckbox.checked = false;
+                    }
+                });
+            });
+        }
+    </script>
+}

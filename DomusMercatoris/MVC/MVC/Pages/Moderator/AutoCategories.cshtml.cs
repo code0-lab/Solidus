@@ -148,17 +148,15 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
             item.ProductClusters ??= new List<ProductCluster>();
 
             // 1. Gelen ID listesini temizle
-            var targetClusterIds = new HashSet<int>(
-                inputClusterIds.Where(id => id > 0)
-            );
+            // Not: Veri sayısı az olduğu için (max ~200), LINQ okunabilirliği mikro-optimizasyona tercih edilmiştir.
+            var targetClusterIds = new HashSet<int>(inputClusterIds.Where(id => id > 0));
 
             if (inputClusterIds.Contains(0))
             {
                 targetClusterIds.Clear();
             }
 
-            // 2. Silinecekleri belirle (Mevcutta var ama hedefte yok)
-            // Not: ToList() ile kopyasını alıyoruz ki iterasyon sırasında koleksiyon değişmesin
+            // 2. Silinecekleri belirle (Smart Update: Mevcutta var ama hedefte yok)
             var toRemove = item.ProductClusters
                 .Where(pc => !targetClusterIds.Contains(pc.Id))
                 .ToList();
@@ -168,8 +166,9 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
                 item.ProductClusters.Remove(cluster);
             }
 
-            // 3. Eklenecekleri belirle (Hedefte var ama mevcutta yok)
+            // 3. Eklenecekleri belirle (Smart Update: Hedefte var ama mevcutta yok)
             var existingIds = new HashSet<int>(item.ProductClusters.Select(pc => pc.Id));
+            
             var idsToAdd = targetClusterIds
                 .Where(id => !existingIds.Contains(id))
                 .ToList();

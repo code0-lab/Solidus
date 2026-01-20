@@ -3,12 +3,14 @@
     var depth = (int)ViewData["Depth"];
     var allCats = (List<DomusMercatoris.Core.Entities.AutoCategory>)ViewData["AllCats"];
     var excludeId = (int?)ViewData["ExcludeId"];
+    var selectedParentId = (int?)ViewData["SelectedParentId"];
 
     if (!excludeId.HasValue || Model.Id != excludeId.Value)
     {
         var prefix = new string('-', depth * 2);
         var name = (prefix.Length > 0 ? prefix + " " : "") + Model.Name;
-        <option value="@Model.Id">@name</option>
+        
+        <!option value="@Model.Id" @(selectedParentId.HasValue && selectedParentId.Value == Model.Id ? "selected" : "")>@name</!option>
 
         var children = allCats.Where(x => x.ParentId == Model.Id).OrderBy(x => x.Name);
         foreach(var child in children)
@@ -17,6 +19,7 @@
             childViewData["Depth"] = depth + 1;
             childViewData["AllCats"] = allCats;
             childViewData["ExcludeId"] = excludeId;
+            childViewData["SelectedParentId"] = selectedParentId;
             <partial name="_AutoCategoryOption" model="child" view-data="childViewData" />
         }
     }
