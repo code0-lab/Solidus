@@ -51,9 +51,15 @@ namespace DomusMercatorisDotnetRest.Controllers
         }
 
         [HttpGet("by-cluster/{clusterId:int}")]
-        public async Task<ActionResult<PaginatedResult<ProductDto>>> GetByCluster(int clusterId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 9, [FromQuery] int? companyId = null, [FromQuery] int? brandId = null)
+        public async Task<ActionResult<PaginatedResult<ProductDto>>> GetByCluster(
+            int clusterId, 
+            [FromQuery] int pageNumber = 1, 
+            [FromQuery] int pageSize = 9, 
+            [FromQuery] int? companyId = null, 
+            [FromQuery] int? brandId = null,
+            [FromQuery] List<long>? prioritizedIds = null)
         {
-            var result = await _productService.GetByClusterAsync(clusterId, pageNumber, pageSize, companyId, brandId);
+            var result = await _productService.GetByClusterAsync(clusterId, pageNumber, pageSize, companyId, brandId, prioritizedIds);
             return Ok(result);
         }
 

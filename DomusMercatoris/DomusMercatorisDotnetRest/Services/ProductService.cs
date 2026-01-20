@@ -42,13 +42,39 @@ namespace DomusMercatorisDotnetRest.Services
             return await ProductQueryHelper.PaginateAndMapAsync(query, pageNumber, pageSize, _mapper);
         }
 
-        public async Task<PaginatedResult<ProductDto>> GetByClusterAsync(int clusterId, int pageNumber, int pageSize, int? companyId, int? brandId = null)
+        public async Task<PaginatedResult<ProductDto>> GetByClusterAsync(int clusterId, int pageNumber, int pageSize, int? companyId, int? brandId = null, List<long>? prioritizedIds = null)
         {
             var query = ApplyCompanyFilter(
                 BaseProductQuery().Where(p => _db.ProductClusterMembers.Any(m => m.ProductId == p.Id && m.ProductClusterId == clusterId)),
                 companyId
             );
             query = ApplyBrandFilter(query, brandId);
+
+            if (prioritizedIds != null && prioritizedIds.Any())
+            {
+                // Prioritize specified IDs (Top 3)
+                var pIds = prioritizedIds.Take(3).ToList();
+                
+                // Start ordering
+                // Note: We cast to IOrderedQueryable to chain ThenByDescending
+                if (pIds.Count > 0)
+                {
+                    query = query.OrderByDescending(p => p.Id == pIds[0]);
+                    
+                    if (pIds.Count > 1)
+                        query = ((IOrderedQueryable<Product>)query).ThenByDescending(p => p.Id == pIds[1]);
+                    
+                    if (pIds.Count > 2)
+                        query = ((IOrderedQueryable<Product>)query).ThenByDescending(p => p.Id == pIds[2]);
+
+                    query = ((IOrderedQueryable<Product>)query).ThenByDescending(p => p.Id);
+                }
+            }
+            else
+            {
+                query = query.OrderByDescending(p => p.Id);
+            }
+
             return await ProductQueryHelper.PaginateAndMapAsync(query, pageNumber, pageSize, _mapper);
         }
 

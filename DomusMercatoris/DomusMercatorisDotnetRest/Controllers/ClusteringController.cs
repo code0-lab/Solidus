@@ -23,6 +23,7 @@ namespace DomusMercatorisDotnetRest.Controllers
             public int ClusterId { get; set; }
             public string? ClusterName { get; set; }
             public int Version { get; set; }
+            public List<long> SimilarProductIds { get; set; } = new();
         }
         
         public class FileUploadDto
@@ -91,11 +92,57 @@ namespace DomusMercatorisDotnetRest.Controllers
 
             if (bestCluster == null) return NotFound("No matching cluster.");
 
+            // Find similar products within the cluster
+            var similarProductIds = new List<long>();
+            try
+            {
+                var productIdsInCluster = await _db.ProductClusterMembers
+                    .Where(m => m.ProductClusterId == bestCluster.Id)
+                    .Select(m => m.ProductId)
+                    .ToListAsync();
+
+                if (productIdsInCluster.Any())
+                {
+                    var features = await _db.ProductFeatures
+                        .Where(f => productIdsInCluster.Contains(f.ProductId))
+                        .ToListAsync();
+
+                    var similarities = new List<(long ProductId, double Distance)>();
+
+                    foreach (var f in features)
+                    {
+                        List<float>? productVector = null;
+                        try { productVector = JsonSerializer.Deserialize<List<float>>(f.FeatureVectorJson); } catch { }
+
+                        if (productVector != null && productVector.Count == vector.Count)
+                        {
+                            double dist = 0;
+                            for (int i = 0; i < vector.Count; i++)
+                            {
+                                var diff = vector[i] - productVector[i];
+                                dist += diff * diff;
+                            }
+                            similarities.Add((f.ProductId, dist));
+                        }
+                    }
+
+                    similarProductIds = similarities.OrderBy(x => x.Distance)
+                        .Take(10) // Take top 10
+                        .Select(x => x.ProductId)
+                        .ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error calculating similarity: {ex.Message}");
+            }
+
             return Ok(new ClassificationResultDto
             {
                 ClusterId = bestCluster.Id,
                 ClusterName = bestCluster.Name,
-                Version = bestCluster.Version
+                Version = bestCluster.Version,
+                SimilarProductIds = similarProductIds
             });
         }
     }

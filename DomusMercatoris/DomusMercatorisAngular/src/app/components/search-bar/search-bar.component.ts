@@ -98,7 +98,14 @@ export class SearchBarComponent implements OnInit, OnDestroy {
           next: (res) => {
             if (this.destroyed) return;
             this.selectedClusterId = res.clusterId;
-            this.searchService.fetchProductsByCluster(res.clusterId, 1, this.itemsPerPage, this.productService.selectedCompany(), this.productService.selectedBrand());
+            this.searchService.fetchProductsByCluster(
+              res.clusterId, 
+              1, 
+              this.itemsPerPage, 
+              this.productService.selectedCompany(), 
+              this.productService.selectedBrand(),
+              res.similarProductIds
+            );
             this.isClassifying = false;
             this.panelOpen = false; // Close the panel on success
             this.router.navigate(['/products/search']);

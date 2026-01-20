@@ -56,7 +56,14 @@ export class SearchComponent {
         .subscribe({
           next: (res) => {
             this.selectedClusterId.set(res.clusterId);
-            this.searchService.fetchProductsByCluster(res.clusterId, 1, this.itemsPerPage, this.productService.selectedCompany());
+            this.searchService.fetchProductsByCluster(
+              res.clusterId, 
+              1, 
+              this.itemsPerPage, 
+              this.productService.selectedCompany(),
+              null,
+              res.similarProductIds
+            );
             this.isClassifying.set(false);
           },
           error: () => {
