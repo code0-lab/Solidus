@@ -17,7 +17,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Account
             _userService = userService;
         }
 
-        public IActionResult OnPost()
+        public async Task<IActionResult> OnPostAsync()
         {
             if (!ModelState.IsValid)
             {
@@ -28,7 +28,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Account
                 ModelState.AddModelError(string.Empty, "Company Name is required.");
                 return Page();
             }
-            User user = _userService.UserRegister(UserRegisterDto);
+            User user = await _userService.UserRegisterAsync(UserRegisterDto);
             if (user != null)
             {
                 return RedirectToPage("/Index");

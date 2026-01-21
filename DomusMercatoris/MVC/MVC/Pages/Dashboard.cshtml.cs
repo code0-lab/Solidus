@@ -41,7 +41,7 @@ namespace DomusMercatorisDotnetMVC.Pages
                 var idClaim = User.FindFirst("UserId")?.Value;
                 if (!string.IsNullOrEmpty(idClaim) && long.TryParse(idClaim, out var userId))
                 {
-                    var me = _userService.GetById(userId);
+                    var me = await _userService.GetByIdAsync(userId);
                     if (me != null)
                     {
                         CompanyId = me.CompanyId;
@@ -51,11 +51,11 @@ namespace DomusMercatorisDotnetMVC.Pages
             }
             if (CompanyId >= 0)
             {
-                ProductCount = _productService.CountByCompany(CompanyId);
-                var users = _userService.GetByCompany(CompanyId);
+                ProductCount = await _productService.CountByCompanyAsync(CompanyId);
+                var users = await _userService.GetByCompanyAsync(CompanyId);
                 ManagerCount = users.Count(u => u.Roles?.Contains("Manager") ?? false);
                 WorkerCount = users.Count(u => !(u.Roles?.Contains("Manager") ?? false));
-                CompanyName = _userService.GetCompanyName(CompanyId) ?? string.Empty;
+                CompanyName = await _userService.GetCompanyNameAsync(CompanyId) ?? string.Empty;
                 var comments = await _commentService.GetLatestCommentsForCompanyAsync(CompanyId, 5);
                 RecentComments = comments.Where(c => c.IsApproved).ToList();
             }

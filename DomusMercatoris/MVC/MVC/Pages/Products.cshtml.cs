@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using DomusMercatorisDotnetMVC.Services;
 using DomusMercatoris.Core.Entities;
+using System.Threading.Tasks;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
@@ -23,7 +24,7 @@ namespace DomusMercatorisDotnetMVC.Pages
         public int TotalCount { get; set; } = 0;
         public int TotalPages { get; set; } = 1;
 
-        public IActionResult OnGet()
+        public async Task<IActionResult> OnGetAsync()
         {
             var pageStr = Request.Query["page"].ToString();
             if (!string.IsNullOrEmpty(pageStr) && int.TryParse(pageStr, out var p))
@@ -33,10 +34,10 @@ namespace DomusMercatorisDotnetMVC.Pages
             var comp = User.FindFirst("CompanyId")?.Value;
             if (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var companyId))
             {
-                TotalCount = _productService.CountByCompany(companyId);
+                TotalCount = await _productService.CountByCompanyAsync(companyId);
                 TotalPages = Math.Max(1, (int)Math.Ceiling(TotalCount / (double)PageSize));
                 if (PageNumber > TotalPages) PageNumber = TotalPages;
-                Items = _productService.GetByCompanyPage(companyId, PageNumber, PageSize);
+                Items = await _productService.GetByCompanyPageAsync(companyId, PageNumber, PageSize);
             }
             else
             {
@@ -45,15 +46,15 @@ namespace DomusMercatorisDotnetMVC.Pages
                 {
                     return RedirectToPage("/Index");
                 }
-                var me = _userService.GetById(userId);
+                var me = await _userService.GetByIdAsync(userId);
                 if (me == null)
                 {
                     return RedirectToPage("/Index");
                 }
-                TotalCount = _productService.CountByCompany(me.CompanyId);
+                TotalCount = await _productService.CountByCompanyAsync(me.CompanyId);
                 TotalPages = Math.Max(1, (int)Math.Ceiling(TotalCount / (double)PageSize));
                 if (PageNumber > TotalPages) PageNumber = TotalPages;
-                Items = _productService.GetByCompanyPage(me.CompanyId, PageNumber, PageSize);
+                Items = await _productService.GetByCompanyPageAsync(me.CompanyId, PageNumber, PageSize);
             }
             return Page();
         }

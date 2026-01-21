@@ -46,7 +46,7 @@ namespace DomusMercatorisDotnetMVC.Pages
                 var idClaim = User.FindFirst("UserId")?.Value;
                 if (!string.IsNullOrEmpty(idClaim) && long.TryParse(idClaim, out var userId))
                 {
-                    var me = _userService.GetById(userId);
+                    var me = await _userService.GetByIdAsync(userId);
                     if (me != null)
                     {
                         CompanyId = me.CompanyId;

@@ -88,7 +88,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
                 return Page();
             }
 
-            var apiKey = _userService.GetCompanyGeminiKey(Input.CompanyId);
+            var apiKey = await _userService.GetCompanyGeminiKeyAsync(Input.CompanyId);
             if (string.IsNullOrEmpty(apiKey))
             {
                 ModelState.AddModelError(string.Empty, "Selected company does not have a Gemini API key configured.");

@@ -37,7 +37,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
 
         public async Task<IActionResult> OnPost()
         {
-            var user = _userService.UserLogin(Email, Password);
+            var user = await _userService.UserLoginAsync(Email, Password);
             if (user != null)
             {
                 // Check for Moderator role

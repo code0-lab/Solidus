@@ -30,7 +30,7 @@ namespace DomusMercatorisDotnetMVC.Pages
 
         public async Task<IActionResult> OnPost()
         {
-            var user = _userService.UserLogin(Email, Password);
+            var user = await _userService.UserLoginAsync(Email, Password);
             if (user != null) {
                 var fullName = $"{user.FirstName} {user.LastName}";
                 var claims = new List<Claim>

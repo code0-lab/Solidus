@@ -9,7 +9,7 @@ using DomusMercatoris.Data;
 
 namespace DomusMercatorisDotnetMVC.Pages.Moderator
 {
-    [Authorize(Roles = "Moderator")]
+    [Authorize(Roles = "Moderator,Rex")]
     public class BanModel : PageModel
     {
         private readonly DomusDbContext _context;

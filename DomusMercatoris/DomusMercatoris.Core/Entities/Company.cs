@@ -15,6 +15,7 @@ namespace DomusMercatoris.Core.Entities
         public bool IsBaned { get; set; } = false;
         public bool IsActive { get; set; } = true;
         public string? GeminiApiKey { get; set; }
+        public string? GeminiPrompt { get; set; }
         public bool IsAiModerationEnabled { get; set; } = false;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

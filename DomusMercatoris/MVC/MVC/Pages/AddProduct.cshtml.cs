@@ -60,7 +60,7 @@ namespace DomusMercatorisDotnetMVC.Pages
 
             if (companyId == 0) return new JsonResult(new { success = false, message = "Company not found" });
 
-            var apiKey = _userService.GetCompanyGeminiKey(companyId);
+            var apiKey = await _userService.GetCompanyGeminiKeyAsync(companyId);
             if (string.IsNullOrEmpty(apiKey))
             {
                 return new JsonResult(new { success = false, message = "Gemini API Key is missing. Please configure it in company settings." });

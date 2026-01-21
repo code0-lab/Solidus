@@ -20,7 +20,7 @@ namespace DomusMercatorisDotnetMVC.Pages
 
         public void OnGet() {}
 
-        public IActionResult OnPost()
+        public async Task<IActionResult> OnPostAsync()
         {
             if (!ModelState.IsValid)
             {
@@ -36,7 +36,7 @@ namespace DomusMercatorisDotnetMVC.Pages
                     ModelState.AddModelError(string.Empty, "Authorization error.");
                     return Page();
                 }
-                var manager = _userService.GetById(managerId);
+                var manager = await _userService.GetByIdAsync(managerId);
                 if (manager == null)
                 {
                     ModelState.AddModelError(string.Empty, "Manager not found.");
@@ -44,7 +44,7 @@ namespace DomusMercatorisDotnetMVC.Pages
                 }
                 companyId = manager.CompanyId;
             }
-            var user = _userService.RegisterWorker(UserRegisterDto, companyId);
+            var user = await _userService.RegisterWorkerAsync(UserRegisterDto, companyId);
             if (user != null)
             {
                 TempData["Message"] = "Worker added.";

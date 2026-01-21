@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using DomusMercatorisDotnetMVC.Services;
 using DomusMercatoris.Core.Entities;
+using System.Threading.Tasks;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
@@ -22,7 +23,7 @@ namespace DomusMercatorisDotnetMVC.Pages
         public List<Product> ProductResults { get; set; } = new();
         public List<User> WorkerResults { get; set; } = new();
 
-        public IActionResult OnGet()
+        public async Task<IActionResult> OnGetAsync()
         {
             Query = (Request.Query["q"].ToString() ?? string.Empty).Trim();
             Context = (Request.Query["ctx"].ToString() ?? string.Empty).Trim().ToLowerInvariant();
@@ -35,7 +36,7 @@ namespace DomusMercatorisDotnetMVC.Pages
                 var idClaim = User.FindFirst("UserId")?.Value;
                 if (!string.IsNullOrEmpty(idClaim) && long.TryParse(idClaim, out var userId))
                 {
-                    var me = _userService.GetById(userId);
+                    var me = await _userService.GetByIdAsync(userId);
                     if (me != null) companyId = me.CompanyId;
                 }
             }
@@ -44,16 +45,16 @@ namespace DomusMercatorisDotnetMVC.Pages
             {
                 if (Context == "products")
                 {
-                    ProductResults = _productService.SearchByCompany(companyId, Query, 20);
+                    ProductResults = await _productService.SearchByCompanyAsync(companyId, Query, 20);
                 }
                 else if (Context == "workers")
                 {
-                    WorkerResults = _userService.SearchByCompany(companyId, Query, 20);
+                    WorkerResults = await _userService.SearchByCompanyAsync(companyId, Query, 20);
                 }
                 else
                 {
-                    ProductResults = _productService.SearchByCompany(companyId, Query, 10);
-                    WorkerResults = _userService.SearchByCompany(companyId, Query, 10);
+                    ProductResults = await _productService.SearchByCompanyAsync(companyId, Query, 10);
+                    WorkerResults = await _userService.SearchByCompanyAsync(companyId, Query, 10);
                 }
             }
             return Page();

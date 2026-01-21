@@ -19,12 +19,13 @@ namespace DomusMercatorisDotnetMVC.Pages
 
         public List<User> Customers { get; set; } = new();
 
-        public IActionResult OnGet()
+        public async Task<IActionResult> OnGetAsync()
         {
             var comp = User.FindFirst("CompanyId")?.Value;
             if (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var companyId))
             {
-                Customers = _userService.GetByCompany(companyId)
+                var customers = await _userService.GetByCompanyAsync(companyId);
+                Customers = customers
                     .Where(u => (u.Roles ?? new List<string>()).Any(r => string.Equals(r, "Customer", System.StringComparison.OrdinalIgnoreCase)))
                     .ToList();
                 return Page();
@@ -34,12 +35,13 @@ namespace DomusMercatorisDotnetMVC.Pages
             {
                 return RedirectToPage("/Index");
             }
-            var me = _userService.GetById(userId);
+            var me = await _userService.GetByIdAsync(userId);
             if (me == null)
             {
                 return RedirectToPage("/Index");
             }
-            Customers = _userService.GetByCompany(me.CompanyId)
+            var customersMe = await _userService.GetByCompanyAsync(me.CompanyId);
+            Customers = customersMe
                 .Where(u => (u.Roles ?? new List<string>()).Any(r => string.Equals(r, "Customer", System.StringComparison.OrdinalIgnoreCase)))
                 .ToList();
             return Page();

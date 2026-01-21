@@ -31,12 +31,13 @@ namespace DomusMercatorisDotnetMVC.Pages
 
         public List<User> Workers { get; set; } = new();
 
-        public IActionResult OnGet()
+        public async Task<IActionResult> OnGetAsync()
         {
             var comp = User.FindFirst("CompanyId")?.Value;
             if (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var companyId))
             {
-                Workers = _userService.GetByCompany(companyId)
+                var workers = await _userService.GetByCompanyAsync(companyId);
+                Workers = workers
                     .Where(u => !(u.Roles ?? new List<string>()).Any(r => string.Equals(r, "Customer", StringComparison.OrdinalIgnoreCase)))
                     .ToList();
                 return Page();
@@ -46,101 +47,102 @@ namespace DomusMercatorisDotnetMVC.Pages
             {
                 return RedirectToPage("/Index");
             }
-            var me = _userService.GetById(userId);
+            var me = await _userService.GetByIdAsync(userId);
             if (me == null)
             {
                 return RedirectToPage("/Index");
             }
-            Workers = _userService.GetByCompany(me.CompanyId)
+            var workersMe = await _userService.GetByCompanyAsync(me.CompanyId);
+            Workers = workersMe
                 .Where(u => !(u.Roles ?? new List<string>()).Any(r => string.Equals(r, "Customer", StringComparison.OrdinalIgnoreCase)))
                 .ToList();
             return Page();
         }
 
-        public IActionResult OnPostUpdate()
+        public async Task<IActionResult> OnPostUpdateAsync()
         {
             if (!User.IsInRole("Manager"))
             {
                 ModelState.AddModelError(string.Empty, "Unauthorized");
-                return OnGet();
+                return await OnGetAsync();
             }
             var comp = User.FindFirst("CompanyId")?.Value;
             int companyId;
             if (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out companyId))
             {
-                var ok1 = _userService.UpdateUserInCompany(Edit.Id, companyId, Edit.FirstName, Edit.LastName, Edit.Email);
+                var ok1 = await _userService.UpdateUserInCompanyAsync(Edit.Id, companyId, Edit.FirstName, Edit.LastName, Edit.Email);
                 if (!ok1)
                 {
                     ModelState.AddModelError(string.Empty, "Update failed");
                 }
-                return OnGet();
+                return await OnGetAsync();
             }
             var idClaim = User.FindFirst("UserId")?.Value;
             long userId;
             if (string.IsNullOrEmpty(idClaim) || !long.TryParse(idClaim, out userId))
             {
                 ModelState.AddModelError(string.Empty, "Unauthorized");
-                return OnGet();
+                return await OnGetAsync();
             }
             if (!ModelState.IsValid)
             {
-                return OnGet();
+                return await OnGetAsync();
             }
-            var me = _userService.GetById(userId);
+            var me = await _userService.GetByIdAsync(userId);
             if (me == null)
             {
                 ModelState.AddModelError(string.Empty, "Unauthorized");
-                return OnGet();
+                return await OnGetAsync();
             }
-            var ok = _userService.UpdateUserInCompany(Edit.Id, me.CompanyId, Edit.FirstName, Edit.LastName, Edit.Email);
+            var ok = await _userService.UpdateUserInCompanyAsync(Edit.Id, me.CompanyId, Edit.FirstName, Edit.LastName, Edit.Email);
             if (!ok)
             {
                 ModelState.AddModelError(string.Empty, "Update failed");
             }
-            return OnGet();
+            return await OnGetAsync();
         }
 
-        public IActionResult OnPostDelete()
+        public async Task<IActionResult> OnPostDeleteAsync()
         {
             if (!User.IsInRole("Manager"))
             {
                 ModelState.AddModelError(string.Empty, "Unauthorized");
-                return OnGet();
+                return await OnGetAsync();
             }
             var comp = User.FindFirst("CompanyId")?.Value;
             int companyId;
             if (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out companyId))
             {
-                var ok1 = _userService.DeleteUserInCompany(DeleteId, companyId);
+                var ok1 = await _userService.DeleteUserInCompanyAsync(DeleteId, companyId);
                 if (!ok1)
                 {
                     ModelState.AddModelError(string.Empty, "Delete failed");
                 }
-                return OnGet();
+                return await OnGetAsync();
             }
             var idClaim = User.FindFirst("UserId")?.Value;
             long userId;
             if (string.IsNullOrEmpty(idClaim) || !long.TryParse(idClaim, out userId))
             {
                 ModelState.AddModelError(string.Empty, "Unauthorized");
-                return OnGet();
+                return await OnGetAsync();
             }
             if (!ModelState.IsValid)
             {
-                return OnGet();
+                return await OnGetAsync();
             }
-            var me = _userService.GetById(userId);
+            var me = await _userService.GetByIdAsync(userId);
             if (me == null)
             {
                 ModelState.AddModelError(string.Empty, "Unauthorized");
-                return OnGet();
+                return await OnGetAsync();
             }
-            var ok = _userService.DeleteUserInCompany(DeleteId, me.CompanyId);
+            var ok = await _userService.DeleteUserInCompanyAsync(DeleteId, me.CompanyId);
             if (!ok)
             {
                 ModelState.AddModelError(string.Empty, "Delete failed");
             }
-            return OnGet();
+            return await OnGetAsync();
         }
     }
 }

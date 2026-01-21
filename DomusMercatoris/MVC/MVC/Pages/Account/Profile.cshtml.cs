@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using DomusMercatorisDotnetMVC.Services;
+using DomusMercatoris.Core.Entities;
+using DomusMercatorisDotnetMVC.Dto.UserDto;
 
 namespace DomusMercatorisDotnetMVC.Pages.Account
 {
@@ -23,40 +25,23 @@ namespace DomusMercatorisDotnetMVC.Pages.Account
         [BindProperty]
         public AiPanelModel AiPanel { get; set; } = new();
 
-        public void OnGet()
+        public async Task<IActionResult> OnGetAsync()
         {
-            var idClaim = User.FindFirst("UserId")?.Value;
-            if (string.IsNullOrEmpty(idClaim) || !long.TryParse(idClaim, out var userId))
-            {
-                Response.Redirect("/Index");
-                return;
-            }
-            var user = _userService.GetById(userId);
+            var user = await GetCurrentUserAsync();
             if (user == null)
             {
-                Response.Redirect("/Index");
-                return;
+                return RedirectToPage("/Index");
             }
-            FullName = $"{user.FirstName} {user.LastName}";
-            Email = user.Email;
-            CompanyId = user.CompanyId;
-            CompanyName = _userService.GetCompanyName(user.CompanyId) ?? string.Empty;
-            Roles = user.Roles ?? new List<string>();
-            
-            // Load AI settings using the helper model
-            AiPanel.LoadSettings(_userService, user.CompanyId);
+
+            await LoadPageDataAsync(user);
+            return Page();
         }
 
-        public IActionResult OnPost()
+        public async Task<IActionResult> OnPostAsync()
         {
             try
             {
-                var idClaim = User.FindFirst("UserId")?.Value;
-                if (string.IsNullOrEmpty(idClaim) || !long.TryParse(idClaim, out var userId))
-                {
-                    return RedirectToPage("/Index");
-                }
-                var user = _userService.GetById(userId);
+                var user = await GetCurrentUserAsync();
                 if (user == null)
                 {
                     return RedirectToPage("/Index");
@@ -69,20 +54,25 @@ namespace DomusMercatorisDotnetMVC.Pages.Account
                 }
 
                 // Checkbox handling for AiPanel.IsAiModerationEnabled
-                // If the checkbox is unchecked, it won't be sent in the form data.
-                // However, since we use [BindProperty] on AiPanel, the model binder should handle it.
-                // But just to be safe with partial view binding prefixes:
                 if (!Request.Form.ContainsKey("AiPanel.IsAiModerationEnabled"))
                 {
                     AiPanel.IsAiModerationEnabled = false;
                 }
 
-                // Save settings using the helper model
-                bool success = AiPanel.SaveSettings(_userService, user.CompanyId);
+                // Save settings using service directly
+                var aiSettingsDto = new AiSettingsDto
+                {
+                    GeminiApiKey = AiPanel.GeminiApiKey,
+                    CommentModerationPrompt = AiPanel.CommentModerationPrompt,
+                    IsAiModerationEnabled = AiPanel.IsAiModerationEnabled
+                };
+
+                bool success = await _userService.UpdateAiSettingsAsync(user.CompanyId, aiSettingsDto);
 
                 if (success)
                 {
                     TempData["SuccessMessage"] = "Profile settings updated successfully.";
+                    return RedirectToPage();
                 }
                 else
                 {
@@ -90,14 +80,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Account
                 }
 
                 // Re-populate view data
-                FullName = $"{user.FirstName} {user.LastName}";
-                Email = user.Email;
-                CompanyId = user.CompanyId;
-                CompanyName = _userService.GetCompanyName(user.CompanyId) ?? string.Empty;
-                Roles = user.Roles ?? new List<string>();
-                
-                // Reload to reflect saved state
-                AiPanel.LoadSettings(_userService, user.CompanyId);
+                await LoadPageDataAsync(user);
                 
                 return Page();
             }
@@ -105,6 +88,35 @@ namespace DomusMercatorisDotnetMVC.Pages.Account
             {
                 TempData["ErrorMessage"] = $"An error occurred: {ex.Message}";
                 return RedirectToPage();
+            }
+        }
+
+        private async Task<User?> GetCurrentUserAsync()
+        {
+            var idClaim = User.FindFirst("UserId")?.Value;
+            if (string.IsNullOrEmpty(idClaim) || !long.TryParse(idClaim, out var userId))
+            {
+                return null;
+            }
+            return await _userService.GetByIdAsync(userId);
+        }
+
+        private async Task LoadPageDataAsync(User user)
+        {
+            FullName = $"{user.FirstName} {user.LastName}";
+            Email = user.Email;
+            CompanyId = user.CompanyId;
+            CompanyName = await _userService.GetCompanyNameAsync(user.CompanyId) ?? string.Empty;
+            Roles = user.Roles ?? new List<string>();
+            
+            // Load AI settings using service directly
+            var aiSettings = await _userService.GetAiSettingsAsync(user.CompanyId);
+            if (aiSettings != null)
+            {
+                AiPanel.ExistingGeminiApiKey = aiSettings.GeminiApiKey;
+                AiPanel.GeminiApiKey = string.IsNullOrEmpty(aiSettings.GeminiApiKey) ? string.Empty : "*****";
+                AiPanel.IsAiModerationEnabled = aiSettings.IsAiModerationEnabled;
+                AiPanel.CommentModerationPrompt = aiSettings.CommentModerationPrompt;
             }
         }
     }

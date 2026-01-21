@@ -338,31 +338,31 @@ namespace DomusMercatorisDotnetMVC.Services
             return entity;
         }
 
-        public int CountByCompany(int companyId)
+        public async Task<int> CountByCompanyAsync(int companyId)
         {
-            return _db.Products.Count(p => p.CompanyId == companyId);
+            return await _db.Products.CountAsync(p => p.CompanyId == companyId);
         }
 
-        public List<Product> GetByCompanyPage(int companyId, int page, int pageSize)
+        public async Task<List<Product>> GetByCompanyPageAsync(int companyId, int page, int pageSize)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 9;
             var skip = (page - 1) * pageSize;
-            return _db.Products
+            return await _db.Products
                 .Include(p => p.Variants)
                 .Where(p => p.CompanyId == companyId)
                 .OrderByDescending(p => p.CreatedAt)
                 .Skip(skip)
                 .Take(pageSize)
-                .ToList();
+                .ToListAsync();
         }
 
-        public List<Product> SearchByCompany(int companyId, string query, int limit = 20)
+        public async Task<List<Product>> SearchByCompanyAsync(int companyId, string query, int limit = 20)
         {
             var q = (query ?? string.Empty).Trim();
             if (string.IsNullOrEmpty(q)) return new List<Product>();
             q = q.ToLowerInvariant();
-            return _db.Products
+            return await _db.Products
                 .Where(p => p.CompanyId == companyId && (
                     (p.Name ?? string.Empty).ToLower().Contains(q) ||
                     (p.Sku ?? string.Empty).ToLower().Contains(q) ||
@@ -370,7 +370,7 @@ namespace DomusMercatorisDotnetMVC.Services
                 ))
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(limit)
-                .ToList();
+                .ToListAsync();
         }
 
         public bool Delete(long id)
