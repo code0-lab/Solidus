@@ -113,7 +113,7 @@ namespace DomusMercatorisDotnetMVC.Pages
                 return Page();
             }
 
-            var product = await _productService.Create(Product);
+            var product = await _productService.CreateAsync(Product);
             
             if (action == "save-add-variants")
             {

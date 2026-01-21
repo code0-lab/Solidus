@@ -1,4 +1,5 @@
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using DomusMercatorisDotnetMVC.Dto.CommentsDto;
 using DomusMercatoris.Core.Entities;
 using DomusMercatoris.Data;
@@ -40,6 +41,9 @@ namespace DomusMercatorisDotnetMVC.Services
                 bool isApproved = await _geminiCommentService.ModerateCommentAsync(comment.Text, user.CompanyId);
                 comment.IsApproved = isApproved;
                 comment.ModerationStatus = isApproved ? 1 : 2;
+
+                // Associate user object directly with comment to avoid extra DB roundtrip
+                comment.User = user;
             }
             else
             {
@@ -50,15 +54,14 @@ namespace DomusMercatorisDotnetMVC.Services
             _db.Comments.Add(comment);
             await _db.SaveChangesAsync();
 
-            // Load user for mapping
-            await _db.Entry(comment).Reference(c => c.User).LoadAsync();
-
+            // Mapping will use the already loaded User property
             return _mapper.Map<CommentsDto>(comment);
         }
 
         public async Task<List<CommentsDto>> GetCommentsByProductIdAsync(long productId)
         {
             var comments = await _db.Comments
+                .AsNoTracking()
                 .Include(c => c.User)
                 .Include(c => c.Product)
                 .Where(c => c.ProductId == productId)
@@ -71,7 +74,6 @@ namespace DomusMercatorisDotnetMVC.Services
         public async Task<bool> SetApprovalAsync(int commentId, bool isApproved, int companyId)
         {
             var comment = await _db.Comments
-                .Include(c => c.Product)
                 .FirstOrDefaultAsync(c => c.Id == commentId && c.Product != null && c.Product.CompanyId == companyId);
 
             if (comment == null)
@@ -89,29 +91,12 @@ namespace DomusMercatorisDotnetMVC.Services
         {
             if (take <= 0) take = 10;
 
-            var comments = await _db.Comments
-                .Include(c => c.User)
-                .Include(c => c.Product)
+            return await _db.Comments
                 .Where(c => c.Product != null && c.Product.CompanyId == companyId)
                 .OrderByDescending(c => c.CreatedAt)
                 .Take(take)
+                .ProjectTo<CommentsDto>(_mapper.ConfigurationProvider)
                 .ToListAsync();
-
-            var result = comments
-                .Select(c => new CommentsDto
-                {
-                    Id = c.Id,
-                    ProductId = c.ProductId,
-                    UserId = c.UserId,
-                    UserName = c.User != null ? c.User.FirstName + " " + c.User.LastName : string.Empty,
-                    ProductName = c.Product != null ? c.Product.Name : string.Empty,
-                    Comment = c.Text,
-                    IsApproved = c.IsApproved,
-                    CreatedAt = c.CreatedAt
-                })
-                .ToList();
-
-            return result;
         }
 
         public async Task<(List<ProductCommentsSummaryDto> Items, int TotalCount)> GetProductsWithCommentsForCompanyAsync(int companyId, int pageNumber, int pageSize)
@@ -120,7 +105,7 @@ namespace DomusMercatorisDotnetMVC.Services
             if (pageSize < 1) pageSize = 10;
 
             var baseQuery = _db.Comments
-                .Include(c => c.Product)
+                .AsNoTracking()
                 .Where(c => c.Product != null && c.Product.CompanyId == companyId)
                 .GroupBy(c => new { c.ProductId, ProductName = c.Product!.Name });
 

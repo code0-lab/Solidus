@@ -40,7 +40,7 @@ namespace DomusMercatorisDotnetMVC.Pages
             {
                 return RedirectToPage("/Products");
             }
-            Product = _productService.GetByIdInCompany(id, companyId);
+            Product = await _productService.GetByIdInCompanyAsync(id, companyId);
             if (Product == null)
             {
                 return RedirectToPage("/Products");
@@ -78,9 +78,9 @@ namespace DomusMercatorisDotnetMVC.Pages
             return RedirectToPage(new { id = productId });
         }
 
-        public IActionResult OnPostDelete(long id)
+        public async Task<IActionResult> OnPostDeleteAsync(long id)
         {
-            var ok = _productService.Delete(id);
+            var ok = await _productService.DeleteAsync(id);
             TempData["Message"] = ok ? "Product deleted." : "Product not found.";
             return RedirectToPage("/Products");
         }

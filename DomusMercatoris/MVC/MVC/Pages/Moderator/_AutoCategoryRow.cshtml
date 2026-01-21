@@ -1,7 +1,7 @@
 @model DomusMercatoris.Core.Entities.AutoCategory
 @{
-    var depth = (int)ViewData["Depth"];
-    var allCats = (List<DomusMercatoris.Core.Entities.AutoCategory>)ViewData["AllCats"];
+    var depth = (int)(ViewData["Depth"] ?? 0);
+    var allCats = (List<DomusMercatoris.Core.Entities.AutoCategory>)(ViewData["AllCats"] ?? new List<DomusMercatoris.Core.Entities.AutoCategory>());
     var children = allCats.Where(x => x.ParentId == Model.Id).OrderBy(x => x.Name).ToList();
     var hasChildren = children.Any();
     var padding = depth * 20;

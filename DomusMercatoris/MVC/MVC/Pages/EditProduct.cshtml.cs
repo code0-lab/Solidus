@@ -46,7 +46,7 @@ namespace DomusMercatorisDotnetMVC.Pages
             {
                 return RedirectToPage("/Products");
             }
-            Existing = _productService.GetByIdInCompany(id, companyId);
+            Existing = await _productService.GetByIdInCompanyAsync(id, companyId);
             if (Existing == null)
             {
                 return RedirectToPage("/Products");
@@ -93,7 +93,7 @@ namespace DomusMercatorisDotnetMVC.Pages
         {
             var comp = User.FindFirst("CompanyId")?.Value;
             var companyId = (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var c)) ? c : 0;
-            Existing = _productService.GetByIdInCompany(id, companyId);
+            Existing = await _productService.GetByIdInCompanyAsync(id, companyId);
             Categories = await _db.Categories.Where(c => c.CompanyId == companyId)
                 .OrderBy(c => c.ParentId.HasValue) //ParentId genelde "Üst Kategori"yi tutar. Eğer null ise o bir Ana Kategoridir. Doluysa (HasValue true ise) bir Alt Kategoridir.
                 .ThenBy(c => c.Name)
@@ -137,7 +137,7 @@ namespace DomusMercatorisDotnetMVC.Pages
             }
             try
             {
-                var updated = _productService.Update(id, Product);
+                var updated = await _productService.UpdateAsync(id, Product);
                 if (updated == null)
                 {
                     return RedirectToPage("/Products");
@@ -148,7 +148,7 @@ namespace DomusMercatorisDotnetMVC.Pages
             catch (InvalidOperationException ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
-                Existing = _productService.GetByIdInCompany(id, companyId);
+                Existing = await _productService.GetByIdInCompanyAsync(id, companyId);
                 Product.Name = Existing?.Name ?? Product.Name;
                 Product.Sku = Existing?.Sku ?? Product.Sku;
                 Product.Description = Existing?.Description ?? Product.Description;

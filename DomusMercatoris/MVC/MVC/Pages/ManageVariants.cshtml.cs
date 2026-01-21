@@ -42,7 +42,7 @@ namespace DomusMercatorisDotnetMVC.Pages
                 return RedirectToPage("/Products");
             }
 
-            Product = _productService.GetByIdInCompany(productId, companyId);
+            Product = await _productService.GetByIdInCompanyAsync(productId, companyId);
             if (Product == null)
             {
                 return RedirectToPage("/Products");
@@ -62,7 +62,7 @@ namespace DomusMercatorisDotnetMVC.Pages
                 return RedirectToPage("/Products");
             }
 
-            Product = _productService.GetByIdInCompany(productId, companyId);
+            Product = await _productService.GetByIdInCompanyAsync(productId, companyId);
             if (Product == null)
             {
                 return RedirectToPage("/Products");
@@ -107,7 +107,7 @@ namespace DomusMercatorisDotnetMVC.Pages
                 return RedirectToPage("/Products");
             }
             
-            Product = _productService.GetByIdInCompany(UpdateVariant.ProductId, companyId);
+            Product = await _productService.GetByIdInCompanyAsync(UpdateVariant.ProductId, companyId);
             if (Product == null)
             {
                 return RedirectToPage("/Products");
@@ -151,7 +151,7 @@ namespace DomusMercatorisDotnetMVC.Pages
                 return RedirectToPage("/Products");
             }
             
-            Product = _productService.GetByIdInCompany(productId, companyId);
+            Product = await _productService.GetByIdInCompanyAsync(productId, companyId);
             if (Product == null)
             {
                 return RedirectToPage("/Products");

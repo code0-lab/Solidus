@@ -130,7 +130,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
 
                 await _db.SaveChangesAsync();
             }
-            catch (DbUpdateException ex)
+            catch (DbUpdateException)
             {
                 // Log error (if logger available)
                 ModelState.AddModelError("", "An error occurred while saving changes. Please try again.");

@@ -6,7 +6,6 @@ using DomusMercatoris.Data;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using System.Data;
 
 namespace DomusMercatorisDotnetMVC.Services
 {
@@ -25,138 +24,172 @@ namespace DomusMercatorisDotnetMVC.Services
             _clusteringService = clusteringService;
         }
 
-        private bool ProductCategoriesExists()
-        {
-            try
-            {
-                var conn = _db.Database.GetDbConnection();
-                if (conn.State != ConnectionState.Open) conn.Open();
-                using var cmd = conn.CreateCommand();
-                cmd.CommandText = "SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'ProductCategories'";
-                var obj = cmd.ExecuteScalar();
-                return obj != null;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-        
-        private int? GetRootCategoryId(int id, int companyId)
-        {
-            var cur = _db.Categories.SingleOrDefault(c => c.CompanyId == companyId && c.Id == id);
-            if (cur == null) return null;
-            while (cur.ParentId.HasValue)
-            {
-                var pid = cur.ParentId.Value;
-                var parent = _db.Categories.SingleOrDefault(c => c.CompanyId == companyId && c.Id == pid);
-                if (parent == null) break;
-                cur = parent;
-            }
-            return cur.Id;
-        }
 
-        private int GetDepth(int id, int companyId)
+        private async Task<(int? rootId, int? subId)> MapCategoryFallbackAsync(List<int> ids, int companyId)
         {
-            var d = 0;
-            var cur = _db.Categories.SingleOrDefault(c => c.CompanyId == companyId && c.Id == id);
-            if (cur == null) return 0;
-            while (cur.ParentId.HasValue)
-            {
-                d++;
-                var pid = cur.ParentId.Value;
-                cur = _db.Categories.SingleOrDefault(c => c.CompanyId == companyId && c.Id == pid);
-                if (cur == null) break;
-            }
-            return d;
-        }
+            // Fetch all categories for the company at once to avoid N+1 and recursive queries
+            var allCats = await _db.Categories
+                .Where(c => c.CompanyId == companyId)
+                .Select(c => new { c.Id, c.ParentId })
+                .AsNoTracking()
+                .ToListAsync();
 
-        private (int? rootId, int? subId) MapCategoryFallback(List<int> ids, int companyId)
-        {
-            var valid = ids.Where(i => _db.Categories.Any(c => c.CompanyId == companyId && c.Id == i)).ToList();
+            var catDict = allCats.ToDictionary(c => c.Id, c => c.ParentId);
+
+            var valid = ids.Where(i => catDict.ContainsKey(i)).ToList();
             if (valid.Count == 0) return (null, null);
-            var roots = valid.Select(i => GetRootCategoryId(i, companyId)).Where(r => r.HasValue).Select(r => r!.Value).ToList();
+
+            // Local helper to find root using dictionary
+            int? GetRoot(int id)
+            {
+                if (!catDict.ContainsKey(id)) return null;
+                var curr = id;
+                var visited = new HashSet<int>();
+                while (catDict[curr].HasValue)
+                {
+                    if (!visited.Add(curr)) break; // Prevent infinite loop
+                    var pid = catDict[curr]!.Value;
+                    if (!catDict.ContainsKey(pid)) break;
+                    curr = pid;
+                }
+                return curr;
+            }
+
+            // Local helper to find depth using dictionary
+            int GetDepthVal(int id)
+            {
+                if (!catDict.ContainsKey(id)) return 0;
+                var d = 0;
+                var curr = id;
+                var visited = new HashSet<int>();
+                while (catDict[curr].HasValue)
+                {
+                    if (!visited.Add(curr)) break; // Prevent infinite loop
+                    d++;
+                    var pid = catDict[curr]!.Value;
+                    if (!catDict.ContainsKey(pid)) break;
+                    curr = pid;
+                }
+                return d;
+            }
+
+            var roots = valid.Select(i => GetRoot(i)).Where(r => r.HasValue).Select(r => r!.Value).ToList();
             if (roots.Count == 0) return (null, null);
+            
             var rootId = roots.GroupBy(x => x).OrderByDescending(g => g.Count()).ThenBy(g => g.Key).First().Key;
-            var sameRoot = valid.Where(i => i != rootId && GetRootCategoryId(i, companyId) == rootId).ToList();
+            var sameRoot = valid.Where(i => i != rootId && GetRoot(i) == rootId).ToList();
+            
             int? subId = null;
             if (sameRoot.Count > 0)
             {
-                subId = sameRoot.OrderByDescending(i => GetDepth(i, companyId)).First();
+                subId = sameRoot.OrderByDescending(i => GetDepthVal(i)).First();
             }
             return (rootId, subId);
         }
 
-        public async Task<Product> Create(ProductCreateDto dto)
+        private async Task<int> GetCurrentCompanyIdAsync()
         {
-            int companyId = 0;
             var ctx = _httpContextAccessor.HttpContext;
             var compClaim = ctx?.User?.FindFirst("CompanyId")?.Value;
             if (!string.IsNullOrEmpty(compClaim) && int.TryParse(compClaim, out var cid))
             {
-                companyId = cid;
+                return cid;
             }
-            else
+            
+            var idClaim = ctx?.User?.FindFirst("UserId")?.Value;
+            if (!string.IsNullOrEmpty(idClaim) && long.TryParse(idClaim, out var userId))
             {
-                var idClaim = ctx?.User?.FindFirst("UserId")?.Value;
-                if (!string.IsNullOrEmpty(idClaim) && long.TryParse(idClaim, out var userId))
-                {
-                    var user = _db.Users.SingleOrDefault(u => u.Id == userId);
-                    if (user != null) companyId = user.CompanyId;
-                }
+                var user = await _db.Users.SingleOrDefaultAsync(u => u.Id == userId);
+                if (user != null) return user.CompanyId;
             }
-            var savedPaths = new List<string>();
-            var order = dto.ImageOrder ?? new List<string>();
+            return 0;
+        }
+
+        private async Task<string> SaveFileAsync(IFormFile file, string baseDir, int companyId)
+        {
+            var ext = System.IO.Path.GetExtension(file.FileName);
+            var fileName = Guid.NewGuid().ToString("N") + ext;
+            var fullPath = System.IO.Path.Combine(baseDir, fileName);
+            using (var fs = new System.IO.FileStream(fullPath, System.IO.FileMode.Create))
+            {
+                await file.CopyToAsync(fs);
+            }
+            return $"/uploads/products/{companyId}/{fileName}";
+        }
+
+        private async Task<List<string>> ProcessImagesAsync(
+            int companyId,
+            List<IFormFile?>? uploadedFiles,
+            List<string>? imageOrder,
+            List<string>? existingImages,
+            List<string>? imagesToRemove)
+        {
+            var finalImages = new List<string>();
+            var filesToSave = uploadedFiles ?? new List<IFormFile?>();
+            var order = imageOrder ?? new List<string>();
+            var existing = existingImages ?? new List<string>();
+            var removed = new HashSet<string>((imagesToRemove ?? new List<string>()).Where(p => !string.IsNullOrWhiteSpace(p)));
+
+            // Prepare directory
             var baseDir = System.IO.Path.Combine(_env.WebRootPath, "uploads", "products", companyId.ToString());
             if (!System.IO.Directory.Exists(baseDir))
             {
                 System.IO.Directory.CreateDirectory(baseDir);
             }
+
+            var currentSet = new HashSet<string>(existing);
+
             if (order.Count > 0)
             {
                 foreach (var token in order)
                 {
                     if (string.IsNullOrWhiteSpace(token)) continue;
+
                     if (token.StartsWith("new:", StringComparison.OrdinalIgnoreCase))
                     {
-                        var idxStr = token.Split(':')[1];
-                        if (int.TryParse(idxStr, out var idx))
+                        var parts = token.Split(':');
+                        if (parts.Length > 1 && int.TryParse(parts[1], out var idx))
                         {
-                            var f = (idx >= 0 && idx < (dto.ImageFiles?.Count ?? 0)) ? dto.ImageFiles?[idx] : null;
+                            var f = (idx >= 0 && idx < filesToSave.Count) ? filesToSave[idx] : null;
                             if (f != null && f.Length > 0)
                             {
-                                var ext = System.IO.Path.GetExtension(f.FileName);
-                                var fileName = Guid.NewGuid().ToString("N") + ext;
-                                var fullPath = System.IO.Path.Combine(baseDir, fileName);
-                                using (var fs = new System.IO.FileStream(fullPath, System.IO.FileMode.Create))
-                                {
-                                    await f.CopyToAsync(fs);
-                                }
-                                var relPath = $"/uploads/products/{companyId}/{fileName}";
-                                savedPaths.Add(relPath);
+                                var path = await SaveFileAsync(f, baseDir, companyId);
+                                finalImages.Add(path);
                             }
                         }
                     }
-                    if (savedPaths.Count >= 4) break;
+                    else
+                    {
+                        if (currentSet.Contains(token) && !removed.Contains(token))
+                        {
+                            finalImages.Add(token);
+                        }
+                    }
+                    if (finalImages.Count >= 4) break;
                 }
             }
             else
             {
-                var files = (dto.ImageFiles ?? new List<IFormFile?>()).Where(f => f != null && f.Length > 0).ToList();
-                foreach (var f in files)
+                var keptExisting = existing.Where(p => !removed.Contains(p)).ToList();
+                finalImages.AddRange(keptExisting);
+
+                var validNewFiles = filesToSave.Where(f => f != null && f.Length > 0).ToList();
+                foreach (var f in validNewFiles)
                 {
-                    if (savedPaths.Count >= 4) break;
-                    var ext = System.IO.Path.GetExtension(f!.FileName);
-                    var fileName = Guid.NewGuid().ToString("N") + ext;
-                    var fullPath = System.IO.Path.Combine(baseDir, fileName);
-                    using (var fs = new System.IO.FileStream(fullPath, System.IO.FileMode.Create))
-                    {
-                        await f.CopyToAsync(fs);
-                    }
-                    var relPath = $"/uploads/products/{companyId}/{fileName}";
-                    savedPaths.Add(relPath);
+                    if (finalImages.Count >= 4) break;
+                    var path = await SaveFileAsync(f!, baseDir, companyId);
+                    finalImages.Add(path);
                 }
             }
+
+            return finalImages.Take(4).ToList();
+        }
+
+        public async Task<Product> CreateAsync(ProductCreateDto dto)
+        {
+            int companyId = await GetCurrentCompanyIdAsync();
+            
+            var savedPaths = await ProcessImagesAsync(companyId, dto.ImageFiles, dto.ImageOrder, null, null);
 
             var entity = new Product
             {
@@ -176,16 +209,13 @@ namespace DomusMercatorisDotnetMVC.Services
             var catIdsCreate = (dto.CategoryIds ?? new List<int>()).Where(id => id > 0).Distinct().ToList();
             if (catIdsCreate.Count > 0)
             {
-                var map = MapCategoryFallback(catIdsCreate, companyId);
+                var map = await MapCategoryFallbackAsync(catIdsCreate, companyId);
                 entity.CategoryId = map.rootId ?? entity.CategoryId;
                 entity.SubCategoryId = map.subId ?? entity.SubCategoryId;
-                if (ProductCategoriesExists())
-                {
-                    var cats = _db.Categories.Where(c => c.CompanyId == companyId && catIdsCreate.Contains(c.Id)).ToList();
-                    entity.Categories = cats;
-                }
+                var cats = await _db.Categories.Where(c => c.CompanyId == companyId && catIdsCreate.Contains(c.Id)).ToListAsync();
+                entity.Categories = cats;
             }
-            _db.Products.Add(entity);
+            await _db.Products.AddAsync(entity);
             await _db.SaveChangesAsync();
             
             // Extract features for clustering
@@ -200,38 +230,30 @@ namespace DomusMercatorisDotnetMVC.Services
             return entity;
         }
 
-        public List<Product> GetByCompany(int companyId)
+        public async Task<List<Product>> GetByCompanyAsync(int companyId)
         {
-            return _db.Products.Where(p => p.CompanyId == companyId).OrderByDescending(p => p.CreatedAt).ToList();
+            return await _db.Products
+                .AsNoTracking()
+                .Where(p => p.CompanyId == companyId)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
         }
 
-        public Product? GetByIdInCompany(long id, int companyId)
+        public async Task<Product?> GetByIdInCompanyAsync(long id, int companyId)
         {
-            return _db.Products
+            return await _db.Products
+                .AsNoTracking()
                 .Include(p => p.AutoCategory)
-                .SingleOrDefault(p => p.Id == id && p.CompanyId == companyId);
+                .SingleOrDefaultAsync(p => p.Id == id && p.CompanyId == companyId);
         }
 
-        public Product? Update(long id, ProductUpdateDto dto)
+        public async Task<Product?> UpdateAsync(long id, ProductUpdateDto dto)
         {
-            int companyId = 0;
-            var ctx = _httpContextAccessor.HttpContext;
-            var compClaim = ctx?.User?.FindFirst("CompanyId")?.Value;
-            if (!string.IsNullOrEmpty(compClaim) && int.TryParse(compClaim, out var cid))
-            {
-                companyId = cid;
-            }
-            else
-            {
-                var idClaim = ctx?.User?.FindFirst("UserId")?.Value;
-                if (!string.IsNullOrEmpty(idClaim) && long.TryParse(idClaim, out var userId))
-                {
-                    var user = _db.Users.SingleOrDefault(u => u.Id == userId);
-                    if (user != null) companyId = user.CompanyId;
-                }
-            }
+            int companyId = await GetCurrentCompanyIdAsync();
 
-            var entity = _db.Products.SingleOrDefault(p => p.Id == id && p.CompanyId == companyId);
+            var entity = await _db.Products
+                .Include(p => p.Categories)
+                .SingleOrDefaultAsync(p => p.Id == id && p.CompanyId == companyId);
             if (entity == null)
             {
                 return null;
@@ -249,92 +271,28 @@ namespace DomusMercatorisDotnetMVC.Services
             var ids = (dto.CategoryIds ?? new List<int>()).Where(id => id > 0).Distinct().ToList();
             if (ids.Count > 0)
             {
-                var map = MapCategoryFallback(ids, companyId);
+                var map = await MapCategoryFallbackAsync(ids, companyId);
                 entity.CategoryId = map.rootId ?? entity.CategoryId;
                 entity.SubCategoryId = map.subId ?? entity.SubCategoryId;
-                if (ProductCategoriesExists())
+                var cats = await _db.Categories.Where(c => c.CompanyId == companyId && ids.Contains(c.Id)).ToListAsync();
+                
+                entity.Categories.Clear();
+                foreach (var c in cats)
                 {
-                    var cats = _db.Categories.Where(c => c.CompanyId == companyId && ids.Contains(c.Id)).ToList();
-                    entity.Categories = cats;
+                    entity.Categories.Add(c);
                 }
             }
 
-            var removed = new HashSet<string>((dto.RemoveImages ?? new List<string>()).Where(p => !string.IsNullOrWhiteSpace(p)));
-            var baseDir = System.IO.Path.Combine(_env.WebRootPath, "uploads", "products", companyId.ToString());
-            if (!System.IO.Directory.Exists(baseDir))
+            entity.Images = await ProcessImagesAsync(companyId, dto.ImageFiles, dto.ImageOrder, entity.Images, dto.RemoveImages);
+
+            await _db.SaveChangesAsync();
+
+            // Extract features for clustering if images have changed
+            if (entity.Images.Any())
             {
-                System.IO.Directory.CreateDirectory(baseDir);
+                await _clusteringService.ExtractAndStoreFeaturesAsync(entity.Id, entity.Images);
             }
 
-            var ordered = new List<string>();
-            var order = dto.ImageOrder ?? new List<string>();
-            var existingSet = new HashSet<string>(entity.Images ?? new List<string>());
-
-            if (order.Count > 0)
-            {
-                foreach (var token in order)
-                {
-                    if (string.IsNullOrWhiteSpace(token)) continue;
-                    if (token.StartsWith("new:", StringComparison.OrdinalIgnoreCase))
-                    {
-                        var idxStr = token.Split(':')[1];
-                        if (int.TryParse(idxStr, out var idx))
-                        {
-                            var f = (idx >= 0 && idx < (dto.ImageFiles?.Count ?? 0)) ? dto.ImageFiles?[idx] : null;
-                            if (f != null && f.Length > 0)
-                            {
-                                var ext = System.IO.Path.GetExtension(f.FileName);
-                                var fileName = Guid.NewGuid().ToString("N") + ext;
-                                var fullPath = System.IO.Path.Combine(baseDir, fileName);
-                                using (var fs = new System.IO.FileStream(fullPath, System.IO.FileMode.Create))
-                                {
-                                    f.CopyTo(fs);
-                                }
-                                var relPath = $"/uploads/products/{companyId}/{fileName}";
-                                ordered.Add(relPath);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        var path = token;
-                        if (existingSet.Contains(path) && !removed.Contains(path))
-                        {
-                            ordered.Add(path);
-                        }
-                    }
-                    if (ordered.Count >= 4) break;
-                }
-            }
-            else
-            {
-                var existing = (entity.Images ?? new List<string>()).Where(p => !removed.Contains(p)).ToList();
-                ordered.AddRange(existing);
-                var files = (dto.ImageFiles ?? new List<IFormFile?>()).Where(f => f != null && f.Length > 0).ToList();
-                foreach (var f in files)
-                {
-                    if (ordered.Count >= 4) break;
-                    var ext = System.IO.Path.GetExtension(f!.FileName);
-                    var fileName = Guid.NewGuid().ToString("N") + ext;
-                    var fullPath = System.IO.Path.Combine(baseDir, fileName);
-                    using (var fs = new System.IO.FileStream(fullPath, System.IO.FileMode.Create))
-                    {
-                        f.CopyTo(fs);
-                    }
-                    var relPath = $"/uploads/products/{companyId}/{fileName}";
-                    ordered.Add(relPath);
-                }
-            }
-
-            var newImages = ordered.Take(4).ToList();
-            if (newImages.Count > 4)
-            {
-                throw new InvalidOperationException("Maximum 4 images allowed.");
-            }
-
-            entity.Images = newImages;
-
-            _db.SaveChanges();
             return entity;
         }
 
@@ -349,6 +307,7 @@ namespace DomusMercatorisDotnetMVC.Services
             if (pageSize < 1) pageSize = 9;
             var skip = (page - 1) * pageSize;
             return await _db.Products
+                .AsNoTracking()
                 .Include(p => p.Variants)
                 .Where(p => p.CompanyId == companyId)
                 .OrderByDescending(p => p.CreatedAt)
@@ -361,38 +320,25 @@ namespace DomusMercatorisDotnetMVC.Services
         {
             var q = (query ?? string.Empty).Trim();
             if (string.IsNullOrEmpty(q)) return new List<Product>();
-            q = q.ToLowerInvariant();
+            
+            // Remove ToLower() for SARGable query (assuming CI collation)
             return await _db.Products
+                .AsNoTracking()
                 .Where(p => p.CompanyId == companyId && (
-                    (p.Name ?? string.Empty).ToLower().Contains(q) ||
-                    (p.Sku ?? string.Empty).ToLower().Contains(q) ||
-                    (p.Description ?? string.Empty).ToLower().Contains(q)
+                    p.Name.Contains(q) ||
+                    p.Sku.Contains(q) ||
+                    p.Description.Contains(q)
                 ))
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(limit)
                 .ToListAsync();
         }
 
-        public bool Delete(long id)
+        public async Task<bool> DeleteAsync(long id)
         {
-            int companyId = 0;
-            var ctx = _httpContextAccessor.HttpContext;
-            var compClaim = ctx?.User?.FindFirst("CompanyId")?.Value;
-            if (!string.IsNullOrEmpty(compClaim) && int.TryParse(compClaim, out var cid))
-            {
-                companyId = cid;
-            }
-            else
-            {
-                var idClaim = ctx?.User?.FindFirst("UserId")?.Value;
-                if (!string.IsNullOrEmpty(idClaim) && long.TryParse(idClaim, out var userId))
-                {
-                    var user = _db.Users.SingleOrDefault(u => u.Id == userId);
-                    if (user != null) companyId = user.CompanyId;
-                }
-            }
+            int companyId = await GetCurrentCompanyIdAsync();
 
-            var entity = _db.Products.SingleOrDefault(p => p.Id == id && p.CompanyId == companyId);
+            var entity = await _db.Products.SingleOrDefaultAsync(p => p.Id == id && p.CompanyId == companyId);
             if (entity == null) return false;
 
             var files = entity.Images ?? new List<string>();
@@ -407,7 +353,7 @@ namespace DomusMercatorisDotnetMVC.Services
             }
 
             _db.Products.Remove(entity);
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
             return true;
         }
     }

@@ -59,11 +59,11 @@ namespace DomusMercatorisDotnetMVC.Pages
             return Page();
         }
 
-        public IActionResult OnPostDelete(long id, int? page)
+        public async Task<IActionResult> OnPostDeleteAsync(long id, int? page)
         {
             var comp = User.FindFirst("CompanyId")?.Value;
             int companyId = (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var c)) ? c : 0;
-            var ok = _productService.Delete(id);
+            var ok = await _productService.DeleteAsync(id);
             TempData["Message"] = ok ? "Product deleted." : "Product not found.";
             var p = page.HasValue && page.Value > 0 ? page.Value : 1;
             return Redirect($"/Products?page={p}");
