@@ -55,16 +55,24 @@ This installs (among others):
 
 The .NET MVC application includes `PythonRunnerService` (`MVC/MVC/Services/PythonRunnerService.cs`) which is responsible for starting the Python API.
 
-Key behavior:
+Key features and behavior:
 
-- At startup, the service searches upward from the current working directory to find the project root containing the `AI` folder.
-- Once found, it sets:
-  - `pythonExecutable` to `<root>/venv/bin/python` if that file exists.
-  - If the virtual environment does **not** exist, it falls back to `python3` from the system PATH.
-- It runs:
-  - `AI/api.py` as the entry point.
-  - Working directory is the project root so that relative paths in the Python code behave correctly.
-- Standard output and error from the Python process are forwarded into the ASP.NET Core logging system.
+- **Cross-Platform Support**: Automatically detects the operating system to use the correct Python executable path:
+  - Windows: `<root>/venv/Scripts/python.exe`
+  - macOS/Linux: `<root>/venv/bin/python`
+  - Fallback: Uses system `python` or `python3` if the virtual environment is missing.
+
+- **Resilience**:
+  - Automatically restarts the Python service if it crashes unexpectedly.
+  - Includes a backoff mechanism and restart limit (max 5 restarts in a short period) to prevent infinite loops.
+
+- **Zombie Process Protection**:
+  - Attempts to kill any lingering `api.py` processes on startup (using `wmic` on Windows or `pkill` on Unix).
+  - Ensures the Python process is terminated when the .NET application stops or exits unexpectedly.
+
+- **Execution**:
+  - Runs `AI/api.py` as the entry point with the project root as the working directory.
+  - Pipes standard output and error logs from Python into the ASP.NET Core logging system.
 
 For reliable operation, it is recommended to:
 

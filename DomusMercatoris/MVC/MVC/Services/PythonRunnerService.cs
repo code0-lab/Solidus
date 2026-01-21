@@ -2,6 +2,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,6 +12,13 @@ namespace MVC.Services
     {
         private readonly ILogger<PythonRunnerService> _logger;
         private Process? _pythonProcess;
+        private bool _isStopping = false;
+        private string? _pythonExecutable;
+        private string? _scriptPath;
+        private string? _workingDirectory;
+        private int _restartCount = 0;
+        private const int MaxRestarts = 5;
+        private DateTime _lastRestartTime = DateTime.MinValue;
 
         public PythonRunnerService(ILogger<PythonRunnerService> logger)
         {
@@ -21,10 +29,10 @@ namespace MVC.Services
         {
             _logger.LogInformation("Starting Python AI Service...");
 
+            // Ensure cleanup on unexpected exit
+            AppDomain.CurrentDomain.ProcessExit += (s, e) => KillProcess();
+
             var currentDir = Directory.GetCurrentDirectory();
-            // Assuming we are in MVC/MVC, we need to go up two levels to find the root where 'AI' and 'venv' are.
-            // However, let's try to locate the 'AI' folder dynamically to be safer.
-            
             var rootDir = FindProjectRoot(currentDir);
             if (rootDir == null)
             {
@@ -32,64 +40,97 @@ namespace MVC.Services
                 return Task.CompletedTask;
             }
 
-            var pythonExecutable = Path.Combine(rootDir, "venv", "bin", "python");
-            var scriptPath = Path.Combine(rootDir, "AI", "api.py");
+            _workingDirectory = rootDir;
+            _scriptPath = Path.Combine(rootDir, "AI", "api.py");
 
-            if (!File.Exists(pythonExecutable))
+            // 1. Cross-Platform Python Path Logic
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                // Fallback: try to use system python if venv not found (though venv is preferred)
-                // Or maybe the venv is named differently? user created 'venv' in previous step.
-                _logger.LogWarning($"Virtual environment python not found at {pythonExecutable}. Checking for 'python3'...");
-                pythonExecutable = "python3"; 
+                _pythonExecutable = Path.Combine(rootDir, "venv", "Scripts", "python.exe");
+            }
+            else
+            {
+                _pythonExecutable = Path.Combine(rootDir, "venv", "bin", "python");
             }
 
-            if (!File.Exists(scriptPath))
+            if (!File.Exists(_pythonExecutable))
             {
-                _logger.LogError($"Python script not found at {scriptPath}");
+                var fallback = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "python" : "python3";
+                _logger.LogWarning($"Virtual environment python not found at {_pythonExecutable}. Checking for '{fallback}'...");
+                _pythonExecutable = fallback;
+            }
+
+            if (!File.Exists(_scriptPath))
+            {
+                _logger.LogError($"Python script not found at {_scriptPath}");
                 return Task.CompletedTask;
             }
 
+            // 2. Kill Zombies (Best Effort)
+            KillZombieProcesses();
+
+            // 3. Start with Resilience
+            StartPythonProcess();
+
+            return Task.CompletedTask;
+        }
+
+        private void StartPythonProcess()
+        {
+            if (_isStopping) return;
+
+            // Reset restart count if last restart was > 1 minute ago
+            if ((DateTime.UtcNow - _lastRestartTime).TotalMinutes > 1)
+            {
+                _restartCount = 0;
+            }
+
+            if (_restartCount > MaxRestarts)
+            {
+                _logger.LogError("Python service crashed too many times. Giving up.");
+                return;
+            }
+
+            _restartCount++;
+            _lastRestartTime = DateTime.UtcNow;
+
             var startInfo = new ProcessStartInfo
             {
-                FileName = pythonExecutable,
-                Arguments = scriptPath,
+                FileName = _pythonExecutable,
+                Arguments = _scriptPath,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true,
-                WorkingDirectory = rootDir // Run from root so relative paths in python script work
+                WorkingDirectory = _workingDirectory
             };
 
-            // Set environment variables if needed, e.g., PYTHONUNBUFFERED
             startInfo.EnvironmentVariables["PYTHONUNBUFFERED"] = "1";
 
             try
             {
                 _pythonProcess = new Process { StartInfo = startInfo };
-                
-                _pythonProcess.OutputDataReceived += (sender, args) => 
+                _pythonProcess.EnableRaisingEvents = true;
+
+                _pythonProcess.OutputDataReceived += (sender, args) =>
                 {
                     if (!string.IsNullOrEmpty(args.Data)) _logger.LogInformation($"[Python API]: {args.Data}");
                 };
-                
-                _pythonProcess.ErrorDataReceived += (sender, args) => 
+
+                _pythonProcess.ErrorDataReceived += (sender, args) =>
                 {
                     if (!string.IsNullOrEmpty(args.Data))
                     {
                         if (args.Data.Contains("INFO:"))
-                        {
                             _logger.LogInformation($"[Python API]: {args.Data}");
-                        }
                         else if (args.Data.Contains("WARNING:"))
-                        {
                             _logger.LogWarning($"[Python API]: {args.Data}");
-                        }
                         else
-                        {
                             _logger.LogError($"[Python API Error]: {args.Data}");
-                        }
                     }
                 };
+
+                _pythonProcess.Exited += OnProcessExited;
 
                 _pythonProcess.Start();
                 _pythonProcess.BeginOutputReadLine();
@@ -101,12 +142,67 @@ namespace MVC.Services
             {
                 _logger.LogError(ex, "Failed to start Python API");
             }
+        }
 
-            return Task.CompletedTask;
+        private void OnProcessExited(object? sender, EventArgs e)
+        {
+            if (_isStopping) return;
+
+            var exitCode = _pythonProcess?.ExitCode ?? -1;
+            _logger.LogWarning($"Python process exited unexpectedly with code {exitCode}. Restarting...");
+
+            // Cleanup old instance reference
+            _pythonProcess?.Dispose();
+            _pythonProcess = null;
+
+            // Use Task.Run to avoid blocking the event thread and allow async delay
+            Task.Run(async () =>
+            {
+                await Task.Delay(2000);
+                StartPythonProcess();
+            });
+        }
+
+        private void KillZombieProcesses()
+        {
+            try
+            {
+                // Best effort to kill previous instances of api.py
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    // Use PowerShell instead of deprecated WMIC
+                    // Get-CimInstance is the modern replacement for Get-WmiObject
+                    var psCommand = "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*AI\\\\api.py*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }";
+                    
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "powershell",
+                        Arguments = $"-NoProfile -Command \"{psCommand}\"",
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    })?.WaitForExit();
+                }
+                else
+                {
+                    // Unix pkill
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "pkill",
+                        Arguments = "-f AI/api.py",
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    })?.WaitForExit();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"Failed to cleanup zombie processes: {ex.Message}");
+            }
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
+            _isStopping = true;
             _logger.LogInformation("Stopping Python AI Service...");
             KillProcess();
             return Task.CompletedTask;
@@ -114,12 +210,18 @@ namespace MVC.Services
 
         private void KillProcess()
         {
-            if (_pythonProcess != null && !_pythonProcess.HasExited)
+            if (_pythonProcess != null)
             {
                 try
                 {
-                    _pythonProcess.Kill();
-                    _pythonProcess.WaitForExit(); // Wait for it to verify
+                    // Detach event handler to prevent restart logic during intentional stop
+                    _pythonProcess.Exited -= OnProcessExited;
+                    
+                    if (!_pythonProcess.HasExited)
+                    {
+                        _pythonProcess.Kill();
+                        _pythonProcess.WaitForExit(3000); // Wait up to 3s
+                    }
                 }
                 catch (Exception ex)
                 {

@@ -110,11 +110,11 @@ For more detailed information about the AI service (endpoints, troubleshooting),
 The MVC project includes `PythonRunnerService`:
 
 - File: `MVC/MVC/Services/PythonRunnerService.cs`
-- On application startup, it:
-  - Walks up from the current working directory to find the project root containing the `AI` folder.
-  - Prefers to run `AI/api.py` using `<root>/venv/bin/python`.
-  - Falls back to `python3` if the virtual environment is missing.
-  - Pipes Python stdout/stderr into ASP.NET Core logs for easier debugging.
+- Features:
+  - **Cross-Platform**: Automatically selects the correct Python executable for Windows (`venv/Scripts/python.exe`) or Linux/macOS (`venv/bin/python`).
+  - **Resilience**: Automatically restarts the Python service if it crashes.
+  - **Cleanup**: Kills zombie processes on startup and ensures clean shutdown on exit.
+  - **Logging**: Pipes Python stdout/stderr into ASP.NET Core logs for easier debugging.
 
 The clustering logic in the MVC app (for example in `ClusteringService`) calls the Python API endpoints at `http://localhost:5001` to:
 
