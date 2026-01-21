@@ -48,15 +48,9 @@ namespace DomusMercatorisDotnetMVC.Pages.Account
                 }
 
                 // Security check: Only Managers can update AI settings
-                if (user.Roles == null || !user.Roles.Contains("Manager"))
+                if (user.Roles == null || !user.Roles.Any(r => r.Trim().Equals("Manager", StringComparison.OrdinalIgnoreCase)))
                 {
                     return Forbid();
-                }
-
-                // Checkbox handling for AiPanel.IsAiModerationEnabled
-                if (!Request.Form.ContainsKey("AiPanel.IsAiModerationEnabled"))
-                {
-                    AiPanel.IsAiModerationEnabled = false;
                 }
 
                 // Save settings using service directly
@@ -109,14 +103,19 @@ namespace DomusMercatorisDotnetMVC.Pages.Account
             CompanyName = await _userService.GetCompanyNameAsync(user.CompanyId) ?? string.Empty;
             Roles = user.Roles ?? new List<string>();
             
-            // Load AI settings using service directly
-            var aiSettings = await _userService.GetAiSettingsAsync(user.CompanyId);
-            if (aiSettings != null)
+            // Load AI settings using service directly (Only for Managers)
+            if (Roles.Any(r => r.Trim().Equals("Manager", StringComparison.OrdinalIgnoreCase)))
             {
-                AiPanel.ExistingGeminiApiKey = aiSettings.GeminiApiKey;
-                AiPanel.GeminiApiKey = string.IsNullOrEmpty(aiSettings.GeminiApiKey) ? string.Empty : "*****";
-                AiPanel.IsAiModerationEnabled = aiSettings.IsAiModerationEnabled;
-                AiPanel.CommentModerationPrompt = aiSettings.CommentModerationPrompt;
+                var aiSettings = await _userService.GetAiSettingsAsync(user.CompanyId);
+                if (aiSettings != null)
+                {
+                    // Only load the existing API key if it belongs to the user's company
+                    // If the user is a Manager but there is no API key yet, they can enter one.
+                    AiPanel.ExistingGeminiApiKey = aiSettings.GeminiApiKey;
+                    AiPanel.GeminiApiKey = string.IsNullOrEmpty(aiSettings.GeminiApiKey) ? string.Empty : "*****";
+                    AiPanel.IsAiModerationEnabled = aiSettings.IsAiModerationEnabled;
+                    AiPanel.CommentModerationPrompt = aiSettings.CommentModerationPrompt;
+                }
             }
         }
     }
