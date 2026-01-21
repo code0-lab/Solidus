@@ -52,7 +52,7 @@ builder.Services.AddScoped<CompanySettingsService>();
 builder.Services.AddHttpClient<GeminiCommentService>();
 builder.Services.AddScoped<GeminiCommentService>();
 builder.Services.AddHttpClient<IClusteringService, ClusteringService>();
-builder.Services.AddHostedService<MVC.Services.PythonRunnerService>();
+builder.Services.AddHostedService<PythonRunnerService>();
 builder.Services.AddHttpContextAccessor();
 
 // Session ve Cookies AddAuthorization

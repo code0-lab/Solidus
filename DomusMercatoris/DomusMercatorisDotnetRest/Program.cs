@@ -44,6 +44,9 @@ builder.Services.AddScoped<ModeratorService>();
 builder.Services.AddScoped<UsersService>();
 builder.Services.AddScoped<BannerService>();
 
+// Python AI Service
+builder.Services.AddHostedService<PythonRunnerService>();
+
 // Common Services
 builder.Services.AddSingleton<EncryptionService>();
 builder.Services.AddScoped<CompanySettingsService>();

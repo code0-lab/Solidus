@@ -5,8 +5,9 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Net.Sockets;
 
-namespace MVC.Services
+namespace DomusMercatoris.Service.Services
 {
     public class PythonRunnerService : IHostedService, IDisposable
     {
@@ -18,6 +19,7 @@ namespace MVC.Services
         private string? _workingDirectory;
         private int _restartCount = 0;
         private const int MaxRestarts = 5;
+        private const int ServicePort = 5001;
         private DateTime _lastRestartTime = DateTime.MinValue;
 
         public PythonRunnerService(ILogger<PythonRunnerService> logger)
@@ -28,6 +30,13 @@ namespace MVC.Services
         public Task StartAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Starting Python AI Service...");
+
+            // 0. Check if service is already running (e.g. started by another app instance)
+            if (IsServiceRunning(ServicePort))
+            {
+                _logger.LogInformation($"Python AI Service appears to be already running on port {ServicePort}. Skipping start.");
+                return Task.CompletedTask;
+            }
 
             // Ensure cleanup on unexpected exit
             AppDomain.CurrentDomain.ProcessExit += (s, e) => KillProcess();
@@ -73,6 +82,26 @@ namespace MVC.Services
             StartPythonProcess();
 
             return Task.CompletedTask;
+        }
+
+        private bool IsServiceRunning(int port)
+        {
+            try
+            {
+                using var client = new TcpClient();
+                var result = client.BeginConnect("127.0.0.1", port, null, null);
+                var success = result.AsyncWaitHandle.WaitOne(TimeSpan.FromMilliseconds(500));
+                if (success)
+                {
+                    client.EndConnect(result);
+                    return true;
+                }
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         private void StartPythonProcess()
