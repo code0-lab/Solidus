@@ -37,6 +37,14 @@ namespace DomusMercatoris.Service.Services
             return banner == null ? null : _mapper.Map<BannerDto>(banner);
         }
 
+        public async Task<BannerDto?> GetByIdAsync(int id, int companyId)
+        {
+            var banner = await _context.Banners
+                .FirstOrDefaultAsync(b => b.Id == id && b.CompanyId == companyId);
+
+            return banner == null ? null : _mapper.Map<BannerDto>(banner);
+        }
+
         public async Task<List<BannerDto>> GetAllAsync(int companyId)
         {
             var list = await _context.Banners
