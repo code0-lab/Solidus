@@ -11,14 +11,14 @@ namespace DomusMercatorisDotnetMVC.Dto.BanDto
         public long? CompanyId { get; set; }
         public string? CompanyName { get; set; }
         public bool BannedForAllCompanies { get; set; }
-        public DateTime? BanedDate { get; set; }
+        public DateTime? BannedDate { get; set; }
         public DateTime? EndDate { get; set; }
         public string? Reason { get; set; }
         public bool PermaBan { get; set; }
         public DateTime? CreatedAt { get; set; }
         public bool ObjectToBan { get; set; }
         public string? Object { get; set; }
-        public bool IsBaned { get; set; }
+        public bool IsBanned { get; set; }
     }
 
     public class CreateBanDto

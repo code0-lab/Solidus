@@ -26,7 +26,7 @@
             <tbody>
                 @foreach (var user in Model.Users)
                 {
-                    var isBanned = user.Ban != null && user.Ban.IsBaned;
+                    var isBanned = user.Ban != null && user.Ban.IsBanned;
                     <tr>
                         <td>@user.Email</td>
                         <td>@user.FirstName @user.LastName</td>

@@ -83,6 +83,8 @@ app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Ban Middleware must be AFTER Auth/Authorization (to know who the user is) 
+// but BEFORE endpoints mapping.
 app.UseMiddleware<BanEnforcementMiddleware>();
 
 app.MapStaticAssets();

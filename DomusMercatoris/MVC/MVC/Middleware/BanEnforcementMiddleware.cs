@@ -17,31 +17,43 @@ namespace DomusMercatorisDotnetMVC.Middleware
         {
             if (context.User.Identity != null && 
                 context.User.Identity.IsAuthenticated && 
-                context.User.IsInRole("Baned"))
+                context.User.IsInRole("Banned"))
             {
                 var path = context.Request.Path.Value?.ToLower() ?? string.Empty;
 
-                // Allow access to Baned page
-                if (path.StartsWith("/baned"))
+                // 1. Static Files Bypass (CSS, JS, Images, Fonts, etc.)
+                // Ban check shouldn't block static assets
+                if (path.StartsWith("/css") || 
+                    path.StartsWith("/js") || 
+                    path.StartsWith("/lib") || 
+                    path.StartsWith("/img") ||
+                    path.StartsWith("/uploads") ||
+                    path.Contains("favicon.ico"))
                 {
                     await _next(context);
                     return;
                 }
 
-                // Allow logout
-                // Logout is usually /Index?handler=Logout or just /?handler=Logout
-                if ((path == "/index" || path == "/") && context.Request.Query.ContainsKey("handler") && context.Request.Query["handler"] == "Logout")
+                // 2. Allow access to Baned page
+                if (path.StartsWith("/banned"))
+                {
+                    await _next(context);
+                    return;
+                }
+
+                // 3. Allow logout
+                // Flexible Logout Check: Any path containing "Logout" in query string or path segment
+                // Covers: /Index?handler=Logout, /?handler=Logout, /Account/Logout, etc.
+                if (path.Contains("logout") || 
+                   (context.Request.Query.ContainsKey("handler") && context.Request.Query["handler"].ToString().ToLower() == "logout"))
                 {
                     await _next(context);
                     return;
                 }
 
                 // Redirect everything else to Baned page
-                if (!path.StartsWith("/baned"))
-                {
-                     context.Response.Redirect("/Baned");
-                     return;
-                }
+                context.Response.Redirect("/Banned");
+                return;
             }
 
             await _next(context);

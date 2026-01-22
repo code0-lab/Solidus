@@ -15,7 +15,7 @@ namespace DomusMercatoris.Core.Entities
         public Company? Company { get; set; }
         
         public bool BannedForAllCompanies { get; set; } = false;
-        public DateTime? BanedDate { get; set; }
+        public DateTime? BannedDate { get; set; }
         public DateTime? EndDate { get; set; }
         public string? Reason { get; set; }
         public bool PermaBan { get; set; } = false;
@@ -24,6 +24,6 @@ namespace DomusMercatoris.Core.Entities
         public bool ObjectToBan { get; set; } = false;
         public string? Object { get; set; }
 
-        public bool IsBaned => EndDate > DateTime.UtcNow || PermaBan;
+        public bool IsBanned => EndDate > DateTime.UtcNow || PermaBan;
     }
 }

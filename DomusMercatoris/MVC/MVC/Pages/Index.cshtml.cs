@@ -43,7 +43,7 @@ namespace DomusMercatorisDotnetMVC.Pages
                 var roles = (user.Roles ?? new List<string>()).ToList();
                 
                 // If user is banned, ONLY assign "Baned" role
-                if (user.Ban != null && user.Ban.IsBaned)
+                if (user.Ban != null && user.Ban.IsBanned)
                 {
                     claims.Add(new Claim(ClaimTypes.Role, "Baned"));
                     HttpContext.Session.SetString("Role", "Baned");
@@ -73,9 +73,9 @@ namespace DomusMercatorisDotnetMVC.Pages
                 
                 HttpContext.Session.SetString("Email", user.Email);
 
-                if (user.Ban != null && user.Ban.IsBaned)
+                if (user.Ban != null && user.Ban.IsBanned)
                 {
-                    return RedirectToPage("/Baned");
+                    return RedirectToPage("/Banned");
                 }
 
                 return RedirectToPage("/Dashboard");

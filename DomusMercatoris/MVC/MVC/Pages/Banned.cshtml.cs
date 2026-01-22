@@ -14,11 +14,11 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 namespace DomusMercatorisDotnetMVC.Pages
 {
     [Authorize]
-    public class BanedModel : PageModel
+    public class BannedModel : PageModel
     {
         private readonly DomusDbContext _context;
 
-        public BanedModel(DomusDbContext context)
+        public BannedModel(DomusDbContext context)
         {
             _context = context;
         }
@@ -38,9 +38,9 @@ namespace DomusMercatorisDotnetMVC.Pages
             var userId = long.Parse(userIdStr);
             var user = await _context.Users.Include(u => u.Ban).FirstOrDefaultAsync(u => u.Id == userId);
 
-            if (user == null || user.Ban == null || !user.Ban.IsBaned)
+            if (user == null || user.Ban == null || !user.Ban.IsBanned)
             {
-                 if (User.IsInRole("Baned"))
+                 if (User.IsInRole("Banned"))
                  {
                      await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
                      return RedirectToPage("/Index");

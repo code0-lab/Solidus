@@ -59,7 +59,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
                 var roles = (user.Roles ?? new List<string>()).ToList();
                 
                 // If user is banned, ONLY assign "Baned" role
-                if (user.Ban != null && user.Ban.IsBaned)
+                if (user.Ban != null && user.Ban.IsBanned)
                 {
                     claims.Add(new Claim(ClaimTypes.Role, "Baned"));
                     HttpContext.Session.SetString("Role", "Baned");
@@ -85,9 +85,9 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
                 // The user requirement says "Baned users... redirected to Baned page". 
                 // It doesn't explicitly say moderators are immune, but usually they are.
                 // However, if a moderator IS banned, they probably shouldn't be accessing the panel.
-                if (user.Ban != null && user.Ban.IsBaned)
+                if (user.Ban != null && user.Ban.IsBanned)
                 {
-                     return RedirectToPage("/Baned");
+                     return RedirectToPage("/Banned");
                 }
 
                 return RedirectToPage("/Moderator/Index");
