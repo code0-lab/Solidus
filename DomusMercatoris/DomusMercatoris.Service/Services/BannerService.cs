@@ -20,34 +20,38 @@ namespace DomusMercatoris.Service.Services
         public async Task<BannerDto?> GetActiveBannerAsync(int companyId)
         {
             var banner = await _context.Banners
+                .AsNoTracking()
                 .Where(b => b.CompanyId == companyId && b.IsApproved && b.IsActive)
                 .OrderByDescending(b => b.CreatedAt)
                 .FirstOrDefaultAsync();
 
-            return banner == null ? null : _mapper.Map<BannerDto>(banner);
+            return _mapper.Map<BannerDto>(banner);
         }
 
         public async Task<BannerDto?> GetAnyActiveBannerAsync()
         {
             var banner = await _context.Banners
+                .AsNoTracking()
                 .Where(b => b.IsApproved && b.IsActive)
                 .OrderByDescending(b => b.CreatedAt)
                 .FirstOrDefaultAsync();
 
-            return banner == null ? null : _mapper.Map<BannerDto>(banner);
+            return _mapper.Map<BannerDto>(banner);
         }
 
         public async Task<BannerDto?> GetByIdAsync(int id, int companyId)
         {
             var banner = await _context.Banners
+                .AsNoTracking()
                 .FirstOrDefaultAsync(b => b.Id == id && b.CompanyId == companyId);
 
-            return banner == null ? null : _mapper.Map<BannerDto>(banner);
+            return _mapper.Map<BannerDto>(banner);
         }
 
         public async Task<List<BannerDto>> GetAllAsync(int companyId)
         {
             var list = await _context.Banners
+                .AsNoTracking()
                 .Where(b => b.CompanyId == companyId)
                 .OrderByDescending(b => b.CreatedAt)
                 .ToListAsync();
@@ -57,27 +61,19 @@ namespace DomusMercatoris.Service.Services
 
         public async Task<List<BannerSummaryDto>> GetSummariesAsync(int companyId)
         {
-            var list = await _context.Banners
+            return await _context.Banners
+                .AsNoTracking()
                 .Where(b => b.CompanyId == companyId)
                 .OrderByDescending(b => b.CreatedAt)
-                // Burada .Select() kullanarak yalnızca belirli kolonları veritabanından çekebiliriz,
-                // ancak entity'den map'lediğimiz için entity'yi çekmek EF+AutoMapper ile daha kolaydır.
-                // Gerçek optimizasyon için doğrudan projeksiyon yapmalıyız.
-                // Ancak 'Banner' entity'sinde HtmlContent alanı büyük.
-                // HtmlContent'i çekmekten kaçınmak için doğrudan DTO'ya ya da anonim tipe projekte etmeliyiz.
-                .Select(b => new Banner
+                .Select(b => new BannerSummaryDto
                 {
                     Id = b.Id,
                     CompanyId = b.CompanyId,
                     Topic = b.Topic,
                     IsApproved = b.IsApproved,
-                    IsActive = b.IsActive,
-                    CreatedAt = b.CreatedAt
-                    // HtmlContent is NOT selected, so it will be null/default
+                    IsActive = b.IsActive
                 })
                 .ToListAsync();
-
-            return _mapper.Map<List<BannerSummaryDto>>(list);
         }
 
         public async Task<BannerDto> CreateAsync(CreateBannerDto dto)
