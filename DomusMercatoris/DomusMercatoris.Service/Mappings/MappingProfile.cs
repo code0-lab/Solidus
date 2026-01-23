@@ -50,6 +50,7 @@ namespace DomusMercatoris.Service.Mappings
             CreateMap<CreateVariantProductDto, VariantProduct>();
 
             CreateMap<Banner, BannerDto>();
+            CreateMap<Banner, BannerSummaryDto>();
         }
     }
 }

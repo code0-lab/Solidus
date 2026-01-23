@@ -55,6 +55,31 @@ namespace DomusMercatoris.Service.Services
             return _mapper.Map<List<BannerDto>>(list);
         }
 
+        public async Task<List<BannerSummaryDto>> GetSummariesAsync(int companyId)
+        {
+            var list = await _context.Banners
+                .Where(b => b.CompanyId == companyId)
+                .OrderByDescending(b => b.CreatedAt)
+                // Burada .Select() kullanarak yalnızca belirli kolonları veritabanından çekebiliriz,
+                // ancak entity'den map'lediğimiz için entity'yi çekmek EF+AutoMapper ile daha kolaydır.
+                // Gerçek optimizasyon için doğrudan projeksiyon yapmalıyız.
+                // Ancak 'Banner' entity'sinde HtmlContent alanı büyük.
+                // HtmlContent'i çekmekten kaçınmak için doğrudan DTO'ya ya da anonim tipe projekte etmeliyiz.
+                .Select(b => new Banner
+                {
+                    Id = b.Id,
+                    CompanyId = b.CompanyId,
+                    Topic = b.Topic,
+                    IsApproved = b.IsApproved,
+                    IsActive = b.IsActive,
+                    CreatedAt = b.CreatedAt
+                    // HtmlContent is NOT selected, so it will be null/default
+                })
+                .ToListAsync();
+
+            return _mapper.Map<List<BannerSummaryDto>>(list);
+        }
+
         public async Task<BannerDto> CreateAsync(CreateBannerDto dto)
         {
             var entity = new Banner

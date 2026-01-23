@@ -10,6 +10,15 @@ namespace DomusMercatoris.Service.DTOs
         public bool IsActive { get; set; }
     }
 
+    public class BannerSummaryDto
+    {
+        public int Id { get; set; }
+        public int CompanyId { get; set; }
+        public string Topic { get; set; } = string.Empty;
+        public bool IsApproved { get; set; }
+        public bool IsActive { get; set; }
+    }
+
     public class CreateBannerDto
     {
         public int CompanyId { get; set; }
