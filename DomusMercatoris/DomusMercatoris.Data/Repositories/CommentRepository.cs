@@ -23,6 +23,18 @@ namespace DomusMercatoris.Data.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<Comment>> GetPagedWithDetailsAsync(int page, int pageSize)
+        {
+            return await _dbSet
+                .Include(c => c.User)
+                .Include(c => c.Product)
+                .Where(c => c.IsApproved)
+                .OrderByDescending(c => c.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+        }
+
         public async Task<Comment?> GetByIdWithDetailsAsync(int id)
         {
             return await _dbSet
