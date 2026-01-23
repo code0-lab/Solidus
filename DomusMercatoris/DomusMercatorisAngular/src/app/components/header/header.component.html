@@ -1,10 +1,12 @@
 <header class="navbar">
   <div class="navbar-top">
     <div class="brand" routerLink="/">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px;">
-        <circle cx="12" cy="12" r="10" fill="#FFD700" stroke="black" stroke-width="2"/>
-        <circle cx="12" cy="12" r="7" stroke="black" stroke-width="1" stroke-dasharray="2 2" fill="none"/>
-        <text x="12" y="16.5" font-family="serif" font-size="14" text-anchor="middle" font-weight="bold" fill="black">S</text>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+        style="margin-right: 8px;">
+        <circle cx="12" cy="12" r="10" fill="#FFD700" stroke="black" stroke-width="2" />
+        <circle cx="12" cy="12" r="7" stroke="black" stroke-width="1" stroke-dasharray="2 2" fill="none" />
+        <text x="12" y="16.5" font-family="serif" font-size="14" text-anchor="middle" font-weight="bold"
+          fill="black">S</text>
       </svg>
       Solidus
     </div>
@@ -17,58 +19,47 @@
       <button class="icon" aria-label="cart" (click)="handleCartClick()" style="position: relative;">
         🛒
         @if (cartService.totalCount() > 0) {
-          <span class="cart-badge">{{ cartService.totalCount() }}</span>
+        <span class="cart-badge">{{ cartService.totalCount() }}</span>
         }
       </button>
       <button class="icon" aria-label="profile" (click)="handleProfileClick()">
         {{ authService.currentUser() ? '👤' : 'LOGIN' }}
       </button>
-      <button class="icon hamburger" (click)="toggleMobileMenu()">
-        ☰
-      </button>
     </div>
   </div>
 
-  <div class="nav-content" [class.open]="isMobileMenuOpen">
-    <div class="nav-center-mobile">
-      <app-search-bar></app-search-bar>
-    </div>
-    <nav class="nav-links">
-      <a routerLink="/" (click)="toggleMobileMenu()">HOME</a>
-    </nav>
-  </div>
 
   @if (isCartOpen) {
-    <div class="cart-dropdown">
-      <div class="cart-header">
-        <span>Cart</span>
-        <span class="count">{{ cartService.totalCount() }} items</span>
-      </div>
-      <div class="cart-items">
-        @for (item of cartService.items(); track item) {
-          <div class="cart-item">
-            <div class="title">
-              {{ item.product.name }}
-              @if (item.variant) {
-                <span class="variant-info" style="font-size: 0.8em; color: #888;">({{ item.variant.color }})</span>
-              }
-            </div>
-            <div class="controls">
-              <button (click)="dec(item)">-</button>
-              <span class="qty">{{ item.qty }}</span>
-              <button (click)="inc(item)">+</button>
-              <button class="remove" (click)="remove(item)">×</button>
-            </div>
-          </div>
-        }
-        @if (cartService.items().length === 0) {
-          <div class="empty">Your cart is empty.</div>
-        }
-      </div>
-      <div class="cart-footer">
-        <div class="total">Total: {{ cartService.totalPrice() | currency:'USD':'symbol' }}</div>
-        <button class="clear" (click)="clearCart()">Clear</button>
-      </div>
+  <div class="cart-dropdown">
+    <div class="cart-header">
+      <span>Cart</span>
+      <span class="count">{{ cartService.totalCount() }} items</span>
     </div>
+    <div class="cart-items">
+      @for (item of cartService.items(); track item) {
+      <div class="cart-item">
+        <div class="title">
+          {{ item.product.name }}
+          @if (item.variant) {
+          <span class="variant-info" style="font-size: 0.8em; color: #888;">({{ item.variant.color }})</span>
+          }
+        </div>
+        <div class="controls">
+          <button (click)="dec(item)">-</button>
+          <span class="qty">{{ item.qty }}</span>
+          <button (click)="inc(item)">+</button>
+          <button class="remove" (click)="remove(item)">×</button>
+        </div>
+      </div>
+      }
+      @if (cartService.items().length === 0) {
+      <div class="empty">Your cart is empty.</div>
+      }
+    </div>
+    <div class="cart-footer">
+      <div class="total">Total: {{ cartService.totalPrice() | currency:'USD':'symbol' }}</div>
+      <button class="clear" (click)="clearCart()">Clear</button>
+    </div>
+  </div>
   }
 </header>

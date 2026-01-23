@@ -5,7 +5,9 @@ import { ProductService } from './product.service';
 import { PaginatedResult, Product } from '../models/product.model';
 import { environment } from '../../environments/environment';
 
-declare module 'heic2any';
+import imageCompression from 'browser-image-compression';
+
+// ... imports remain the same ...
 
 @Injectable({ providedIn: 'root' })
 export class SearchService {
@@ -23,9 +25,9 @@ export class SearchService {
     const hasValidExtension = validExtensions.test(file.name);
 
     if (!isImageMime && !hasValidExtension) {
-       if (file.type && !file.type.startsWith('image/')) {
-         return { valid: false, error: 'Only images are accepted.' };
-       }
+      if (file.type && !file.type.startsWith('image/')) {
+        return { valid: false, error: 'Only images are accepted.' };
+      }
     }
 
     if (file.size > MAX_SIZE_BYTES) {
@@ -35,26 +37,28 @@ export class SearchService {
   }
 
   async processImage(file: File): Promise<File> {
-    if (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) {
-      try {
-        const heic2anyModule = await import('heic2any');
-        // @ts-ignore
-        const heic2any = heic2anyModule.default || heic2anyModule;
-        
-        const convertedBlob = await heic2any({
-          blob: file,
-          toType: 'image/jpeg',
-          quality: 0.8
-        });
-        
-        const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
-        return new File([blob as Blob], file.name.replace(/\.hei[cf]$/i, '.jpg'), { type: 'image/jpeg' });
-      } catch (err) {
-        console.error('HEIC conversion failed:', err);
-        throw new Error('Could not process HEIC image.');
-      }
+    console.log('[SearchService] processImage using browser-image-compression:', file.name);
+
+    const options = {
+      maxSizeMB: 1, // Reasonable limit
+      maxWidthOrHeight: 512, // User requested 512px
+      useWebWorker: true,
+      fileType: 'image/jpeg',
+      initialQuality: 0.85
+    };
+
+    try {
+      const compressedFile = await imageCompression(file, options);
+      console.log('[SearchService] Compression success:', compressedFile.name, compressedFile.size);
+
+      // Ensure the name ends with .jpg
+      const newFileName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
+      return new File([compressedFile], newFileName, { type: 'image/jpeg' });
+    } catch (error) {
+      console.warn('[SearchService] browser-image-compression failed:', error);
+      // Fallback: Return original file if compression fails (e.g. strict HEIC without lib)
+      return file;
     }
-    return file;
   }
 
   classifyImage(file: File): Observable<{ clusterId: number; clusterName?: string; version: number; similarProductIds?: number[] }> {
@@ -63,7 +67,7 @@ export class SearchService {
     try {
       const url = URL.createObjectURL(file);
       this.productService.queryImageUrl.set(url);
-    } catch {}
+    } catch { }
     return this.http.post<{ clusterId: number; clusterName?: string; version: number; similarProductIds?: number[] }>(`${this.apiUrl}/clustering/classify`, formData);
   }
 

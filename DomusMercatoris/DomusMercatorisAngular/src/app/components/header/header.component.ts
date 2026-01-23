@@ -18,7 +18,7 @@ export class HeaderComponent {
   router = inject(Router);
   cartService = inject(CartService);
   isCartOpen = false;
-  isMobileMenuOpen = false;
+
 
   handleProfileClick() {
     if (this.authService.currentUser()) {
@@ -32,9 +32,7 @@ export class HeaderComponent {
     this.isCartOpen = !this.isCartOpen;
   }
 
-  toggleMobileMenu() {
-    this.isMobileMenuOpen = !this.isMobileMenuOpen;
-  }
+
 
   inc(item: any) {
     this.cartService.increment(item);

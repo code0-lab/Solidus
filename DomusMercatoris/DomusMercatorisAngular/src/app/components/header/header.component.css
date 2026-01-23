@@ -18,7 +18,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 60px; /* Increased height for search bar */
+  height: 60px;
+  /* Increased height for search bar */
   width: 100%;
   gap: 10px;
 }
@@ -38,13 +39,17 @@
   flex-grow: 1;
   display: flex;
   justify-content: center;
-  max-width: 800px; /* Match search bar max width */
+  width: 100%;
+  /* Use full available width */
 }
 
-/* Hide desktop search on mobile */
+/* Show desktop search on mobile (unified) */
 @media (max-width: 768px) {
   .nav-center-desktop {
-    display: none;
+    display: flex;
+    justify-content: flex-end;
+    /* Align right near icons */
+    margin-right: 5px;
   }
 }
 
@@ -73,61 +78,6 @@
 .icon:active {
   background: #eee;
   color: black;
-}
-
-.hamburger {
-  display: flex;
-  font-size: 20px;
-}
-
-@media (min-width: 769px) {
-  .hamburger {
-    display: none;
-  }
-}
-
-/* Nav Content (Mobile Search + Links) */
-.nav-content {
-  display: none;
-  flex-direction: column;
-  width: 100%;
-  padding-bottom: 10px;
-  background: white;
-  border-top: 1px solid #f0f0f0;
-}
-
-.nav-content.open {
-  display: flex;
-}
-
-.nav-center-mobile {
-  padding: 10px;
-  display: flex;
-  justify-content: center;
-}
-
-/* Hide mobile search on desktop */
-@media (min-width: 769px) {
-  .nav-center-mobile {
-    display: none;
-  }
-}
-
-.nav-links {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.nav-links a {
-  padding: 10px 15px;
-  text-decoration: none;
-  color: black;
-  border-bottom: 1px solid #eee;
-}
-
-.nav-links a:hover {
-  background-color: #f9f9f9;
 }
 
 /* Cart Dropdown */

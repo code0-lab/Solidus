@@ -2,42 +2,48 @@
   <h2>Search</h2>
   <div class="upload-row">
     <label>Filter by image:</label>
-    <input type="file" accept="image/*" (change)="onImageSelected($event)" />
+
+    <button class="upload-btn" (click)="openSelectDialog()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+        <circle cx="12" cy="13" r="4"></circle>
+      </svg>
+      Scan / Upload Image
+    </button>
+    <input #fileInput type="file" accept="image/*" (change)="onImageSelected($event)" style="display: none;" />
+
     @if (isClassifying()) {
-      <span class="status">Classifying...</span>
+    <span class="status">Classifying...</span>
     }
     @if (selectedClusterId() !== null) {
-      <span class="status">Selected class: {{ selectedClusterId() }}</span>
+    <span class="status">Selected class: {{ selectedClusterId() }}</span>
     }
     @if (classifyError()) {
-      <span class="status error">{{ classifyError() }}</span>
+    <span class="status error">{{ classifyError() }}</span>
     }
   </div>
-  
+
   @if (productService.queryImageUrl()) {
-    <div class="query-preview">
-      <div class="preview-box">
-        <img [src]="productService.queryImageUrl()!" alt="Query image">
-      </div>
-      @if (selectedClusterId() !== null) {
-        <span class="query-meta">Class: {{ selectedClusterId() }}</span>
-      }
+  <div class="query-preview">
+    <div class="preview-box">
+      <img [src]="productService.queryImageUrl()!" alt="Query image">
     </div>
+    @if (selectedClusterId() !== null) {
+    <span class="query-meta">Class: {{ selectedClusterId() }}</span>
+    }
+  </div>
   }
 
   @if (productService.products().length === 0) {
-    <p>No products found.</p>
+  <p>No products found.</p>
   } @else {
-    <app-product-list 
-      [products]="productService.products()" 
-      (selectProduct)="onSelectProduct($event)">
-    </app-product-list>
+  <app-product-list [products]="productService.products()" (selectProduct)="onSelectProduct($event)">
+  </app-product-list>
   }
 
   @if (selectedProduct()) {
-    <app-product-detail 
-      [product]="selectedProduct()!" 
-      (onClose)="closeProductDetail()">
-    </app-product-detail>
+  <app-product-detail [product]="selectedProduct()!" (onClose)="closeProductDetail()">
+  </app-product-detail>
   }
 </section>

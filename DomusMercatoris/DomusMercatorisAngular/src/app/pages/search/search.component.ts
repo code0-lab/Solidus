@@ -1,4 +1,4 @@
-import { Component, signal, inject, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
+import { Component, signal, inject, ChangeDetectionStrategy, DestroyRef, ViewChild, ElementRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ProductService } from '../../services/product.service';
@@ -20,6 +20,8 @@ export class SearchComponent {
   searchService = inject(SearchService);
   destroyRef = inject(DestroyRef);
 
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+
   selectedProduct = signal<Product | null>(null);
   selectedClusterId = signal<number | null>(null);
   isClassifying = signal(false);
@@ -34,10 +36,16 @@ export class SearchComponent {
     this.selectedProduct.set(null);
   }
 
+  openSelectDialog() {
+    if (this.fileInput) {
+      this.fileInput.nativeElement.click();
+    }
+  }
+
   async onImageSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
-    
+
     const file = input.files[0];
     const validation = this.searchService.validateFile(file);
     if (!validation.valid) {
@@ -50,16 +58,16 @@ export class SearchComponent {
 
     try {
       const processedFile = await this.searchService.processImage(file);
-      
+
       this.searchService.classifyImage(processedFile)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: (res) => {
             this.selectedClusterId.set(res.clusterId);
             this.searchService.fetchProductsByCluster(
-              res.clusterId, 
-              1, 
-              this.itemsPerPage, 
+              res.clusterId,
+              1,
+              this.itemsPerPage,
               this.productService.selectedCompany(),
               null,
               res.similarProductIds

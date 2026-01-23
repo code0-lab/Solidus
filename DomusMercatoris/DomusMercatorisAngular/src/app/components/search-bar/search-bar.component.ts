@@ -31,7 +31,22 @@ export class SearchBarComponent implements OnInit, OnDestroy {
   showHint = false;
   panelOpen = false;
   isDragging = false;
+
   isExpanded = false;
+  isTyping = false;
+
+  onInputFocus() {
+    this.isTyping = true;
+  }
+
+  onInputBlur() {
+    // Small delay to allow click on category icon if needed before resetting
+    setTimeout(() => {
+      if (!this.query) {
+        this.isTyping = false;
+      }
+    }, 200);
+  }
   private readonly MAX_SIZE_BYTES = 17 * 1024 * 1024;
   private destroy$ = new Subject<void>();
   private destroyed = false;
@@ -64,7 +79,7 @@ export class SearchBarComponent implements OnInit, OnDestroy {
     // Reset filters for global search but keep category if selected
     this.productService.selectedCompany.set(null);
     this.productService.selectedBrand.set(null);
-    
+
     const categoryId = this.productService.selectedCategory();
 
     this.searchService.searchProductsByName(q, 1, this.itemsPerPage, null, null, categoryId);
@@ -87,11 +102,12 @@ export class SearchBarComponent implements OnInit, OnDestroy {
     }
 
     this.isClassifying = true; // Show loading
+    this.isExpanded = true; // Ensure bar is open so status is visible
     this.classifyError = null;
 
     try {
       const processedFile = await this.searchService.processImage(file);
-      
+
       this.searchService.classifyImage(processedFile)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
@@ -99,10 +115,10 @@ export class SearchBarComponent implements OnInit, OnDestroy {
             if (this.destroyed) return;
             this.selectedClusterId = res.clusterId;
             this.searchService.fetchProductsByCluster(
-              res.clusterId, 
-              1, 
-              this.itemsPerPage, 
-              this.productService.selectedCompany(), 
+              res.clusterId,
+              1,
+              this.itemsPerPage,
+              this.productService.selectedCompany(),
               this.productService.selectedBrand(),
               res.similarProductIds
             );
@@ -129,10 +145,10 @@ export class SearchBarComponent implements OnInit, OnDestroy {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
     const file = input.files[0];
-    
+
     // Reset input value to allow selecting same file again
     input.value = '';
-    
+
     await this.handleFileProcessing(file);
   }
 

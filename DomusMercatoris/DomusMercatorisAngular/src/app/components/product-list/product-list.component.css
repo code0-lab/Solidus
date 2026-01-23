@@ -10,6 +10,7 @@
 
 .product-row {
   display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 20px;
   padding: 10px;
   box-sizing: border-box;
@@ -17,7 +18,8 @@
 
 /* Ensure card height is consistent */
 .product-card {
-  height: 300px; /* Fixed height for cards (Desktop default) */
+  height: 300px;
+  /* Fixed height for cards (Desktop default) */
   background: white;
   border: 1px solid black;
   box-shadow: 2px 2px 0 black;
@@ -45,7 +47,8 @@
   align-items: center;
   justify-content: center;
   border: 1px solid black;
-  background: white !important; /* Force white background for consistency */
+  background: white !important;
+  /* Force white background for consistency */
   margin-bottom: 5px;
   position: relative;
 }
@@ -101,6 +104,7 @@
   text-transform: none;
   line-height: 1.2;
   display: -webkit-box;
+  line-clamp: 2;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
@@ -116,20 +120,25 @@
 /* Mobile Grid (2 cols) */
 @media (max-width: 767px) and (min-width: 400px) {
   .product-row {
-    gap: 10px;
-    padding: 10px; /* Keeps row height consistent with calculation */
+    gap: 8px;
+    /* Reduced gap */
+    padding: 5px;
+    /* Reduced padding */
+    grid-template-columns: repeat(2, 1fr);
+    /* Explicitly set 2 columns */
   }
 
   .product-card {
-    height: 270px;
+    height: 250px;
+    /* Reduced height to fit better */
   }
-  
+
   .card-image {
-    height: 130px;
+    height: 120px;
   }
-  
+
   .card-image img {
-    max-height: 120px;
+    max-height: 110px;
   }
 }
 
@@ -140,21 +149,22 @@
   }
 
   .product-card {
-    height: 330px; /* Larger card for single column */
+    height: 300px;
+    /* Slightly reduced */
   }
-  
+
   .card-image {
     height: 180px;
   }
-  
+
   .card-image img {
     max-height: 160px;
   }
-  
+
   .card-content h3 {
     font-size: 14px;
   }
-  
+
   .price {
     font-size: 14px;
   }
