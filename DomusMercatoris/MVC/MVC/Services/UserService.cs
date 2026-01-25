@@ -234,5 +234,52 @@ namespace DomusMercatorisDotnetMVC.Services
             await _dbContext.SaveChangesAsync();
             return true;
         }
+
+        public async Task<bool> ChangePasswordAsync(long userId, string currentPassword, string newPassword)
+        {
+            var user = await _dbContext.Users.SingleOrDefaultAsync(u => u.Id == userId);
+            if (user == null) return false;
+
+            if (!BCrypt.Net.BCrypt.Verify(currentPassword, user.Password))
+            {
+                return false;
+            }
+
+            user.Password = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            await _dbContext.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> ChangeEmailAsync(long userId, string newEmail, string password)
+        {
+            var user = await _dbContext.Users.SingleOrDefaultAsync(u => u.Id == userId);
+            if (user == null) return false;
+
+            if (!BCrypt.Net.BCrypt.Verify(password, user.Password))
+            {
+                return false;
+            }
+
+            // Check if email is already taken
+            if (await _dbContext.Users.AnyAsync(u => u.Email == newEmail && u.Id != userId))
+            {
+                return false;
+            }
+
+            user.Email = newEmail;
+            await _dbContext.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> UpdateContactInfoAsync(long userId, string? phone, string? address)
+        {
+            var user = await _dbContext.Users.SingleOrDefaultAsync(u => u.Id == userId);
+            if (user == null) return false;
+
+            user.Phone = phone;
+            user.Address = address;
+            await _dbContext.SaveChangesAsync();
+            return true;
+        }
     }
 }

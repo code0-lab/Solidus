@@ -1,6 +1,6 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { User, LoginResponse, UserProfileDto, LoginRequest, RegisterRequest, Company, UpdateProfileRequest } from '../models/user.model';
+import { User, LoginResponse, UserProfileDto, LoginRequest, RegisterRequest, Company, UpdateProfileRequest, ChangePasswordRequest, ChangeEmailRequest } from '../models/user.model';
 import { Observable, tap } from 'rxjs';
 import { jwtDecode } from 'jwt-decode';
 import { environment } from '../../environments/environment';
@@ -80,7 +80,9 @@ export class AuthService {
       firstName: profile.firstName,
       lastName: profile.lastName,
       phone: profile.phone ?? null,
-      address: profile.address ?? null
+      address: profile.address ?? null,
+      companyId: profile.companyId,
+      roles: profile.roles || []
     };
   }
 
@@ -137,6 +139,20 @@ export class AuthService {
       tap(profile => {
         this.updateUserFromProfile(profile);
       })
+    );
+  }
+
+  changePassword(payload: ChangePasswordRequest): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/me/password`, payload);
+  }
+
+  changeEmail(payload: ChangeEmailRequest): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/me/email`, payload).pipe(
+        tap(() => {
+            // If email changes, we might want to update the local user state or logout
+            // For now, let's just fetch the profile again to get the new email
+            this.fetchProfile().subscribe();
+        })
     );
   }
 

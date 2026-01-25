@@ -6,6 +6,8 @@ export interface User {
     lastName?: string;
     phone?: string | null;
     address?: string | null;
+    companyId?: number;
+    roles: string[];
 }
 
 export interface LoginRequest {
@@ -40,6 +42,17 @@ export interface UserProfileDto {
 export interface UpdateProfileRequest {
     phone?: string | null;
     address?: string | null;
+}
+
+export interface ChangePasswordRequest {
+    currentPassword: string;
+    newPassword: string;
+    confirmNewPassword: string;
+}
+
+export interface ChangeEmailRequest {
+    newEmail: string;
+    currentPassword: string;
 }
 
 export interface LoginResponse {

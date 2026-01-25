@@ -1,60 +1,199 @@
 <div class="profile-container">
   <h2>My Profile</h2>
   @if (authService.currentUser(); as user) {
-    <div class="profile-card">
-      <div class="profile-header">
-        <div class="avatar">
-          {{ user.firstName?.charAt(0) || '' }}{{ user.lastName?.charAt(0) || '' }}
-        </div>
-        <div class="user-info">
-          <h3>{{ user.firstName }} {{ user.lastName }}</h3>
-          <p>{{ user.email }}</p>
-        </div>
-      </div>
-
-      <div class="profile-fields" [formGroup]="profileForm">
-        <div class="field-group">
-          <label for="phone">Phone</label>
-          <input
-            id="phone"
-            type="tel"
-            formControlName="phone"
-            [class.invalid]="profileForm.get('phone')?.invalid && profileForm.get('phone')?.touched"
-            placeholder="Add your phone number">
-          @if (profileForm.get('phone')?.invalid && profileForm.get('phone')?.touched) {
-            <small class="error-msg">Please enter a valid phone number (digits, space, +).</small>
-          }
-          <small class="field-hint">Leave empty and save to remove phone.</small>
-        </div>
-
-        <div class="field-group">
-          <label for="address">Address</label>
-          <textarea
-            id="address"
-            rows="3"
-            formControlName="address"
-            placeholder="Add your address"></textarea>
-          <small class="field-hint">Leave empty and save to remove address.</small>
-        </div>
-
-        <button class="save-btn" (click)="saveProfile()" [disabled]="isSaving() || profileForm.invalid || !hasChanges">
-          {{ isSaving() ? 'Saving...' : 'Save Changes' }}
-        </button>
-      </div>
-
-      <button class="logout-btn" (click)="logout()">Log Out</button>
-
-      @if (showLogoutConfirm()) {
-        <div class="confirm-overlay">
-          <div class="confirm-box">
-            <p>Are you sure you want to log out?</p>
-            <div class="confirm-actions">
-              <button class="cancel-btn" (click)="cancelLogout()">Cancel</button>
-              <button class="confirm-btn" (click)="confirmLogout()">Yes, Log Out</button>
-            </div>
+    <div class="profile-layout">
+      <!-- Sidebar Navigation -->
+      <div class="profile-sidebar">
+        <div class="user-brief">
+          <div class="avatar-small">
+            {{ user.firstName?.charAt(0) || '' }}{{ user.lastName?.charAt(0) || '' }}
+          </div>
+          <div class="user-brief-info">
+            <strong>{{ user.firstName }} {{ user.lastName }}</strong>
+            <span>{{ user.email }}</span>
           </div>
         </div>
-      }
+        
+        <nav class="profile-nav">
+          <button 
+            [class.active]="activeTab() === 'overview'" 
+            (click)="setActiveTab('overview')">
+            Overview
+          </button>
+          <button 
+            [class.active]="activeTab() === 'contact'" 
+            (click)="setActiveTab('contact')">
+            Contact Info
+          </button>
+          <button 
+            [class.active]="activeTab() === 'password'" 
+            (click)="setActiveTab('password')">
+            Change Password
+          </button>
+          <button 
+            [class.active]="activeTab() === 'email'" 
+            (click)="setActiveTab('email')">
+            Change Email
+          </button>
+          <button class="nav-logout" (click)="logout()">
+            Log Out
+          </button>
+        </nav>
+      </div>
+
+      <!-- Main Content Area -->
+      <div class="profile-content">
+        
+        <!-- Overview Tab -->
+        @if (activeTab() === 'overview') {
+          <div class="tab-content fade-in">
+            <h3>Account Overview</h3>
+            <div class="info-grid">
+              <div class="info-item">
+                <label>Full Name</label>
+                <p>{{ user.firstName }} {{ user.lastName }}</p>
+              </div>
+              <div class="info-item">
+                <label>Email</label>
+                <p>{{ user.email }}</p>
+              </div>
+              <div class="info-item">
+                <label>Company ID</label>
+                <p>{{ user.companyId }}</p>
+              </div>
+              <div class="info-item">
+                <label>Roles</label>
+                <div class="roles-list">
+                  @for (role of user.roles; track role) {
+                    <span class="role-badge">{{ role }}</span>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Contact Info Tab -->
+        @if (activeTab() === 'contact') {
+          <div class="tab-content fade-in">
+            <h3>Update Contact Info</h3>
+            <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
+              <div class="field-group">
+                <label for="phone">Phone</label>
+                <input
+                  id="phone"
+                  type="tel"
+                  formControlName="phone"
+                  [class.invalid]="profileForm.get('phone')?.invalid && profileForm.get('phone')?.touched"
+                  placeholder="Add your phone number">
+                @if (profileForm.get('phone')?.invalid && profileForm.get('phone')?.touched) {
+                  <small class="error-msg">Please enter a valid phone number (digits, space, +).</small>
+                }
+              </div>
+
+              <div class="field-group">
+                <label for="address">Address</label>
+                <textarea
+                  id="address"
+                  rows="3"
+                  formControlName="address"
+                  placeholder="Add your address"></textarea>
+              </div>
+
+              <button class="save-btn" type="submit" [disabled]="isSaving() || profileForm.invalid || !hasChanges">
+                {{ isSaving() ? 'Saving...' : 'Save Changes' }}
+              </button>
+            </form>
+          </div>
+        }
+
+        <!-- Change Password Tab -->
+        @if (activeTab() === 'password') {
+          <div class="tab-content fade-in">
+            <h3>Change Password</h3>
+            <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
+              <div class="field-group">
+                <label for="currentPass">Current Password</label>
+                <input
+                  id="currentPass"
+                  type="password"
+                  formControlName="currentPassword">
+              </div>
+
+              <div class="field-group">
+                <label for="newPass">New Password</label>
+                <input
+                  id="newPass"
+                  type="password"
+                  formControlName="newPassword">
+                @if (passwordForm.get('newPassword')?.errors?.['minlength'] && passwordForm.get('newPassword')?.touched) {
+                  <small class="error-msg">Password must be at least 6 characters.</small>
+                }
+              </div>
+
+              <div class="field-group">
+                <label for="confirmPass">Confirm New Password</label>
+                <input
+                  id="confirmPass"
+                  type="password"
+                  formControlName="confirmNewPassword">
+                @if (passwordForm.errors?.['mismatch'] && passwordForm.get('confirmNewPassword')?.touched) {
+                  <small class="error-msg">Passwords do not match.</small>
+                }
+              </div>
+
+              <button class="save-btn" type="submit" [disabled]="isSaving() || passwordForm.invalid">
+                {{ isSaving() ? 'Updating...' : 'Update Password' }}
+              </button>
+            </form>
+          </div>
+        }
+
+        <!-- Change Email Tab -->
+        @if (activeTab() === 'email') {
+          <div class="tab-content fade-in">
+            <h3>Change Email</h3>
+            <p class="info-text">Changing your email will require you to log in again with the new email address.</p>
+            <form [formGroup]="emailForm" (ngSubmit)="changeEmail()">
+              <div class="field-group">
+                <label for="newEmail">New Email Address</label>
+                <input
+                  id="newEmail"
+                  type="email"
+                  formControlName="newEmail"
+                  placeholder="name@example.com">
+                @if (emailForm.get('newEmail')?.invalid && emailForm.get('newEmail')?.touched) {
+                  <small class="error-msg">Please enter a valid email address.</small>
+                }
+              </div>
+
+              <div class="field-group">
+                <label for="currentPassEmail">Current Password (for verification)</label>
+                <input
+                  id="currentPassEmail"
+                  type="password"
+                  formControlName="currentPassword">
+              </div>
+
+              <button class="save-btn" type="submit" [disabled]="isSaving() || emailForm.invalid">
+                {{ isSaving() ? 'Updating...' : 'Update Email' }}
+              </button>
+            </form>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  @if (showLogoutConfirm()) {
+    <div class="confirm-overlay">
+      <div class="confirm-box">
+        <p>Are you sure you want to log out?</p>
+        <div class="confirm-actions">
+          <button class="cancel-btn" (click)="cancelLogout()">Cancel</button>
+          <button class="confirm-btn" (click)="confirmLogout()">Yes, Log Out</button>
+        </div>
+      </div>
     </div>
   }
 </div>

@@ -80,6 +80,37 @@ namespace DomusMercatorisDotnetRest.Services
             return _mapper.Map<UserDto>(user);
         }
 
+        public async Task<bool> ChangePasswordAsync(long userId, ChangePasswordDto dto)
+        {
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null) return false;
+
+            var hashedCurrent = HashSha256(dto.CurrentPassword);
+            if (user.Password != hashedCurrent) return false;
+
+            user.Password = HashSha256(dto.NewPassword);
+            await _db.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> ChangeEmailAsync(long userId, ChangeEmailDto dto)
+        {
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null) return false;
+
+            var hashedCurrent = HashSha256(dto.CurrentPassword);
+            if (user.Password != hashedCurrent) return false;
+
+            if (await _db.Users.AnyAsync(u => u.Email.ToLower() == dto.NewEmail.ToLower() && u.Id != userId))
+            {
+                return false;
+            }
+
+            user.Email = dto.NewEmail;
+            await _db.SaveChangesAsync();
+            return true;
+        }
+
         private string HashSha256(string input)
         {
             using var sha256 = SHA256.Create();

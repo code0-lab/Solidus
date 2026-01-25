@@ -22,20 +22,46 @@ export class ProfileComponent implements OnInit {
   toastService = inject(ToastService);
 
   profileForm!: FormGroup;
+  passwordForm!: FormGroup;
+  emailForm!: FormGroup;
+
   isSaving = signal(false);
   showLogoutConfirm = signal(false);
+  activeTab = signal<'overview' | 'contact' | 'password' | 'email'>('overview');
 
   ngOnInit() {
-    const user = this.authService.currentUser();// Mevcut kullanıcı verisi sadece bir kere çekildi ve null olamaz
-    if (!user) { // Dikkkat eğer başka yerde veri güncellemesi yapılır ise bu durumda değişim profile sayfasına kurulan yapı nedeni ile yansımaz.
-      this.router.navigate(['/']); // Ancak zaten başka yerden değişim imkanıda tanınmadı.
+    const user = this.authService.currentUser();
+    if (!user) {
+      this.router.navigate(['/']);
       return;
     }
     
     this.profileForm = this.fb.group({
-      phone: [user?.phone ?? '', [Validators.pattern('^[0-9+ ]*$')]], // Only numbers, plus and space
+      phone: [user?.phone ?? '', [Validators.pattern('^[0-9+ ]*$')]],
       address: [user?.address ?? '', [Validators.maxLength(500)]]
     });
+
+    this.passwordForm = this.fb.group({
+      currentPassword: ['', Validators.required],
+      newPassword: ['', [Validators.required, Validators.minLength(6)]],
+      confirmNewPassword: ['', Validators.required]
+    }, { validators: this.passwordMatchValidator });
+
+    this.emailForm = this.fb.group({
+      newEmail: ['', [Validators.required, Validators.email]],
+      currentPassword: ['', Validators.required]
+    });
+  }
+
+  passwordMatchValidator(g: FormGroup) {
+    return g.get('newPassword')?.value === g.get('confirmNewPassword')?.value
+      ? null : { mismatch: true };
+  }
+
+  setActiveTab(tab: 'overview' | 'contact' | 'password' | 'email') {
+    this.activeTab.set(tab);
+    if (tab === 'password') this.passwordForm.reset();
+    if (tab === 'email') this.emailForm.reset();
   }
 
   // Helper to check if form value is different from initial user data
@@ -71,7 +97,6 @@ export class ProfileComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: profile => {
-          // Update form with new values (resets dirty state essentially)
           this.profileForm.reset({
             phone: profile.phone ?? '',
             address: profile.address ?? ''
@@ -82,6 +107,50 @@ export class ProfileComponent implements OnInit {
         error: () => {
           this.isSaving.set(false);
           this.toastService.error('Failed to update profile.');
+        }
+      });
+  }
+
+  changePassword() {
+    if (this.passwordForm.invalid) return;
+
+    this.isSaving.set(true);
+    const { currentPassword, newPassword, confirmNewPassword } = this.passwordForm.value;
+
+    this.authService.changePassword({ currentPassword, newPassword, confirmNewPassword })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.isSaving.set(false);
+          this.passwordForm.reset();
+          this.toastService.success('Password changed successfully.');
+          this.setActiveTab('overview');
+        },
+        error: (err) => {
+          this.isSaving.set(false);
+          this.toastService.error(err.error?.message || 'Failed to change password.');
+        }
+      });
+  }
+
+  changeEmail() {
+    if (this.emailForm.invalid) return;
+
+    this.isSaving.set(true);
+    const { newEmail, currentPassword } = this.emailForm.value;
+
+    this.authService.changeEmail({ newEmail, currentPassword })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.isSaving.set(false);
+          this.emailForm.reset();
+          this.toastService.success('Email changed successfully.');
+          this.setActiveTab('overview');
+        },
+        error: (err) => {
+          this.isSaving.set(false);
+          this.toastService.error(err.error?.message || 'Failed to change email.');
         }
       });
   }

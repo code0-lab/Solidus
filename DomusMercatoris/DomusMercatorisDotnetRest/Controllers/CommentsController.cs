@@ -76,7 +76,7 @@ namespace DomusMercatorisDotnetRest.Controllers
             var userId = GetUserId();
             if (userId == null) return Unauthorized();
 
-            var isAdmin = User.IsInRole("admin");
+            var isAdmin = User.IsInRole("Moderator") || User.IsInRole("Rex");
             await _commentService.UpdateAsync(id, updateDto, userId.Value, isAdmin);
             
             return NoContent();
@@ -89,7 +89,7 @@ namespace DomusMercatorisDotnetRest.Controllers
             var userId = GetUserId();
             if (userId == null) return Unauthorized();
 
-            var isAdmin = User.IsInRole("admin");
+            var isAdmin = User.IsInRole("Moderator") || User.IsInRole("Rex");
             await _commentService.DeleteAsync(id, userId.Value, isAdmin);
 
             return NoContent();

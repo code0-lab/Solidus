@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using DomusMercatorisDotnetMVC.Services;
 using DomusMercatoris.Core.Entities;
 using DomusMercatorisDotnetMVC.Dto.UserDto;
+using DomusMercatoris.Service.DTOs;
 
 namespace DomusMercatorisDotnetMVC.Pages.Account
 {
@@ -25,6 +26,15 @@ namespace DomusMercatorisDotnetMVC.Pages.Account
         [BindProperty]
         public AiPanelModel AiPanel { get; set; } = new();
 
+        [BindProperty]
+        public UpdateUserProfileDto ContactInfo { get; set; } = new();
+
+        [BindProperty]
+        public ChangePasswordDto PasswordChange { get; set; } = new();
+
+        [BindProperty]
+        public ChangeEmailDto EmailChange { get; set; } = new();
+
         public async Task<IActionResult> OnGetAsync()
         {
             var user = await GetCurrentUserAsync();
@@ -37,7 +47,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Account
             return Page();
         }
 
-        public async Task<IActionResult> OnPostAsync()
+        public async Task<IActionResult> OnPostUpdateAiSettingsAsync()
         {
             try
             {
@@ -65,17 +75,14 @@ namespace DomusMercatorisDotnetMVC.Pages.Account
 
                 if (success)
                 {
-                    TempData["SuccessMessage"] = "Profile settings updated successfully.";
-                    return RedirectToPage();
+                    TempData["SuccessMessage"] = "AI settings updated successfully.";
                 }
                 else
                 {
-                    TempData["ErrorMessage"] = "Failed to update some settings.";
+                    TempData["ErrorMessage"] = "Failed to update AI settings.";
                 }
 
-                // Re-populate view data
                 await LoadPageDataAsync(user);
-                
                 return Page();
             }
             catch (Exception ex)
@@ -83,6 +90,91 @@ namespace DomusMercatorisDotnetMVC.Pages.Account
                 TempData["ErrorMessage"] = $"An error occurred: {ex.Message}";
                 return RedirectToPage();
             }
+        }
+
+        public async Task<IActionResult> OnPostUpdateContactAsync()
+        {
+            var user = await GetCurrentUserAsync();
+            if (user == null) return RedirectToPage("/Index");
+
+            var success = await _userService.UpdateContactInfoAsync(user.Id, ContactInfo.Phone, ContactInfo.Address);
+            if (success)
+            {
+                TempData["SuccessMessage"] = "Contact info updated successfully.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Failed to update contact info.";
+            }
+
+            await LoadPageDataAsync(user);
+            return Page();
+        }
+
+        public async Task<IActionResult> OnPostChangePasswordAsync()
+        {
+            var user = await GetCurrentUserAsync();
+            if (user == null) return RedirectToPage("/Index");
+
+            if (!ModelState.IsValid)
+            {
+                 // Filter relevant validation errors
+                 foreach (var state in ModelState)
+                 {
+                     if (state.Key.StartsWith("PasswordChange") && state.Value.Errors.Count > 0)
+                     {
+                         TempData["ErrorMessage"] = state.Value.Errors.First().ErrorMessage;
+                         await LoadPageDataAsync(user);
+                         return Page();
+                     }
+                 }
+            }
+
+            var success = await _userService.ChangePasswordAsync(user.Id, PasswordChange.CurrentPassword, PasswordChange.NewPassword);
+            if (success)
+            {
+                TempData["SuccessMessage"] = "Password changed successfully.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Failed to change password. Check your current password.";
+            }
+
+            await LoadPageDataAsync(user);
+            return Page();
+        }
+
+        public async Task<IActionResult> OnPostChangeEmailAsync()
+        {
+            var user = await GetCurrentUserAsync();
+            if (user == null) return RedirectToPage("/Index");
+
+             if (!ModelState.IsValid)
+            {
+                 // Filter relevant validation errors
+                 foreach (var state in ModelState)
+                 {
+                     if (state.Key.StartsWith("EmailChange") && state.Value.Errors.Count > 0)
+                     {
+                         TempData["ErrorMessage"] = state.Value.Errors.First().ErrorMessage;
+                         await LoadPageDataAsync(user);
+                         return Page();
+                     }
+                 }
+            }
+
+            var success = await _userService.ChangeEmailAsync(user.Id, EmailChange.NewEmail, EmailChange.CurrentPassword);
+            if (success)
+            {
+                TempData["SuccessMessage"] = "Email updated successfully.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Failed to update email. Password might be wrong or email already taken.";
+            }
+
+            await LoadPageDataAsync(user);
+            return Page();
         }
 
         private async Task<User?> GetCurrentUserAsync()
@@ -103,14 +195,16 @@ namespace DomusMercatorisDotnetMVC.Pages.Account
             CompanyName = await _userService.GetCompanyNameAsync(user.CompanyId) ?? string.Empty;
             Roles = user.Roles ?? new List<string>();
             
+            ContactInfo.Phone = user.Phone;
+            ContactInfo.Address = user.Address;
+            EmailChange.NewEmail = user.Email;
+
             // Load AI settings using service directly (Only for Managers)
             if (Roles.Any(r => r.Trim().Equals("Manager", StringComparison.OrdinalIgnoreCase)))
             {
                 var aiSettings = await _userService.GetAiSettingsAsync(user.CompanyId);
                 if (aiSettings != null)
                 {
-                    // Only load the existing API key if it belongs to the user's company
-                    // If the user is a Manager but there is no API key yet, they can enter one.
                     AiPanel.ExistingGeminiApiKey = aiSettings.GeminiApiKey;
                     AiPanel.GeminiApiKey = string.IsNullOrEmpty(aiSettings.GeminiApiKey) ? string.Empty : "*****";
                     AiPanel.IsAiModerationEnabled = aiSettings.IsAiModerationEnabled;

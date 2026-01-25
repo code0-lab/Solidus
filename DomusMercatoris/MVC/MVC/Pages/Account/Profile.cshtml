@@ -6,49 +6,157 @@
 }
 
 <div class="container py-4">
-    <h3>Profile</h3>
+    <h3>Profile Settings</h3>
     
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
     }
     @if (TempData["ErrorMessage"] != null)
     {
-        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
     }
 
-    <div class="card">
-        <div class="card-body">
-            <div class="row mb-2">
-                <div class="col-sm-3">Full Name</div>
-                <div class="col-sm-9">@Model.FullName</div>
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="list-group" id="list-tab" role="tablist">
+                <a class="list-group-item list-group-item-action active" id="list-overview-list" data-bs-toggle="list" href="#list-overview" role="tab" aria-controls="list-overview">Overview</a>
+                <a class="list-group-item list-group-item-action" id="list-contact-list" data-bs-toggle="list" href="#list-contact" role="tab" aria-controls="list-contact">Contact Info</a>
+                <a class="list-group-item list-group-item-action" id="list-password-list" data-bs-toggle="list" href="#list-password" role="tab" aria-controls="list-password">Change Password</a>
+                <a class="list-group-item list-group-item-action" id="list-email-list" data-bs-toggle="list" href="#list-email" role="tab" aria-controls="list-email">Change Email</a>
+                @if (Model.Roles != null && Model.Roles.Any(r => r.Trim().Equals("Manager", StringComparison.OrdinalIgnoreCase)))
+                {
+                    <a class="list-group-item list-group-item-action" id="list-ai-list" data-bs-toggle="list" href="#list-ai" role="tab" aria-controls="list-ai">AI Settings</a>
+                }
             </div>
-            <div class="row mb-2">
-                <div class="col-sm-3">Email</div>
-                <div class="col-sm-9">@Model.Email</div>
-            </div>
-            <div class="row mb-2">
-                <div class="col-sm-3">Company Id</div>
-                <div class="col-sm-9">@Model.CompanyId</div>
-            </div>
-            <div class="row mb-2">
-                <div class="col-sm-3">Company Name</div>
-                <div class="col-sm-9">@Model.CompanyName</div>
-            </div>
-            <div class="row mb-2">
-                <div class="col-sm-3">Roles</div>
-                <div class="col-sm-9">@string.Join(", ", Model.Roles)</div>
+        </div>
+        <div class="col-md-9">
+            <div class="tab-content" id="nav-tabContent">
+                <!-- Overview Tab -->
+                <div class="tab-pane fade show active" id="list-overview" role="tabpanel" aria-labelledby="list-overview-list">
+                    <div class="card">
+                        <div class="card-header">Account Overview</div>
+                        <div class="card-body">
+                            <dl class="row">
+                                <dt class="col-sm-3">Full Name</dt>
+                                <dd class="col-sm-9">@Model.FullName</dd>
+
+                                <dt class="col-sm-3">Email</dt>
+                                <dd class="col-sm-9">@Model.Email</dd>
+
+                                <dt class="col-sm-3">Company</dt>
+                                <dd class="col-sm-9">@Model.CompanyName (@Model.CompanyId)</dd>
+
+                                <dt class="col-sm-3">Roles</dt>
+                                <dd class="col-sm-9">
+                                    @foreach(var role in Model.Roles) {
+                                        <span class="badge bg-secondary me-1">@role</span>
+                                    }
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Info Tab -->
+                <div class="tab-pane fade" id="list-contact" role="tabpanel" aria-labelledby="list-contact-list">
+                    <div class="card">
+                        <div class="card-header">Contact Information</div>
+                        <div class="card-body">
+                            <form method="post" asp-page-handler="UpdateContact">
+                                <div class="mb-3">
+                                    <label asp-for="ContactInfo.Phone" class="form-label">Phone Number</label>
+                                    <input asp-for="ContactInfo.Phone" class="form-control" />
+                                    <span asp-validation-for="ContactInfo.Phone" class="text-danger"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="ContactInfo.Address" class="form-label">Address</label>
+                                    <textarea asp-for="ContactInfo.Address" class="form-control" rows="3"></textarea>
+                                    <span asp-validation-for="ContactInfo.Address" class="text-danger"></span>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Update Contact Info</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Change Password Tab -->
+                <div class="tab-pane fade" id="list-password" role="tabpanel" aria-labelledby="list-password-list">
+                    <div class="card">
+                        <div class="card-header">Change Password</div>
+                        <div class="card-body">
+                            <form method="post" asp-page-handler="ChangePassword">
+                                <div class="mb-3">
+                                    <label asp-for="PasswordChange.CurrentPassword" class="form-label">Current Password</label>
+                                    <input asp-for="PasswordChange.CurrentPassword" type="password" class="form-control" />
+                                    <span asp-validation-for="PasswordChange.CurrentPassword" class="text-danger"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="PasswordChange.NewPassword" class="form-label">New Password</label>
+                                    <input asp-for="PasswordChange.NewPassword" type="password" class="form-control" />
+                                    <span asp-validation-for="PasswordChange.NewPassword" class="text-danger"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="PasswordChange.ConfirmNewPassword" class="form-label">Confirm New Password</label>
+                                    <input asp-for="PasswordChange.ConfirmNewPassword" type="password" class="form-control" />
+                                    <span asp-validation-for="PasswordChange.ConfirmNewPassword" class="text-danger"></span>
+                                </div>
+                                <button type="submit" class="btn btn-warning">Change Password</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Change Email Tab -->
+                <div class="tab-pane fade" id="list-email" role="tabpanel" aria-labelledby="list-email-list">
+                    <div class="card">
+                        <div class="card-header">Change Email</div>
+                        <div class="card-body">
+                            <div class="alert alert-warning">
+                                Changing your email will update your login credentials.
+                            </div>
+                            <form method="post" asp-page-handler="ChangeEmail">
+                                <div class="mb-3">
+                                    <label asp-for="EmailChange.NewEmail" class="form-label">New Email Address</label>
+                                    <input asp-for="EmailChange.NewEmail" class="form-control" />
+                                    <span asp-validation-for="EmailChange.NewEmail" class="text-danger"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="EmailChange.CurrentPassword" class="form-label">Current Password (for verification)</label>
+                                    <input asp-for="EmailChange.CurrentPassword" type="password" class="form-control" />
+                                    <span asp-validation-for="EmailChange.CurrentPassword" class="text-danger"></span>
+                                </div>
+                                <button type="submit" class="btn btn-danger">Update Email</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Settings Tab -->
+                @if (Model.Roles != null && Model.Roles.Any(r => r.Trim().Equals("Manager", StringComparison.OrdinalIgnoreCase)))
+                {
+                    <div class="tab-pane fade" id="list-ai" role="tabpanel" aria-labelledby="list-ai-list">
+                        <div class="card">
+                            <div class="card-header">AI Configuration</div>
+                            <div class="card-body">
+                                <form method="post" asp-page-handler="UpdateAiSettings">
+                                    @Html.AntiForgeryToken()
+                                    @Html.EditorFor(x => x.AiPanel)
+                                    <div class="mt-3">
+                                        <button type="submit" class="btn btn-success">Save AI Settings</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
             </div>
         </div>
     </div>
-
-    @if (Model.Roles != null && Model.Roles.Any(r => r.Trim().Equals("Manager", StringComparison.OrdinalIgnoreCase)))
-    {
-        <div class="mt-5">
-            <form method="post">
-                @Html.AntiForgeryToken()
-                @Html.EditorFor(x => x.AiPanel)
-            </form>
-        </div>
-    }
 </div>
