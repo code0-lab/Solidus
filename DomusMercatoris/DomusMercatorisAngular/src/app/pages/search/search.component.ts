@@ -1,6 +1,7 @@
-import { Component, signal, inject, ChangeDetectionStrategy, DestroyRef, ViewChild, ElementRef } from '@angular/core';
+import { Component, signal, inject, ChangeDetectionStrategy, DestroyRef, effect, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
+import { ImageCropperComponent, ImageCroppedEvent, LoadedImage } from 'ngx-image-cropper';
 import { ProductService } from '../../services/product.service';
 import { SearchService } from '../../services/search.service';
 import { Product } from '../../models/product.model';
@@ -10,7 +11,7 @@ import { ProductDetailComponent } from '../../components/product-detail/product-
 @Component({
   selector: 'app-search',
   standalone: true,
-  imports: [CommonModule, ProductListComponent, ProductDetailComponent],
+  imports: [CommonModule, ProductListComponent, ProductDetailComponent, ImageCropperComponent],
   templateUrl: './search.component.html',
   styleUrl: './search.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -20,13 +21,42 @@ export class SearchComponent {
   searchService = inject(SearchService);
   destroyRef = inject(DestroyRef);
 
-  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
-
   selectedProduct = signal<Product | null>(null);
   selectedClusterId = signal<number | null>(null);
   isClassifying = signal(false);
   classifyError = signal<string | null>(null);
   itemsPerPage = 9;
+
+  // Cropper state
+  imageFile: File | undefined = undefined;
+  croppedImageBlob: Blob | null = null;
+  showCropper = signal(false);
+  isVisualSearchMode = signal(false);
+
+  constructor() {
+    effect(() => {
+      const pendingFile = this.searchService.pendingImageFile();
+      if (pendingFile) {
+        untracked(() => {
+          this.imageFile = pendingFile;
+          this.showCropper.set(true);
+          this.isVisualSearchMode.set(false);
+          this.classifyError.set(null);
+          this.searchService.pendingImageFile.set(null);
+        });
+      }
+    });
+
+    // Restore last results if empty
+    effect(() => {
+      // Check only once on init
+      untracked(() => {
+        if (this.productService.products().length === 0) {
+          this.productService.loadLastResults();
+        }
+      });
+    });
+  }
 
   onSelectProduct(p: Product) {
     this.selectedProduct.set(p);
@@ -36,30 +66,51 @@ export class SearchComponent {
     this.selectedProduct.set(null);
   }
 
-  openSelectDialog() {
-    if (this.fileInput) {
-      this.fileInput.nativeElement.click();
-    }
+  closeVisualSearch() {
+    this.isVisualSearchMode.set(false);
+    this.productService.queryImageUrl.set(null);
+    this.selectedClusterId.set(null);
+    // Do NOT clear products, so they persist in the standard view
+    // this.productService.products.set([]); 
   }
 
-  async onImageSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (!input.files || input.files.length === 0) return;
+  imageCropped(event: ImageCroppedEvent) {
+    this.croppedImageBlob = event.blob || null;
+  }
 
-    const file = input.files[0];
-    const validation = this.searchService.validateFile(file);
-    if (!validation.valid) {
-      this.classifyError.set(validation.error || 'Invalid file');
-      return;
-    }
+  imageLoaded(image: LoadedImage) {
+      // Image loaded
+  }
 
+  cropperReady() {
+      // Cropper ready
+  }
+
+  loadImageFailed() {
+      this.classifyError.set('Image load failed');
+      this.showCropper.set(false);
+  }
+
+  cancelCrop() {
+      this.showCropper.set(false);
+      this.imageFile = undefined;
+      this.croppedImageBlob = null;
+  }
+
+  async confirmCrop() {
+    if (!this.croppedImageBlob) return;
+    
+    this.showCropper.set(false);
+    this.isVisualSearchMode.set(true); // Enable Visual Search Mode
     this.isClassifying.set(true);
-    this.classifyError.set(null);
+    
+    // Create File from Blob
+    const file = new File([this.croppedImageBlob], "cropped.png", { type: "image/png" });
 
     try {
-      const processedFile = await this.searchService.processImage(file);
-
-      this.searchService.classifyImage(processedFile)
+      // Pass true to skip processing because we want to send the cropped image (High Res) 
+      // to Python for rembg. Python will handle resizing after rembg.
+      this.searchService.classifyImage(file, true)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: (res) => {

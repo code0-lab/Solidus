@@ -34,3 +34,16 @@ dist/
 # Secrets & Local Settings
 appsettings.Development.json
 appsettings.Local.json
+
+# AI Service
+AI/AiLogs/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+.venv
+env/
+venv/
+ENV/
+.u2net/

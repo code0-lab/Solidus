@@ -1,53 +1,80 @@
-.search-page {
+/* Standard Search Layout (Retro) */
+.standard-search-container {
+  display: flex;
+  justify-content: center;
+  padding: 20px 10px;
+}
+
+.standard-search-window {
+  width: 100%;
   max-width: 1100px;
-  margin: 0 auto;
-  padding: 0 10px;
-}
-
-.search-page h2 {
-  font-size: 1.75rem;
-  letter-spacing: 0.02em;
-  margin: 0 0 1rem;
-}
-
-.upload-row {
+  min-height: 400px;
   display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 1rem;
+  flex-direction: column;
 }
 
-.upload-row label {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: #333;
-}
-
-.upload-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.standard-search-content {
+  flex: 1;
   background: white;
+  padding: 16px;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* Retro Empty State */
+.retro-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 300px;
+  color: #333;
+  gap: 16px;
+  border: 1px dashed #ccc;
+  background-image: 
+    linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+    linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+    linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+    linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+}
+
+.sys-icon-large {
+  font-size: 48px;
+  font-weight: bold;
+  width: 80px;
+  height: 80px;
+  border: 2px solid black;
+  box-shadow: 4px 4px 0 black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  font-family: var(--sys-font-family);
+}
+
+.retro-empty-state p {
+  font-size: 1.2rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  margin: 0;
+  background: white;
+  padding: 4px 8px;
   border: 1px solid black;
   box-shadow: 2px 2px 0 black;
-  padding: 8px 12px;
-  font-family: var(--sys-font-family);
-  font-weight: 500;
-  cursor: pointer;
-  font-size: 14px;
-  transition: transform 0.1s, box-shadow 0.1s;
 }
 
-.upload-btn:active {
-  transform: translate(2px, 2px);
-  box-shadow: none;
+.retro-hint {
+  font-size: 0.8rem;
+  color: #666;
+  background: white;
+  padding: 2px 6px;
+  border: 1px dashed black;
 }
 
-.upload-btn svg {
-  width: 18px;
-  height: 18px;
-}
+/* Inherits global .sys-button but can have specific overrides here if needed */
 
 .status {
   font-size: 12px;
@@ -62,36 +89,6 @@
   border-color: #b00020;
 }
 
-.query-preview {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 1rem;
-}
-
-.preview-box {
-  border: 1px solid black;
-  box-shadow: 2px 2px 0 black;
-  background: white;
-  width: 140px;
-  height: 140px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.preview-box img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  display: block;
-}
-
-.query-meta {
-  font-size: 12px;
-  color: #333;
-}
-
 @media (max-width: 768px) {
   .search-page {
     padding: 0 10px;
@@ -102,51 +99,252 @@
     align-items: flex-start;
     gap: 10px;
   }
-
-  .upload-row label {
-    width: 100%;
-    margin-bottom: -5px;
-    /* Pull label closer to button */
-  }
-
-  .upload-btn {
-    width: 100%;
-    justify-content: center;
-    padding: 12px;
-    /* Larger touch target */
-  }
-
-  .status {
-    width: 100%;
-    text-align: center;
-    box-sizing: border-box;
-  }
-
-  .query-preview {
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .preview-box {
-    width: 100px;
-    height: 100px;
-  }
-
-  .search-page h2 {
-    font-size: 1.5rem;
-    margin-bottom: 0.8rem;
-    text-align: center;
-  }
 }
 
-@media (max-width: 360px) {
-  .search-page {
-    padding: 0 6px;
+/* --- System 1 Visual Search Layout --- */
+
+/* Reusing global .modal-overlay, .sys-window, .sys-window-header */
+
+.sys-button-small {
+  background: white;
+  border: 1px solid black;
+  box-shadow: 1px 1px 0 black;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.sys-button-small:active {
+  background: black;
+  color: white;
+  box-shadow: none;
+}
+
+/* Cropper Window */
+.cropper-window {
+  width: 90%;
+  max-width: 600px;
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.cropper-content {
+  flex: 1;
+  background: #808080; /* Gray desktop background for cropper area */
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cropper-footer {
+  padding: 12px;
+  background: white;
+  display: flex;
+  justify-content: center;
+}
+
+/* Visual Search Results Window */
+.vs-window {
+  width: 95%;
+  max-width: 900px;
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.vs-split-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Left Sidebar (Query) */
+.vs-sidebar {
+  width: 250px;
+  border-right: 1px solid black;
+  background: white;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.vs-query-box {
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid black;
+  box-shadow: 2px 2px 0 black;
+  padding: 4px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vs-query-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.vs-info-box {
+  width: 100%;
+  border: 1px solid black;
+  padding: 8px;
+  text-align: center;
+}
+
+.info-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  color: #666;
+}
+
+.info-value {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+/* Right Content (Results) */
+.vs-content-area {
+  flex: 1;
+  background: white;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.vs-status-msg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  color: #333;
+}
+
+/* Retro Progress Bar */
+.sys-progress-bar {
+  width: 200px;
+  height: 20px;
+  border: 1px solid black;
+  padding: 2px;
+  margin-top: 10px;
+  background: white;
+  box-shadow: 2px 2px 0 black;
+}
+
+.sys-progress-fill {
+  height: 100%;
+  background: repeating-linear-gradient(
+    45deg,
+    black,
+    black 10px,
+    white 10px,
+    white 20px
+  );
+  animation: progress-anim 1s linear infinite;
+}
+
+@keyframes progress-anim {
+  0% { background-position: 0 0; }
+  100% { background-position: 40px 0; }
+}
+
+/* Grid Results */
+.vs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.vs-item-card {
+  cursor: pointer;
+  /* No extra container style needed, images have borders */
+}
+
+.vs-item-img-border {
+  border: 1px solid black;
+  box-shadow: 2px 2px 0 black;
+  margin-bottom: 8px;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: white;
+}
+
+.vs-item-img-border img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.2s;
+}
+
+.vs-item-card:hover .vs-item-img-border img {
+  transform: scale(1.05);
+}
+
+.vs-item-card:active .vs-item-img-border {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+.vs-item-details {
+  text-align: center;
+}
+
+.vs-item-name {
+  font-size: 12px;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vs-item-price {
+  font-weight: bold;
+  font-size: 13px;
+}
+
+/* Responsive for Mobile */
+@media (max-width: 768px) {
+  .vs-split-layout {
+    flex-direction: column;
   }
 
-  .preview-box {
-    width: 80px;
-    height: 80px;
+  .vs-sidebar {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    padding: 10px;
+    border-right: none;
+    border-bottom: 1px solid black;
+    justify-content: space-between;
+  }
+
+  .vs-query-box {
+    width: 60px;
+    height: 60px;
+    box-shadow: 1px 1px 0 black;
+  }
+
+  .vs-info-box {
+    width: auto;
+    border: none;
+    text-align: right;
   }
 }

@@ -101,44 +101,13 @@ export class SearchBarComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.isClassifying = true; // Show loading
-    this.isExpanded = true; // Ensure bar is open so status is visible
+    // Pass file to SearchComponent for cropping and processing
+    this.searchService.pendingImageFile.set(file);
+    this.panelOpen = false;
     this.classifyError = null;
-
-    try {
-      const processedFile = await this.searchService.processImage(file);
-
-      this.searchService.classifyImage(processedFile)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: (res) => {
-            if (this.destroyed) return;
-            this.selectedClusterId = res.clusterId;
-            this.searchService.fetchProductsByCluster(
-              res.clusterId,
-              1,
-              this.itemsPerPage,
-              this.productService.selectedCompany(),
-              this.productService.selectedBrand(),
-              res.similarProductIds
-            );
-            this.isClassifying = false;
-            this.panelOpen = false; // Close the panel on success
-            this.router.navigate(['/products/search']);
-          },
-          error: (err) => {
-            if (this.destroyed) return;
-            console.error('Classification error:', err);
-            this.classifyError = 'Classification failed.';
-            this.isClassifying = false;
-          }
-        });
-    } catch (err) {
-      if (this.destroyed) return;
-      console.error('Processing error:', err);
-      this.classifyError = 'Could not process image.';
-      this.isClassifying = false;
-    }
+    
+    // Navigate to search page
+    this.router.navigate(['/products/search']);
   }
 
   async onImageSelected(event: Event) {

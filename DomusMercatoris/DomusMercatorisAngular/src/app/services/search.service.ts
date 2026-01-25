@@ -1,6 +1,6 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, finalize } from 'rxjs';
+import { Observable, finalize, from, switchMap } from 'rxjs';
 import { ProductService } from './product.service';
 import { PaginatedResult, Product } from '../models/product.model';
 import { environment } from '../../environments/environment';
@@ -13,6 +13,9 @@ import imageCompression from 'browser-image-compression';
 export class SearchService {
   private http = inject(HttpClient);
   private productService = inject(ProductService);
+  
+  // Pending file from other components (e.g. Navbar/SearchBar) to be handled by SearchComponent
+  pendingImageFile = signal<File | null>(null);
 
   private get apiUrl(): string {
     return environment.apiUrl;
@@ -61,14 +64,94 @@ export class SearchService {
     }
   }
 
-  classifyImage(file: File): Observable<{ clusterId: number; clusterName?: string; version: number; similarProductIds?: number[] }> {
-    const formData = new FormData();
-    formData.append('file', file);
-    try {
-      const url = URL.createObjectURL(file);
-      this.productService.queryImageUrl.set(url);
-    } catch { }
-    return this.http.post<{ clusterId: number; clusterName?: string; version: number; similarProductIds?: number[] }>(`${this.apiUrl}/clustering/classify`, formData);
+  async processImageForResNet(file: File): Promise<File> {
+    console.log('[SearchService] Processing image for ResNet (224x224, RGB)...');
+    return new Promise((resolve) => {
+      const img = new Image();
+      const reader = new FileReader();
+
+      reader.onload = (e: any) => {
+        img.src = e.target.result;
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+              console.warn('[SearchService] Canvas context not available');
+              resolve(file);
+              return;
+            }
+
+            const TARGET_SIZE = 224;
+            canvas.width = TARGET_SIZE;
+            canvas.height = TARGET_SIZE;
+
+            // 1. Fill background with white (handles transparency)
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, TARGET_SIZE, TARGET_SIZE);
+
+            // 2. Calculate aspect-ratio preserving dimensions
+            // We want to fit the image INSIDE 224x224 without cropping, adding whitespace (padding) if needed.
+            // "En boy oranı bozulmadan olabilecek en yakın durum" -> Fit and Pad.
+            const scale = Math.min(TARGET_SIZE / img.width, TARGET_SIZE / img.height);
+            const w = img.width * scale;
+            const h = img.height * scale;
+            const x = (TARGET_SIZE - w) / 2;
+            const y = (TARGET_SIZE - h) / 2;
+
+            ctx.drawImage(img, x, y, w, h);
+
+            // 3. Export as JPEG (forces RGB, drops alpha channel but we painted white background already)
+            canvas.toBlob((blob) => {
+              if (blob) {
+                const newName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
+                const newFile = new File([blob], newName, { type: 'image/jpeg' });
+                console.log(`[SearchService] ResNet processing done. ${file.size} -> ${newFile.size} bytes`);
+                resolve(newFile);
+              } else {
+                resolve(file);
+              }
+            }, 'image/jpeg', 0.95);
+
+          } catch (err) {
+            console.error('[SearchService] ResNet processing failed:', err);
+            resolve(file);
+          }
+        };
+        img.onerror = () => {
+            console.warn('[SearchService] Image load failed');
+            resolve(file);
+        };
+      };
+      reader.onerror = () => {
+          console.warn('[SearchService] FileReader failed');
+          resolve(file);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  classifyImage(file: File, skipProcessing: boolean = false): Observable<{ clusterId: number; clusterName?: string; version: number; similarProductIds?: number[] }> {
+    // Return Observable directly using RxJS operators
+    const fileProcessing$ = skipProcessing ? from(Promise.resolve(file)) : from(
+      this.processImageForResNet(file).catch(e => {
+        console.warn('[SearchService] Fallback to original file:', e);
+        return file;
+      })
+    );
+
+    return fileProcessing$.pipe(
+      switchMap(fileToSend => {
+        const formData = new FormData();
+        formData.append('file', fileToSend);
+        try {
+          const url = URL.createObjectURL(fileToSend);
+          this.productService.queryImageUrl.set(url);
+        } catch { }
+        
+        return this.http.post<{ clusterId: number; clusterName?: string; version: number; similarProductIds?: number[] }>(`${this.apiUrl}/clustering/classify`, formData);
+      })
+    );
   }
 
   fetchProductsByCluster(clusterId: number, pageNumber: number = 1, pageSize: number = 9, companyId?: number | null, brandId?: number | null, prioritizedIds?: number[] | null): void {

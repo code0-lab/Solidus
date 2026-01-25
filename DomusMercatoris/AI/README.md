@@ -1,251 +1,72 @@
-Domus Mercatoris AI Service
-===========================
+# Domus Mercatoris - AI Service
 
-This folder contains the Python-based AI service used by the Domus Mercatoris MVC application for image feature extraction and clustering.
+This folder contains the **Python-based AI service** used by the Domus Mercatoris platform for image feature extraction and clustering. It is built with **FastAPI** and uses **PyTorch** (ResNet-50) and **Rembg** for image processing.
 
-The service is implemented in `api.py` using FastAPI and is started automatically by the .NET MVC app via `PythonRunnerService`.
+## 🧠 Core Capabilities
 
+1.  **Feature Extraction:** Uses a pre-trained **ResNet-50** model (final classification layer removed) to convert product images into 2048-dimensional feature vectors.
+2.  **Background Removal:** Uses **`rembg`** (U2-Net) to automatically remove backgrounds from user-uploaded images, improving classification accuracy.
+3.  **Clustering:** Implements K-Means clustering for grouping similar products.
 
-Prerequisites
--------------
+## 🖼 The "Golden Ratio" Processing Pipeline
 
-- Python 3 (installed and available as `python3` on your PATH)
-- macOS or Linux (commands below use Unix-style paths)
-- Git clone of this repository
+To optimize ResNet-50 performance, this service implements the backend portion of our image processing pipeline:
 
+1.  **Input:** Receives a cropped image from the Frontend (or raw image via API).
+2.  **Background Removal:** Applies `rembg.remove()` to isolate the object.
+3.  **Smart Preprocessing:**
+    *   Composites the transparent image over a **white background**.
+    *   Resizes to **224x224** pixels.
+    *   Preserves **aspect ratio** by padding with white (no distortion).
+4.  **Inference:** Feeds the processed image to ResNet-50.
 
-1. Create the Virtual Environment
----------------------------------
+## 🛠 Prerequisites
 
-From the repository root (`DomusMercatoris`), create a virtual environment named `venv`:
+*   **Python 3.11** (Strict requirement for `rembg` compatibility).
+*   **macOS / Linux** (Recommended environment).
 
-```bash
-cd /path/to/DomusMercatoris
-python3 -m venv venv
-```
+## 📦 Installation
 
-This will create:
-
-- `venv/bin/python` (interpreter the MVC app prefers to use)
-- `venv/bin/pip` (package installer)
-
-
-2. Install Python Dependencies
-------------------------------
-
-With the virtual environment created, install the AI service dependencies from `AI/requirements.txt`:
-
-```bash
-cd /path/to/DomusMercatoris
-venv/bin/python -m pip install --upgrade pip
-venv/bin/python -m pip install -r AI/requirements.txt
-```
-
-This installs (among others):
-
-- `fastapi`
-- `uvicorn`
-- `torch`, `torchvision`
-- `numpy`, `scikit-learn`
-- `pillow`, `pillow-heif`
-
-
-3. How the MVC App Starts the AI Service
-----------------------------------------
-
-The .NET MVC application includes `PythonRunnerService` (`MVC/MVC/Services/PythonRunnerService.cs`) which is responsible for starting the Python API.
-
-Key features and behavior:
-
-- **Cross-Platform Support**: Automatically detects the operating system to use the correct Python executable path:
-  - Windows: `<root>/venv/Scripts/python.exe`
-  - macOS/Linux: `<root>/venv/bin/python`
-  - Fallback: Uses system `python` or `python3` if the virtual environment is missing.
-
-- **Resilience**:
-  - Automatically restarts the Python service if it crashes unexpectedly.
-  - Includes a backoff mechanism and restart limit (max 5 restarts in a short period) to prevent infinite loops.
-
-- **Zombie Process Protection**:
-  - Attempts to kill any lingering `api.py` processes on startup (using `wmic` on Windows or `pkill` on Unix).
-  - Ensures the Python process is terminated when the .NET application stops or exits unexpectedly.
-
-- **Execution**:
-  - Runs `AI/api.py` as the entry point with the project root as the working directory.
-  - Pipes standard output and error logs from Python into the ASP.NET Core logging system.
-
-For reliable operation, it is recommended to:
-
-- Keep the `AI` folder at the solution root.
-- Create and use the `venv` virtual environment as described above.
-
-
-4. Running the AI Service Manually (for Testing)
------------------------------------------------
-
-You can also run the AI service manually without starting the MVC app, which is useful for debugging.
-
-From the repository root:
-
-```bash
-cd /path/to/DomusMercatoris
-source venv/bin/activate
-python AI/api.py
-```
-
-This will start a FastAPI server via Uvicorn on:
-
-- `http://0.0.0.0:5001`
-
-Endpoints:
-
-- `POST /extract` — accepts image files and returns a feature vector.
-- `POST /cluster` — accepts feature vectors and runs K-Means clustering.
-
-
-5. Example Requests and Responses
----------------------------------
-
-### 5.1. `POST /extract`
-
-Example request using `curl` (sending a single image file):
-
-```bash
-curl -X POST "http://localhost:5001/extract" \
-  -H "accept: application/json" \
-  -H "Content-Type: multipart/form-data" \
-  -F "files=@/path/to/image.jpg"
-```
-
-Example JSON response (shortened for readability):
-
-```json
-{
-  "vector": [
-    0.012345678,
-    -0.03456789,
-    0.00123456
-    // ... total length 2048 floats
-  ]
-}
-```
-
-The `vector` field is a list of 2048 floating-point values representing the extracted image features.
-
-
-### 5.2. `POST /cluster`
-
-Example request body:
-
-```json
-{
-  "features": [
-    [0.01, 0.02, 0.03],
-    [0.02, 0.01, 0.05],
-    [0.10, 0.20, 0.30]
-  ],
-  "k": 2
-}
-```
-
-Example request using `curl`:
-
-```bash
-curl -X POST "http://localhost:5001/cluster" \
-  -H "accept: application/json" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "features": [
-      [0.01, 0.02, 0.03],
-      [0.02, 0.01, 0.05],
-      [0.10, 0.20, 0.30]
-    ],
-    "k": 2
-  }'
-```
-
-Example JSON response:
-
-```json
-{
-  "labels": [0, 0, 1],
-  "centroids": [
-    [0.015, 0.015, 0.04],
-    [0.10, 0.20, 0.30]
-  ]
-}
-```
-
-- `labels` is a list assigning each input feature vector to a cluster index.
-- `centroids` is a list of cluster centers in the same feature space.
-
-
-6. Common Issues and Troubleshooting
-------------------------------------
-
-**Problem: `ModuleNotFoundError: No module named 'fastapi'` or similar**
-
-- Cause: Dependencies were not installed into the environment that is running `api.py`.
-- Fix:
-  - Ensure you have created the `venv` at the project root.
-  - Run:
-
+1.  **Create a Virtual Environment:**
+    From the repository root (`DomusMercatoris`):
     ```bash
-    cd /path/to/DomusMercatoris
-    venv/bin/python -m pip install -r AI/requirements.txt
+    python3.11 -m venv venv
     ```
 
-**Problem: MVC logs show “Python service will not start” or API script not found**
+2.  **Install Dependencies:**
+    ```bash
+    source venv/bin/activate
+    pip install --upgrade pip
+    pip install -r AI/requirements.txt
+    ```
+    *Dependencies include: `fastapi`, `uvicorn`, `torch`, `torchvision`, `rembg`, `pillow`, `numpy`, `scikit-learn`.*
 
-- Ensure that:
-  - The repository structure still includes the `AI` folder at the root.
-  - The MVC app is being run from within the solution (so the root search can find `AI`).
+## 🚀 Running the Service
 
+The service runs on port **5001** by default.
 
-7. Updating Dependencies
-------------------------
-
-When you need to add or update Python packages:
-
-1. Modify `AI/requirements.txt` to include the desired packages.
-2. Re-install dependencies:
-
-   ```bash
-   cd /path/to/DomusMercatoris
-   venv/bin/python -m pip install -r AI/requirements.txt
-   ```
-
-3. Restart the MVC application so `PythonRunnerService` can restart the AI process with the updated environment.
-
-
-8. AI Flow Diagram (Mermaid)
-----------------------------
-
-The diagram below shows how the ASP.NET MVC application, the Python AI service, and the database interact.
-
-```mermaid
-graph LR
-  A[ASP.NET MVC App] --> B[PythonRunnerService]
-  B --> C[Start AI/api.py with Uvicorn]
-  C --> D[FastAPI AI Service port 5001]
-
-  E[Admin or Moderator UI] --> F[Upload or Edit Product]
-  F --> G[ASP.NET MVC Controllers]
-  G --> H[ClusteringService.ExtractAndStoreFeaturesAsync]
-  H --> I[Read product images from wwwroot]
-  I --> J[POST /extract to AI service]
-  J --> K[ResNet feature extractor]
-  K --> L[2048-dim feature vector]
-  L --> M[Save vector in ProductFeatures]
-  M --> N[(Database)]
-
-  P[Admin triggers clustering] --> Q[ClusteringService.RunClusteringAsync]
-  Q --> R[Load feature vectors from ProductFeatures]
-  R --> S[Build feature matrix]
-  S --> T[POST /cluster to AI service]
-  T --> U[Run K-Means clustering]
-  U --> V[Return labels and centroids]
-  V --> W[Update ProductClusters and ProductClusterMembers]
-  W --> N
-  N --> X[UIs read clustered products]
+### Manual Start (Debug Mode)
+```bash
+# From project root
+source venv/bin/activate
+python -m uvicorn AI.api:app --port 5001 --reload
 ```
+
+### Automatic Start
+The .NET backend application (`DomusMercatorisDotnetRest` or MVC app) includes a `PythonRunnerService` that attempts to start this API automatically if it's not running.
+
+## 🐛 Debugging & Logging
+
+**Debug Logging** is enabled by default (`ENABLE_DEBUG_LOGGING = True` in `api.py`).
+
+*   **Log Location:** `AI/AiLogs/`
+*   **Contents:**
+    *   `YYYYMMDD_..._filename.jpg`: The final preprocessed image seen by ResNet (224x224, white bg).
+    *   `YYYYMMDD_..._vector.json`: The output feature vector.
+
+Use these logs to verify that the background removal and resizing are working correctly.
+
+## 🔌 API Endpoints
+
+*   `POST /extract`: Accepts a list of image files, returns feature vectors.
+*   `POST /cluster`: Accepts feature vectors and `k`, returns cluster labels and centroids.

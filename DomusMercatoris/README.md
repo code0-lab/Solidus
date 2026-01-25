@@ -1,177 +1,74 @@
-Domus Mercatoris – Solution Overview and Setup
-==============================================
+# Domus Mercatoris
 
-This repository contains the full Domus Mercatoris system:
+Domus Mercatoris is a modern, microservices-based e-commerce platform built with a "Brutalist" design philosophy. It integrates advanced AI capabilities for visual product search and features a robust, scalable architecture.
 
-- **DomusMercatorisDotnetRest** – .NET REST API (backend)
-- **MVC** – ASP.NET Core MVC / Razor Pages application (admin and web UI)
-- **DomusMercatorisAngular** – Angular SPA (shop frontend)
-- **AI** – Python-based AI service used for image feature extraction and clustering
+## 🏗 System Architecture
 
-This document explains how to set up and run each part locally.
+The project consists of three main components:
 
+1.  **Frontend (Angular):**
+    *   **Project:** `DomusMercatorisAngular`
+    *   **Tech Stack:** Angular 17+ (Standalone Components, Signals), TypeScript.
+    *   **Features:** Brutalist UI, Infinite Scroll, **Visual Search with Image Cropping**.
+    *   **Responsibility:** User interface, handling user input, cropping images for AI processing.
 
-Prerequisites
--------------
+2.  **Backend API (ASP.NET Core):**
+    *   **Project:** `DomusMercatorisDotnetRest`
+    *   **Tech Stack:** .NET 8, C#, Entity Framework Core.
+    *   **Features:** REST API, JWT Authentication, Product Management, **AI Proxy/Gateway**.
+    *   **Responsibility:** Business logic, database operations, orchestrating requests between Frontend and AI Service.
 
-- .NET SDK 9.0 or compatible
-- Node.js and npm
-- Python 3 (available as `python3` on your PATH)
-- macOS or Linux (commands below use Unix-style paths)
+3.  **AI Service (Python):**
+    *   **Project:** `AI`
+    *   **Tech Stack:** Python 3.11, FastAPI, PyTorch (ResNet-50), **Rembg**.
+    *   **Features:** Image Feature Extraction, Background Removal, Clustering.
+    *   **Responsibility:** Processing images to generate feature vectors for visual search.
 
+## 🖼 The "Golden Ratio" Image Processing Pipeline
 
-1. Restore and Build .NET Projects
-----------------------------------
+To ensure the highest accuracy for visual search (ResNet-50), we implement a specific processing pipeline:
 
-From the solution root:
+1.  **User Selection (Angular):** The user uploads an image and **crops** the relevant area using the client-side cropper (`ngx-image-cropper`). This ensures only the object of interest is sent.
+2.  **Background Removal (Python):** The cropped image is sent to the AI service, where **`rembg`** removes the background, isolating the product.
+3.  **Smart Preprocessing (Python):** The transparent image is composited over a **white background** and resized to **224x224** while preserving the aspect ratio (padding with white).
+4.  **Feature Extraction (Python):** The processed image is fed into ResNet-50 to generate a feature vector.
 
-```bash
-cd /path/to/DomusMercatoris
-dotnet restore DomusMercatoris.sln
-dotnet build DomusMercatoris.sln
-```
+## 🚀 Getting Started
 
-This builds:
+### Prerequisites
 
-- `DomusMercatoris.Core`
-- `DomusMercatoris.Data`
-- `DomusMercatoris.Service`
-- `DomusMercatorisDotnetRest`
-- `MVC` (DomusMercatorisDotnetMVC)
+*   **Node.js** (LTS) & **npm**
+*   **.NET 8 SDK**
+*   **Python 3.11** (Required for `rembg` compatibility)
+*   **Docker** (Optional, for containerized deployment)
 
+### Running the Project
 
-2. Run the REST API
--------------------
+1.  **AI Service:**
+    *   Navigate to the root directory.
+    *   Set up the virtual environment: `python3.11 -m venv venv`
+    *   Activate and install requirements: `source venv/bin/activate && pip install -r AI/requirements.txt`
+    *   The .NET application will attempt to start this service automatically, or you can run it manually.
 
-From the solution root:
+2.  **Backend API:**
+    *   Navigate to `DomusMercatorisDotnetRest`.
+    *   Run `dotnet run`.
+    *   The API usually listens on `http://localhost:5200`.
 
-```bash
-cd /path/to/DomusMercatoris
-dotnet run --project DomusMercatorisDotnetRest/DomusMercatorisDotnetRest.csproj
-```
+3.  **Frontend:**
+    *   Navigate to `DomusMercatorisAngular`.
+    *   Run `npm install` (first time).
+    *   Run `npm start`.
+    *   Access the app at `http://localhost:4200`.
 
-This starts the REST API, serving JSON endpoints used by the frontend.
+## 📂 Repository Structure
 
+*   `AI/` - Python FastAPI service for AI operations.
+*   `DomusMercatorisAngular/` - Angular Frontend application.
+*   `DomusMercatorisDotnetRest/` - Main ASP.NET Core REST API.
+*   `DomusMercatoris.Core/` - Shared Domain Entities and Interfaces.
+*   `DomusMercatoris.Data/` - Database Context and Infrastructure.
+*   `DomusMercatoris.Service/` - Business Logic Services.
 
-3. Run the MVC Application
---------------------------
-
-From the solution root:
-
-```bash
-cd /path/to/DomusMercatoris
-dotnet run --project MVC/MVC/MVC.csproj
-```
-
-The MVC app hosts the admin UI and is also responsible for starting the Python AI service via `PythonRunnerService`.
-
-
-4. Set Up and Run the Angular Frontend
---------------------------------------
-
-From the Angular project directory:
-
-```bash
-cd /path/to/DomusMercatoris/DomusMercatorisAngular
-npm install
-npm run start
-```
-
-The Angular app:
-
-- Uses `ng serve` with `proxy.conf.json` for API calls.
-- Exposes the shop frontend (see `angular.json` and `proxy.conf.json` for details).
-
-
-5. Set Up the Python AI Service
--------------------------------
-
-The Python AI service lives in the `AI` folder and is started automatically by the MVC app. It uses FastAPI and Uvicorn.
-
-From the solution root:
-
-```bash
-cd /path/to/DomusMercatoris
-python3 -m venv venv
-venv/bin/python -m pip install --upgrade pip
-venv/bin/python -m pip install -r AI/requirements.txt
-```
-
-This creates a virtual environment at the solution root and installs all dependencies required by `AI/api.py` (FastAPI, Torch, scikit-learn, etc.).
-
-For more detailed information about the AI service (endpoints, troubleshooting), see:
-
-- `AI/README.md`
-
-
-6. How the MVC App Integrates with the AI Service
--------------------------------------------------
-
-The MVC project includes `PythonRunnerService`:
-
-- File: `MVC/MVC/Services/PythonRunnerService.cs`
-- Features:
-  - **Cross-Platform**: Automatically selects the correct Python executable for Windows (`venv/Scripts/python.exe`) or Linux/macOS (`venv/bin/python`).
-  - **Resilience**: Automatically restarts the Python service if it crashes.
-  - **Cleanup**: Kills zombie processes on startup and ensures clean shutdown on exit.
-  - **Logging**: Pipes Python stdout/stderr into ASP.NET Core logs for easier debugging.
-
-The clustering logic in the MVC app (for example in `ClusteringService`) calls the Python API endpoints at `http://localhost:5001` to:
-
-- Extract image feature vectors.
-- Run K-Means clustering.
-
-
-7. Running the Python AI Service Manually (Optional)
-----------------------------------------------------
-
-For debugging, you can start the Python AI service manually:
-
-```bash
-cd /path/to/DomusMercatoris
-source venv/bin/activate
-python AI/api.py
-```
-
-This will start a FastAPI server via Uvicorn on:
-
-- `http://0.0.0.0:5001`
-
-You can then hit its endpoints (for example with `curl` or Postman) to verify behavior independently of the MVC app.
-
-
-8. Common Problems
-------------------
-
-**Problem: MVC logs show Python import errors (e.g. `ModuleNotFoundError: No module named 'fastapi'`)**
-
-- Ensure the virtual environment exists at the solution root.
-- Ensure dependencies are installed:
-
-  ```bash
-  cd /path/to/DomusMercatoris
-  venv/bin/python -m pip install -r AI/requirements.txt
-  ```
-
-**Problem: MVC logs show that the Python service will not start or cannot find the `AI` folder**
-
-- Make sure:
-  - The `AI` folder is present at the solution root.
-  - You are running the MVC app from within this repository and not from a different working directory.
-
-
-9. Where to Look in the Code
-----------------------------
-
-- AI service implementation:
-  - `AI/api.py`
-- AI service CLI utilities:
-  - `AI/main.py`
-- MVC Python integration:
-  - `MVC/MVC/Services/PythonRunnerService.cs`
-  - `MVC/MVC/Services/ClusteringService.cs`
-- REST API:
-  - `DomusMercatorisDotnetRest/Program.cs`
-- Angular frontend:
-  - `DomusMercatorisAngular/src/app`
-
+---
+© 2026 Solidus. All rights reserved.

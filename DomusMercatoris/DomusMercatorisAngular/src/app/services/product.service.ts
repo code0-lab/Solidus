@@ -157,8 +157,38 @@ export class ProductService {
       this.products.update(current => [...current, ...processed]);
     } else {
       this.products.set(processed);
+      this.saveLastResults(processed); // Save to history
     }
     this.totalCount.set(data.totalCount);
+  }
+
+  // --- Persistence for Last Results ---
+  private readonly STORAGE_KEY = 'sys_last_results';
+
+  private saveLastResults(products: Product[]) {
+    try {
+      // Limit to first 9 items to save space/performance
+      const toSave = products.slice(0, 9);
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(toSave));
+    } catch (e) {
+      console.warn('Failed to save last results', e);
+    }
+  }
+
+  loadLastResults(): boolean {
+    try {
+      const stored = localStorage.getItem(this.STORAGE_KEY);
+      if (stored) {
+        const products = JSON.parse(stored) as Product[];
+        if (products && products.length > 0) {
+          this.products.set(products);
+          return true;
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load last results', e);
+    }
+    return false;
   }
 
   searchProductsByName(query: string, pageNumber: number = 1, pageSize: number = 9, companyId?: number | null, brandId?: number | null, categoryId?: number | null): void {
