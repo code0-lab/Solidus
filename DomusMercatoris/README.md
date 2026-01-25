@@ -20,13 +20,27 @@ The project consists of three main components:
 
 3.  **AI Service (Python):**
     *   **Project:** `AI`
-    *   **Tech Stack:** Python 3.11, FastAPI, PyTorch (ResNet-50), **Rembg**.
-    *   **Features:** Image Feature Extraction, Background Removal, Clustering.
+    *   **Tech Stack:** Python 3.11, FastAPI, PyTorch (ResNet-50), **Rembg**, **Pillow-Heif**.
+    *   **Features:** Image Feature Extraction, Background Removal, Clustering, **HEIC Support**.
     *   **Responsibility:** Processing images to generate feature vectors for visual search.
 
 ## 🖼 The "Golden Ratio" Image Processing Pipeline
 
 To ensure the highest accuracy for visual search (ResNet-50), we implement a specific processing pipeline:
+
+```mermaid
+graph LR
+    A[User Upload] -->|Raw Image| B[Angular Cropper]
+    B -->|Cropped Image| C[Backend API]
+    C -->|Forward| D[AI Service]
+    subgraph Python AI Service
+    D -->|Rembg| E[Remove Background]
+    E -->|Transparent| F[Smart Preprocessing]
+    F -->|Resize/Pad to 224x224| G[ResNet-50]
+    G -->|Extract| H[Feature Vector]
+    end
+    H -->|JSON| C
+```
 
 1.  **User Selection (Angular):** The user uploads an image and **crops** the relevant area using the client-side cropper (`ngx-image-cropper`). This ensures only the object of interest is sent.
 2.  **Background Removal (Python):** The cropped image is sent to the AI service, where **`rembg`** removes the background, isolating the product.

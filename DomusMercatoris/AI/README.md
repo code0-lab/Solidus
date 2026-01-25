@@ -12,7 +12,16 @@ This folder contains the **Python-based AI service** used by the Domus Mercatori
 
 To optimize ResNet-50 performance, this service implements the backend portion of our image processing pipeline:
 
-1.  **Input:** Receives a cropped image from the Frontend (or raw image via API).
+```mermaid
+graph LR
+    Input[Input Image] -->|Rembg| NoBg[Transparent Image]
+    NoBg -->|White BG Composition| WhiteBg[White Background]
+    WhiteBg -->|Resize & Pad| Resized[224x224 Image]
+    Resized -->|Inference| ResNet[ResNet-50]
+    ResNet -->|2048-dim Vector| Output[Feature Vector]
+```
+
+1.  *   **Input:** Receives a cropped image from the Frontend (or raw image via API). Supports standard formats (JPEG, PNG) and **HEIC/HEIF** (via `pillow-heif`).
 2.  **Background Removal:** Applies `rembg.remove()` to isolate the object.
 3.  **Smart Preprocessing:**
     *   Composites the transparent image over a **white background**.
@@ -39,7 +48,7 @@ To optimize ResNet-50 performance, this service implements the backend portion o
     pip install --upgrade pip
     pip install -r AI/requirements.txt
     ```
-    *Dependencies include: `fastapi`, `uvicorn`, `torch`, `torchvision`, `rembg`, `pillow`, `numpy`, `scikit-learn`.*
+    *Dependencies include: `fastapi`, `uvicorn`, `torch`, `torchvision`, `rembg`, `pillow`, `pillow-heif` (HEIC support), `numpy`, `scikit-learn`.*
 
 ## 🚀 Running the Service
 
@@ -57,7 +66,7 @@ The .NET backend application (`DomusMercatorisDotnetRest` or MVC app) includes a
 
 ## 🐛 Debugging & Logging
 
-**Debug Logging** is enabled by default (`ENABLE_DEBUG_LOGGING = True` in `api.py`).
+**Debug Logging** is disabled by default (`ENABLE_DEBUG_LOGGING = False` in `api.py`) to save disk space. You can enable it by changing the variable to `True`.
 
 *   **Log Location:** `AI/AiLogs/`
 *   **Contents:**
