@@ -25,15 +25,15 @@ namespace DomusMercatorisDotnetMVC.Pages
         public int TotalCount { get; set; } = 0;
         public int TotalPages { get; set; } = 1;
 
-        private bool ProductCategoriesExists()
+        private async Task<bool> ProductCategoriesExistsAsync()
         {
             try
             {
                 var conn = _db.Database.GetDbConnection();
-                if (conn.State != System.Data.ConnectionState.Open) conn.Open();
+                if (conn.State != System.Data.ConnectionState.Open) await conn.OpenAsync();
                 using var cmd = conn.CreateCommand();
                 cmd.CommandText = "SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'ProductCategories'";
-                var obj = cmd.ExecuteScalar();
+                var obj = await cmd.ExecuteScalarAsync();
                 return obj != null;
             }
             catch
@@ -42,7 +42,7 @@ namespace DomusMercatorisDotnetMVC.Pages
             }
         }
 
-        public IActionResult OnGet(int id)
+        public async Task<IActionResult> OnGetAsync(int id)
         {
             var comp = User.FindFirst("CompanyId")?.Value;
             int companyId = 0;
@@ -55,11 +55,11 @@ namespace DomusMercatorisDotnetMVC.Pages
                 var idClaim = User.FindFirst("UserId")?.Value;
                 if (!string.IsNullOrEmpty(idClaim) && long.TryParse(idClaim, out var userId))
                 {
-                    var user = _db.Users.SingleOrDefault(u => u.Id == userId);
+                    var user = await _db.Users.AsNoTracking().SingleOrDefaultAsync(u => u.Id == userId);
                     if (user != null) companyId = user.CompanyId;
                 }
             }
-            var cat = _db.Categories.SingleOrDefault(c => c.CompanyId == companyId && c.Id == id);
+            var cat = await _db.Categories.AsNoTracking().SingleOrDefaultAsync(c => c.CompanyId == companyId && c.Id == id);
             if (cat == null)
             {
                 return RedirectToPage("/Categories");
@@ -71,36 +71,38 @@ namespace DomusMercatorisDotnetMVC.Pages
             {
                 PageNumber = Math.Max(1, p);
             }
-            if (ProductCategoriesExists())
+            if (await ProductCategoriesExistsAsync())
             {
                 var baseQuery = _db.Products
+                    .AsNoTracking()
                     .Where(p => p.CompanyId == companyId)
                     .Include(p => p.Categories)
                     .Where(p => p.CategoryId == id || p.SubCategoryId == id || p.Categories.Any(c => c.Id == id));
-                TotalCount = baseQuery.Count();
+                TotalCount = await baseQuery.CountAsync();
                 TotalPages = Math.Max(1, (int)Math.Ceiling(TotalCount / (double)PageSize));
                 if (PageNumber > TotalPages) PageNumber = TotalPages;
                 var skip = (PageNumber - 1) * PageSize;
-                Items = baseQuery
+                Items = await baseQuery
                     .OrderByDescending(p => p.CreatedAt)
                     .Skip(skip)
                     .Take(PageSize)
-                    .ToList();
+                    .ToListAsync();
             }
             else
             {
                 var baseQuery = _db.Products
+                    .AsNoTracking()
                     .Where(p => p.CompanyId == companyId)
                     .Where(p => p.CategoryId == id || p.SubCategoryId == id);
-                TotalCount = baseQuery.Count();
+                TotalCount = await baseQuery.CountAsync();
                 TotalPages = Math.Max(1, (int)Math.Ceiling(TotalCount / (double)PageSize));
                 if (PageNumber > TotalPages) PageNumber = TotalPages;
                 var skip = (PageNumber - 1) * PageSize;
-                Items = baseQuery
+                Items = await baseQuery
                     .OrderByDescending(p => p.CreatedAt)
                     .Skip(skip)
                     .Take(PageSize)
-                    .ToList();
+                    .ToListAsync();
             }
             return Page();
         }

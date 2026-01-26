@@ -70,22 +70,21 @@ namespace DomusMercatorisDotnetMVC.Pages.Account
             const string digits = "0123456789";
             const string all = lowers + uppers + digits;
             
-            var random = new Random();
             var password = new char[10]; // Length 10 (between 5 and 12)
 
             // Ensure requirements
-            password[0] = lowers[random.Next(lowers.Length)];
-            password[1] = uppers[random.Next(uppers.Length)];
-            password[2] = digits[random.Next(digits.Length)];
+            password[0] = lowers[System.Security.Cryptography.RandomNumberGenerator.GetInt32(lowers.Length)];
+            password[1] = uppers[System.Security.Cryptography.RandomNumberGenerator.GetInt32(uppers.Length)];
+            password[2] = digits[System.Security.Cryptography.RandomNumberGenerator.GetInt32(digits.Length)];
 
             // Fill the rest
             for (int i = 3; i < password.Length; i++)
             {
-                password[i] = all[random.Next(all.Length)];
+                password[i] = all[System.Security.Cryptography.RandomNumberGenerator.GetInt32(all.Length)];
             }
 
             // Shuffle
-            return new string(password.OrderBy(x => random.Next()).ToArray());
+            return new string(password.OrderBy(x => System.Security.Cryptography.RandomNumberGenerator.GetInt32(int.MaxValue)).ToArray());
         }
     }
 }

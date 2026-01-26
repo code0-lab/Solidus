@@ -4,6 +4,7 @@ using DomusMercatoris.Service.Services;
 using DomusMercatoris.Service.DTOs;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
@@ -26,7 +27,7 @@ namespace DomusMercatorisDotnetMVC.Pages
 
         public async Task<IActionResult> OnGetAsync()
         {
-            var companyId = GetCompanyId();
+            var companyId = await GetCompanyIdAsync();
             if (companyId == 0) return RedirectToPage("/Index");
 
             Brands = await _brandService.GetBrandsByCompanyAsync(companyId);
@@ -35,7 +36,7 @@ namespace DomusMercatorisDotnetMVC.Pages
 
         public async Task<IActionResult> OnPostCreateAsync()
         {
-            var companyId = GetCompanyId();
+            var companyId = await GetCompanyIdAsync();
             if (companyId == 0) return RedirectToPage("/Index");
 
             if (!ModelState.IsValid)
@@ -52,14 +53,14 @@ namespace DomusMercatorisDotnetMVC.Pages
 
         public async Task<IActionResult> OnPostDeleteAsync(int id)
         {
-            var companyId = GetCompanyId();
+            var companyId = await GetCompanyIdAsync();
             if (companyId == 0) return RedirectToPage("/Index");
 
             await _brandService.DeleteBrandAsync(id, companyId);
             return RedirectToPage();
         }
 
-        private int GetCompanyId()
+        private async Task<int> GetCompanyIdAsync()
         {
             var claim = User.FindFirst("CompanyId")?.Value;
             if (int.TryParse(claim, out int id)) return id;
@@ -68,7 +69,7 @@ namespace DomusMercatorisDotnetMVC.Pages
             var userIdStr = User.FindFirst("UserId")?.Value;
             if (long.TryParse(userIdStr, out long userId))
             {
-                 var user = _db.Users.SingleOrDefault(u => u.Id == userId);
+                 var user = await _db.Users.AsNoTracking().SingleOrDefaultAsync(u => u.Id == userId);
                  return user?.CompanyId ?? 0;
             }
             return 0;

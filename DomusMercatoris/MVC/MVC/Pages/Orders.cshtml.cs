@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -21,19 +22,16 @@ namespace DomusMercatorisDotnetMVC.Pages
         }
 
         public List<Order> Orders { get; set; } = new List<Order>();
+
+        [BindProperty(SupportsGet = true)]
         public int PageNumber { get; set; } = 1;
+
         public int PageSize { get; set; } = 9;
         public int TotalCount { get; set; } = 0;
         public int TotalPages { get; set; } = 1;
 
-        public void OnGet()
+        public async Task OnGetAsync()
         {
-            var pageStr = Request.Query["page"].ToString();
-            if (!string.IsNullOrEmpty(pageStr) && int.TryParse(pageStr, out var p))
-            {
-                PageNumber = Math.Max(1, p);
-            }
-
             var comp = User.FindFirst("CompanyId")?.Value;
             int companyId = 0;
             if (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var cid))
@@ -45,7 +43,7 @@ namespace DomusMercatorisDotnetMVC.Pages
                 var idClaim = User.FindFirst("UserId")?.Value;
                 if (!string.IsNullOrEmpty(idClaim) && long.TryParse(idClaim, out var userId))
                 {
-                    var me = _db.Users.SingleOrDefault(u => u.Id == userId);
+                    var me = await _db.Users.SingleOrDefaultAsync(u => u.Id == userId);
                     if (me != null) companyId = me.CompanyId;
                 }
             }
@@ -53,15 +51,18 @@ namespace DomusMercatorisDotnetMVC.Pages
             if (companyId > 0)
             {
                 var query = _db.Orders
+                    .AsNoTracking()
                     .Where(s => s.CompanyId == companyId && s.IsPaid);
 
-                TotalCount = query.Count();
+                TotalCount = await query.CountAsync();
                 TotalPages = Math.Max(1, (int)Math.Ceiling(TotalCount / (double)PageSize));
+                
+                if (PageNumber < 1) PageNumber = 1;
                 if (PageNumber > TotalPages) PageNumber = TotalPages;
 
                 var skip = (PageNumber - 1) * PageSize;
 
-                Orders = query
+                Orders = await query
                     .Include(s => s.User)
                     .Include(s => s.FleetingUser)
                     .Include(s => s.OrderItems)
@@ -72,7 +73,7 @@ namespace DomusMercatorisDotnetMVC.Pages
                     .OrderByDescending(s => s.CreatedAt)
                     .Skip(skip)
                     .Take(PageSize)
-                    .ToList();
+                    .ToListAsync();
             }
         }
     }

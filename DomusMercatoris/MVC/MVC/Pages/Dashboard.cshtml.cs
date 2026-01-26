@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authorization;
 using DomusMercatorisDotnetMVC.Services;
 using System.Linq;
 using DomusMercatorisDotnetMVC.Dto.CommentsDto;
+using OrderService = DomusMercatoris.Service.Services.OrderService;
+using DomusMercatoris.Service.DTOs;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
@@ -13,12 +15,14 @@ namespace DomusMercatorisDotnetMVC.Pages
         private readonly ProductService _productService;
         private readonly UserService _userService;
         private readonly CommentService _commentService;
+        private readonly OrderService _orderService;
 
-        public DashboardModel(ProductService productService, UserService userService, CommentService commentService)
+        public DashboardModel(ProductService productService, UserService userService, CommentService commentService, OrderService orderService)
         {
             _productService = productService;
             _userService = userService;
             _commentService = commentService;
+            _orderService = orderService;
         }
 
         public int CompanyId { get; set; }
@@ -28,6 +32,8 @@ namespace DomusMercatorisDotnetMVC.Pages
         public string ManagerName { get; set; } = string.Empty;
         public string CompanyName { get; set; } = string.Empty;
         public List<CommentsDto> RecentComments { get; set; } = new();
+        public List<OrderDto> RecentOrders { get; set; } = new();
+        public int TotalOrders { get; set; }
 
         public async Task OnGetAsync()
         {
@@ -58,6 +64,10 @@ namespace DomusMercatorisDotnetMVC.Pages
                 CompanyName = await _userService.GetCompanyNameAsync(CompanyId) ?? string.Empty;
                 var result = await _commentService.GetCommentsForCompanyAsync(CompanyId, 1, 1, 3);
                 RecentComments = result.Items;
+
+                var orders = await _orderService.GetByCompanyIdAsync(CompanyId);
+                TotalOrders = orders.Count;
+                RecentOrders = orders.Take(5).ToList();
             }
         }
     }

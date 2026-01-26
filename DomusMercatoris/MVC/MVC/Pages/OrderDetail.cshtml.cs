@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using DomusMercatoris.Data;
 using DomusMercatoris.Core.Entities;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
@@ -21,9 +22,10 @@ namespace DomusMercatorisDotnetMVC.Pages
         public Order? Order { get; set; }
         public CargoTracking? Tracking { get; set; }
 
-        public IActionResult OnGet(long id)
+        public async Task<IActionResult> OnGetAsync(long id)
         {
-            var order = _db.Orders
+            var order = await _db.Orders
+                .AsNoTracking()
                 .Include(s => s.User)
                 .Include(s => s.FleetingUser)
                 .Include(s => s.OrderItems)
@@ -31,7 +33,7 @@ namespace DomusMercatorisDotnetMVC.Pages
                 .Include(s => s.OrderItems)
                     .ThenInclude(sp => sp.VariantProduct)
                 .Include(s => s.CargoTracking)
-                .SingleOrDefault(s => s.Id == id);
+                .SingleOrDefaultAsync(s => s.Id == id);
 
             if (order == null || !order.IsPaid)
             {
@@ -50,7 +52,7 @@ namespace DomusMercatorisDotnetMVC.Pages
                 var idClaim = User.FindFirst("UserId")?.Value;
                 if (!string.IsNullOrEmpty(idClaim) && long.TryParse(idClaim, out var userId))
                 {
-                    var me = _db.Users.SingleOrDefault(u => u.Id == userId);
+                    var me = await _db.Users.SingleOrDefaultAsync(u => u.Id == userId);
                     if (me != null) companyId = me.CompanyId;
                 }
             }

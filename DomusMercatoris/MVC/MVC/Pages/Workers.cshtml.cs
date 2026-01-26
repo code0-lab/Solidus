@@ -38,7 +38,10 @@ namespace DomusMercatorisDotnetMVC.Pages
             {
                 var workers = await _userService.GetByCompanyAsync(companyId);
                 Workers = workers
-                    .Where(u => !(u.Roles ?? new List<string>()).Any(r => string.Equals(r, "Customer", StringComparison.OrdinalIgnoreCase)))
+                    .Where(u => !(u.Roles ?? new List<string>()).Any(r => 
+                        string.Equals(r, "Customer", StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(r, "Rex", StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(r, "Moderator", StringComparison.OrdinalIgnoreCase)))
                     .ToList();
                 return Page();
             }
@@ -54,7 +57,10 @@ namespace DomusMercatorisDotnetMVC.Pages
             }
             var workersMe = await _userService.GetByCompanyAsync(me.CompanyId);
             Workers = workersMe
-                .Where(u => !(u.Roles ?? new List<string>()).Any(r => string.Equals(r, "Customer", StringComparison.OrdinalIgnoreCase)))
+                .Where(u => !(u.Roles ?? new List<string>()).Any(r => 
+                    string.Equals(r, "Customer", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(r, "Rex", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(r, "Moderator", StringComparison.OrdinalIgnoreCase)))
                 .ToList();
             return Page();
         }

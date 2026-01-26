@@ -28,6 +28,7 @@ namespace MVC.Pages.MockBank
         public async Task OnGetAsync()
         {
             PendingOrders = await _context.Orders
+                .AsNoTracking()
                 .Where(s => s.Status == OrderStatus.PaymentPending)
                 .OrderByDescending(s => s.CreatedAt)
                 .ToListAsync();
@@ -50,8 +51,9 @@ namespace MVC.Pages.MockBank
             var payload = new { OrderId = id, Approved = approved };
             var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
-            // Assuming API is running on localhost:5280
-            var response = await client.PostAsync("http://localhost:5280/api/Payment/process", content);
+            // Use current request scheme and host to construct the URL dynamically
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var response = await client.PostAsync($"{baseUrl}/api/Payment/process", content);
 
             if (response.IsSuccessStatusCode)
             {

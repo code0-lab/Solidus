@@ -11,6 +11,11 @@ namespace DomusMercatorisDotnetRest.Hubs
             await Groups.AddToGroupAsync(Context.ConnectionId, orderId);
         }
 
+        public async Task JoinCompanyGroup(int companyId)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"Company-{companyId}");
+        }
+
         public async Task LeaveOrderGroup(string orderId)
         {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, orderId);

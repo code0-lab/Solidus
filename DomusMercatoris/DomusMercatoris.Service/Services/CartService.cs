@@ -39,6 +39,11 @@ namespace DomusMercatoris.Service.Services
 
         public async Task AddToCartAsync(long userId, AddToCartDto dto)
         {
+            if (dto.Quantity <= 0)
+            {
+                throw new ArgumentException("Quantity must be greater than zero.", nameof(dto.Quantity));
+            }
+
             var existingItem = await _db.CartItems
                 .FirstOrDefaultAsync(c => c.UserId == userId && c.ProductId == dto.ProductId && c.VariantProductId == dto.VariantProductId);
 
@@ -62,6 +67,11 @@ namespace DomusMercatoris.Service.Services
 
         public async Task UpdateQuantityAsync(long userId, long itemId, int quantity)
         {
+            if (quantity <= 0)
+            {
+                throw new ArgumentException("Quantity must be greater than zero.", nameof(quantity));
+            }
+
             var item = await _db.CartItems.FirstOrDefaultAsync(c => c.Id == itemId && c.UserId == userId);
             if (item != null)
             {
@@ -72,12 +82,9 @@ namespace DomusMercatoris.Service.Services
 
         public async Task RemoveFromCartAsync(long userId, long itemId)
         {
-            var item = await _db.CartItems.FirstOrDefaultAsync(c => c.Id == itemId && c.UserId == userId);
-            if (item != null)
-            {
-                _db.CartItems.Remove(item);
-                await _db.SaveChangesAsync();
-            }
+            await _db.CartItems
+                .Where(c => c.Id == itemId && c.UserId == userId)
+                .ExecuteDeleteAsync();
         }
 
         public async Task SyncCartAsync(long userId, List<SyncCartItemDto> localItems)

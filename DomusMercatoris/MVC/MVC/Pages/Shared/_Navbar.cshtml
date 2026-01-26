@@ -64,9 +64,12 @@
                     </li>
                 }
                 
-                <li class="nav-item">
-                    <a class="nav-link text-uppercase fw-bold text-danger" href="/MockBank" target="_blank">🏦 Mock Bank</a>
-                </li>
+                @if (User.IsInRole("Rex"))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link text-uppercase fw-bold text-danger" href="/MockBank" target="_blank">🏦 Mock Bank</a>
+                    </li>
+                }
 
                 @if (User.Identity != null && User.Identity.IsAuthenticated)
                 {

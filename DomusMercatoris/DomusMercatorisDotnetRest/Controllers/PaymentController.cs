@@ -68,13 +68,25 @@ namespace DomusMercatorisDotnetRest.Controllers
             _orderRepository.Update(order);
             await _orderRepository.SaveChangesAsync();
 
-            // Notify client
+            // Notify client (user)
             await _hubContext.Clients.Group(order.Id.ToString()).SendAsync("PaymentStatusChanged", new 
             { 
                 OrderId = order.Id, 
                 Status = order.Status.ToString(),
                 IsApproved = request.Approved
             });
+
+            // Notify Company if Approved
+            if (request.Approved)
+            {
+                await _hubContext.Clients.Group($"Company-{order.CompanyId}").SendAsync("NewOrderReceived", new 
+                {
+                    OrderId = order.Id,
+                    CreatedAt = order.CreatedAt,
+                    TotalPrice = order.TotalPrice,
+                    Status = order.Status.ToString()
+                });
+            }
 
             return Ok(new { Message = "Processed" });
         }

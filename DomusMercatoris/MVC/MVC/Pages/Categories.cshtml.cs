@@ -8,6 +8,7 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 using System.Net;
+using System.Threading.Tasks;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
@@ -45,19 +46,18 @@ namespace DomusMercatorisDotnetMVC.Pages
         [BindProperty]
         public CreateInput Input { get; set; } = new();
 
-        public IActionResult OnGet()
+        public async Task<IActionResult> OnGetAsync()
         {
             var comp = User.FindFirst("CompanyId")?.Value;
             if (string.IsNullOrEmpty(comp) || !int.TryParse(comp, out var companyId))
             {
-                Console.WriteLine("[Categories.OnGet] missing company id, redirecting to Dashboard");
                 return RedirectToPage("/Dashboard");
             }
-            BuildTree(companyId);
+            await BuildTreeAsync(companyId);
             var editStr = Request.Query["editId"].ToString();
             if (!string.IsNullOrEmpty(editStr) && int.TryParse(editStr, out var eid))
             {
-                var cat = _db.Categories.SingleOrDefault(c => c.CompanyId == companyId && c.Id == eid);
+                var cat = await _db.Categories.SingleOrDefaultAsync(c => c.CompanyId == companyId && c.Id == eid);
                 if (cat != null)
                 {
                     IsEditing = true;
@@ -70,14 +70,12 @@ namespace DomusMercatorisDotnetMVC.Pages
                     };
                 }
             }
-            //Console.WriteLine($"[Categories.OnGet] compClaim={comp}, parsedCompanyId={companyId}, categoriesCount={Categories.Count}");
             return Page();
         }
 
-        public IActionResult OnPost()
+        public async Task<IActionResult> OnPostAsync()
         {
             var comp = User.FindFirst("CompanyId")?.Value;
-            //Console.WriteLine($"[Categories.OnPost] compClaim={comp}");
             int companyId = 0;
             if (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var cid))
             {
@@ -88,49 +86,27 @@ namespace DomusMercatorisDotnetMVC.Pages
                 var idClaim = User.FindFirst("UserId")?.Value;
                 if (!string.IsNullOrEmpty(idClaim) && long.TryParse(idClaim, out var userId))
                 {
-                    var user = _db.Users.SingleOrDefault(u => u.Id == userId);
+                    var user = await _db.Users.SingleOrDefaultAsync(u => u.Id == userId);
                     if (user != null) companyId = user.CompanyId;
                 }
             }
-            //Console.WriteLine($"[Categories.OnPost] resolvedCompanyId={companyId}");
             if (companyId == 0)
             {
                 ModelState.AddModelError(string.Empty, "Authorization error.");
-                //Console.WriteLine("[Categories.OnPost] companyId=0 authorization error");
-                return OnGet();
+                return await OnGetAsync();
             }
-            if (Request.HasFormContentType)
-            {
-                foreach (var key in Request.Form.Keys)
-                {
-                    var val = Request.Form[key].ToString();
-                    //Console.WriteLine($"[Categories.OnPost] form {key}='{val}'");
-                }
-            }
-            //Console.WriteLine($"[Categories.OnPost] bound Input.Name='{Input.Name}'");
-            var parentRaw = Input.ParentId.HasValue ? Input.ParentId.Value.ToString() : "null";
-            //Console.WriteLine($"[Categories.OnPost] input Name='{Input.Name}', DescLen={(Input.Description ?? string.Empty).Length}, ParentId={parentRaw}");
-            //Console.WriteLine($"[Categories.OnPost] modelStateValid={ModelState.IsValid}, errorCount={ModelState.ErrorCount}");
-            foreach (var kv in ModelState)
-            {
-                //foreach (var err in kv.Value.Errors)
-                //{
-                    //Console.WriteLine($"[Categories.OnPost] modelError key={kv.Key} error={err.ErrorMessage}");
-                //}
-            }
+
             if (!ModelState.IsValid)
             {
-                BuildTree(companyId);
-                //Console.WriteLine($"[Categories.OnPost] invalid model, categoriesCount={Categories.Count}");
+                await BuildTreeAsync(companyId);
                 return Page();
             }
 
             int? parentId = null;
             if (Input.ParentId.HasValue)
             {
-                var exists = _db.Categories.Any(c => c.CompanyId == companyId && c.Id == Input.ParentId.Value);
+                var exists = await _db.Categories.AnyAsync(c => c.CompanyId == companyId && c.Id == Input.ParentId.Value);
                 if (exists) parentId = Input.ParentId.Value;
-                //Console.WriteLine($"[Categories.OnPost] parentExists={exists}, parentId={(parentId.HasValue ? parentId.Value.ToString() : "null")}");
             }
 
             var entity = new Category
@@ -140,27 +116,24 @@ namespace DomusMercatorisDotnetMVC.Pages
                 CompanyId = companyId,
                 ParentId = parentId
             };
-            //Console.WriteLine($"[Categories.OnPost] saving CompanyId={companyId}, Name='{entity.Name}', ParentId={(entity.ParentId.HasValue ? entity.ParentId.Value.ToString() : "null")}");
+
             try
             {
                 _db.Categories.Add(entity);
-                _db.SaveChanges();
+                await _db.SaveChangesAsync();
             }
             catch
             {
-                //Console.WriteLine("[Categories.OnPost] save failed");
                 ModelState.AddModelError(string.Empty, "Save failed.");
-                BuildTree(companyId);
+                await BuildTreeAsync(companyId);
                 return Page();
             }
             TempData["Message"] = "Category created.";
-            //Console.WriteLine("[Categories.OnPost] save ok, redirect to /Categories");
             return RedirectToPage("/Categories");
         }
 
-        public IActionResult OnPostUpdate()
+        public async Task<IActionResult> OnPostUpdateAsync()
         {
-            //Console.WriteLine("edit Categories worked");
             var comp = User.FindFirst("CompanyId")?.Value;
             int companyId = (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var cid)) ? cid : 0;
             var editStr = Request.Form["EditId"].ToString();
@@ -170,21 +143,20 @@ namespace DomusMercatorisDotnetMVC.Pages
             }
             if (!ModelState.IsValid)
             {
-                BuildTree(companyId);
+                await BuildTreeAsync(companyId);
                 IsEditing = true;
                 EditId = eid;
-                //Console.WriteLine($"[Categories.OnPost] editId={eid}");
                 return Page();
             }
             if (Input.ParentId.HasValue && Input.ParentId.Value == eid)
             {
                 ModelState.AddModelError(string.Empty, "A category cannot be its own parent.");
-                BuildTree(companyId);
+                await BuildTreeAsync(companyId);
                 IsEditing = true;
                 EditId = eid;
                 return Page();
             }
-            var entity = _db.Categories.SingleOrDefault(c => c.CompanyId == companyId && c.Id == eid);
+            var entity = await _db.Categories.SingleOrDefaultAsync(c => c.CompanyId == companyId && c.Id == eid);
             if (entity == null)
             {
                 return RedirectToPage("/Categories");
@@ -192,19 +164,19 @@ namespace DomusMercatorisDotnetMVC.Pages
             int? parentId = null;
             if (Input.ParentId.HasValue)
             {
-                var exists = _db.Categories.Any(c => c.CompanyId == companyId && c.Id == Input.ParentId.Value);
+                var exists = await _db.Categories.AnyAsync(c => c.CompanyId == companyId && c.Id == Input.ParentId.Value);
                 if (exists) parentId = Input.ParentId.Value;
             }
             entity.Name = Input.Name;
             entity.Description = Input.Description;
             entity.ParentId = parentId;
-            //entity.Id = eid;
-            _db.SaveChanges();
+            
+            await _db.SaveChangesAsync();
             TempData["Message"] = "Category updated.";
             return RedirectToPage("/Categories");
         }
 
-        public IActionResult OnPostDelete()
+        public async Task<IActionResult> OnPostDeleteAsync()
         {
             var comp = User.FindFirst("CompanyId")?.Value;
             int companyId = (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var cid)) ? cid : 0;
@@ -213,16 +185,16 @@ namespace DomusMercatorisDotnetMVC.Pages
             {
                 return RedirectToPage("/Categories");
             }
-            var entity = _db.Categories.SingleOrDefault(c => c.CompanyId == companyId && c.Id == eid);
+            var entity = await _db.Categories.SingleOrDefaultAsync(c => c.CompanyId == companyId && c.Id == eid);
             if (entity == null)
             {
                 return RedirectToPage("/Categories");
             }
-            var hasChildren = _db.Categories.Any(c => c.CompanyId == companyId && c.ParentId == eid);
+            var hasChildren = await _db.Categories.AnyAsync(c => c.CompanyId == companyId && c.ParentId == eid);
             if (hasChildren)
             {
                 ModelState.AddModelError(string.Empty, "Cannot delete: move or delete subcategories first.");
-                BuildTree(companyId);
+                await BuildTreeAsync(companyId);
                 IsEditing = true;
                 EditId = eid;
                 Input = new CreateInput
@@ -234,17 +206,20 @@ namespace DomusMercatorisDotnetMVC.Pages
                 return Page();
             }
             _db.Categories.Remove(entity);
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
             TempData["Message"] = "Category deleted.";
             return RedirectToPage("/Categories");
         }
 
-        private void BuildTree(int companyId)
+        private async Task BuildTreeAsync(int companyId)
         {
-            Categories = _db.Categories.Where(c => c.CompanyId == companyId)
+            Categories = await _db.Categories
+                .Where(c => c.CompanyId == companyId)
                 .OrderBy(c => c.ParentId.HasValue)
                 .ThenBy(c => c.Name)
-                .ToList();
+                .AsNoTracking()
+                .ToListAsync();
+            
             var dict = Categories.ToDictionary(c => c.Id, c => new CategoryNode { Item = c });
             foreach (var c in Categories)
             {
@@ -257,10 +232,12 @@ namespace DomusMercatorisDotnetMVC.Pages
             ProductsByCategory = new Dictionary<int, List<Product>>();
             try
             {
-                var products = _db.Products
+                var products = await _db.Products
                     .Where(p => p.CompanyId == companyId)
                     .Include(p => p.Categories)
-                    .ToList();
+                    .AsNoTracking()
+                    .ToListAsync();
+
                 foreach (var p in products)
                 {
                     foreach (var cat in p.Categories.Where(cat => cat.CompanyId == companyId))
@@ -276,9 +253,12 @@ namespace DomusMercatorisDotnetMVC.Pages
             }
             catch
             {
-                var products = _db.Products
+                // Fallback logic if needed, but async
+                var products = await _db.Products
                     .Where(p => p.CompanyId == companyId)
-                    .ToList();
+                    .AsNoTracking()
+                    .ToListAsync();
+                
                 foreach (var p in products)
                 {
                     if (p.CategoryId.HasValue)

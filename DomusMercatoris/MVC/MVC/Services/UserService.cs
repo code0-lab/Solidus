@@ -121,6 +121,13 @@ namespace DomusMercatorisDotnetMVC.Services
             {
                 return false;
             }
+
+            // Security Check: Prevent deletion of Rex or Moderator
+            if ((user.Roles ?? new List<string>()).Any(r => r == "Rex" || r == "Moderator"))
+            {
+                return false;
+            }
+
             _dbContext.Users.Remove(user);
             await _dbContext.SaveChangesAsync();
             return true;

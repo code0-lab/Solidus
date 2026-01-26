@@ -44,6 +44,7 @@ builder.Services.AddScoped<BrandService>();
 builder.Services.AddScoped<VariantProductService>();
 builder.Services.AddScoped<CargoService>();
 builder.Services.AddScoped<DomusMercatorisDotnetMVC.Services.CommentService>();
+builder.Services.AddScoped<DomusMercatoris.Service.Services.OrderService>();
 builder.Services.AddHttpClient<GeminiService>();
 builder.Services.AddScoped<GeminiService>();
 builder.Services.AddScoped<BannerService>();

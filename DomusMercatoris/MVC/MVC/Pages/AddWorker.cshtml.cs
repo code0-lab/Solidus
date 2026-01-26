@@ -63,6 +63,11 @@ namespace DomusMercatorisDotnetMVC.Pages
                 {
                     TempData["GeneratedPassword"] = generatedPassword;
                     TempData["WorkerEmail"] = user.Email;
+                    
+                    // Clear the form to prevent accidental double submission
+                    ModelState.Clear();
+                    UserRegisterDto = new();
+
                     // Don't redirect immediately if we want to show the password
                     return Page();
                 }
@@ -82,20 +87,19 @@ namespace DomusMercatorisDotnetMVC.Pages
             const string uppers = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
             const string digits = "0123456789";
             const string all = lowers + uppers + digits;
-            
-            var random = new Random();
+
             var password = new char[10];
 
-            password[0] = lowers[random.Next(lowers.Length)];
-            password[1] = uppers[random.Next(uppers.Length)];
-            password[2] = digits[random.Next(digits.Length)];
+            password[0] = lowers[System.Security.Cryptography.RandomNumberGenerator.GetInt32(lowers.Length)];
+            password[1] = uppers[System.Security.Cryptography.RandomNumberGenerator.GetInt32(uppers.Length)];
+            password[2] = digits[System.Security.Cryptography.RandomNumberGenerator.GetInt32(digits.Length)];
 
             for (int i = 3; i < password.Length; i++)
             {
-                password[i] = all[random.Next(all.Length)];
+                password[i] = all[System.Security.Cryptography.RandomNumberGenerator.GetInt32(all.Length)];
             }
 
-            return new string(password.OrderBy(x => random.Next()).ToArray());
+            return new string(password.OrderBy(x => System.Security.Cryptography.RandomNumberGenerator.GetInt32(int.MaxValue)).ToArray());
         }
     }
 }
