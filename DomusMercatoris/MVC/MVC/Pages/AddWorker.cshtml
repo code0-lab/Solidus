@@ -7,38 +7,105 @@
 
 <div class="container py-4">
     <h3>Add Worker</h3>
-    @if (ModelState.IsValid == false)
+    @if (TempData["GeneratedPassword"] != null)
     {
-        <div class="alert alert-danger">
-            <ul>
-                @foreach (Microsoft.AspNetCore.Mvc.ModelBinding.ModelStateEntry modelState in ModelState.Values)
-                {
-                    @foreach (var error in modelState.Errors)
-                    {
-                        <li>@error.ErrorMessage</li>
-                    }
-                }
-            </ul>
+        <div class="alert alert-success">
+            <h4 class="alert-heading">Worker Added Successfully!</h4>
+            <p>The worker account has been created. Here is the automatically generated password:</p>
+            <div class="bg-light p-3 border text-center mb-3">
+                <span class="fs-4 fw-bold font-monospace user-select-all">@TempData["GeneratedPassword"]</span>
+            </div>
+            <p class="mb-0 text-danger fw-bold">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                Please save this password immediately and share it with the worker securely.
+            </p>
+            <hr>
+            <div class="d-flex justify-content-center gap-3">
+                <button type="button" class="btn btn-outline-success" onclick="downloadCredentials()">
+                    <i class="bi bi-download me-2"></i>Download Credentials
+                </button>
+                <a href="/Dashboard" class="btn btn-primary">Go to Dashboard</a>
+            </div>
         </div>
+
+        <script>
+            function downloadCredentials() {
+                const email = '@TempData["WorkerEmail"]';
+                const password = '@TempData["GeneratedPassword"]';
+                const content = `DOMUS MERCATORIS WORKER REGISTRATION\n\nEmail: ${email}\nPassword: ${password}\n\nPlease keep this information secure.`;
+                
+                const blob = new Blob([content], { type: 'text/plain' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'worker-credentials.txt';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            }
+        </script>
     }
-    <form method="post">
-        @Html.AntiForgeryToken()
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <input name="UserRegisterDto.FirstName" value="@Model.UserRegisterDto.FirstName" class="form-control" placeholder="First name" />
+    else
+    {
+        @if (ModelState.IsValid == false)
+        {
+            <div class="alert alert-danger">
+                <ul>
+                    @foreach (Microsoft.AspNetCore.Mvc.ModelBinding.ModelStateEntry modelState in ModelState.Values)
+                    {
+                        @foreach (var error in modelState.Errors)
+                        {
+                            <li>@error.ErrorMessage</li>
+                        }
+                    }
+                </ul>
             </div>
-            <div class="col-md-6">
-                <input name="UserRegisterDto.LastName" value="@Model.UserRegisterDto.LastName" class="form-control" placeholder="Last name" />
+        }
+        <form method="post">
+            @Html.AntiForgeryToken()
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <input name="UserRegisterDto.FirstName" value="@Model.UserRegisterDto.FirstName" class="form-control" placeholder="First name" />
+                </div>
+                <div class="col-md-6">
+                    <input name="UserRegisterDto.LastName" value="@Model.UserRegisterDto.LastName" class="form-control" placeholder="Last name" />
+                </div>
             </div>
-        </div>
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <input name="UserRegisterDto.Email" value="@Model.UserRegisterDto.Email" class="form-control" placeholder="Email" />
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <input name="UserRegisterDto.Email" value="@Model.UserRegisterDto.Email" class="form-control" placeholder="Email" />
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="autoPassCheck" name="IsAutoGeneratePassword" value="true" @(Model.IsAutoGeneratePassword ? "checked" : "") onchange="togglePasswordFields()">
+                        <input type="hidden" name="IsAutoGeneratePassword" value="false">
+                        <label class="form-check-label" for="autoPassCheck">
+                            Auto-generate password
+                        </label>
+                    </div>
+                    <div id="passwordFields" style="display: none;">
+                        <input type="password" name="UserRegisterDto.Password" value="@Model.UserRegisterDto.Password" class="form-control" placeholder="Password" />
+                    </div>
+                </div>
             </div>
-            <div class="col-md-6">
-                <input type="password" name="UserRegisterDto.Password" value="@Model.UserRegisterDto.Password" class="form-control" placeholder="Password" />
-            </div>
-        </div>
-        <button class="btn btn-primary">Save</button>
-    </form>
+            <button class="btn btn-primary">Save</button>
+        </form>
+
+        <script>
+            function togglePasswordFields() {
+                var isChecked = document.getElementById('autoPassCheck').checked;
+                var passField = document.getElementById('passwordFields');
+                if (isChecked) {
+                    passField.style.display = 'none';
+                } else {
+                    passField.style.display = 'block';
+                }
+            }
+            // Initialize on load
+            document.addEventListener("DOMContentLoaded", function() {
+                togglePasswordFields();
+            });
+        </script>
+    }
 </div>

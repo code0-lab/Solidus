@@ -11,16 +11,16 @@ using System;
 namespace DomusMercatorisDotnetMVC.Pages
 {
     [Authorize(Roles = "Manager,User")]
-    public class SalesModel : PageModel
+    public class OrdersModel : PageModel
     {
         private readonly DomusDbContext _db;
 
-        public SalesModel(DomusDbContext db)
+        public OrdersModel(DomusDbContext db)
         {
             _db = db;
         }
 
-        public List<Sale> Sales { get; set; } = new List<Sale>();
+        public List<Order> Orders { get; set; } = new List<Order>();
         public int PageNumber { get; set; } = 1;
         public int PageSize { get; set; } = 9;
         public int TotalCount { get; set; } = 0;
@@ -52,7 +52,7 @@ namespace DomusMercatorisDotnetMVC.Pages
 
             if (companyId > 0)
             {
-                var query = _db.Sales
+                var query = _db.Orders
                     .Where(s => s.CompanyId == companyId && s.IsPaid);
 
                 TotalCount = query.Count();
@@ -61,12 +61,12 @@ namespace DomusMercatorisDotnetMVC.Pages
 
                 var skip = (PageNumber - 1) * PageSize;
 
-                Sales = query
+                Orders = query
                     .Include(s => s.User)
                     .Include(s => s.FleetingUser)
-                    .Include(s => s.SaleProducts)
+                    .Include(s => s.OrderItems)
                         .ThenInclude(sp => sp.Product)
-                    .Include(s => s.SaleProducts)
+                    .Include(s => s.OrderItems)
                         .ThenInclude(sp => sp.VariantProduct)
                     .Include(s => s.CargoTracking)
                     .OrderByDescending(s => s.CreatedAt)

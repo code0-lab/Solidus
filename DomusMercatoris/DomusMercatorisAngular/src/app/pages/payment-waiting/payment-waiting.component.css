@@ -1,0 +1,61 @@
+.waiting-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 80vh;
+    background-color: #f5f5f5;
+}
+
+.content-box {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    text-align: center;
+    min-width: 300px;
+}
+
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.order-id {
+    font-weight: bold;
+    color: #666;
+    margin-top: 1rem;
+}
+
+.connection-status {
+    font-size: 0.8rem;
+    color: #999;
+    margin-top: 2rem;
+}
+
+.checkmark {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.cross {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.success-container h2 {
+    color: #2ecc71;
+}
+
+.error-container h2 {
+    color: #e74c3c;
+}

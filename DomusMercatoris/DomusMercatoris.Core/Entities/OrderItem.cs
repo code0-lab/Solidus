@@ -2,12 +2,12 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 namespace DomusMercatoris.Core.Entities
 {
-    public class SaleProduct
+    public class OrderItem
     {
         [Key]
         public long Id { get; set; }
-        public long SaleId { get; set; }
-        public Sale Sale { get; set; } = null!;
+        public long OrderId { get; set; }
+        public Order Order { get; set; } = null!;
         public long ProductId { get; set; }
         public Product Product { get; set; } = null!;
         public long? VariantProductId { get; set; }

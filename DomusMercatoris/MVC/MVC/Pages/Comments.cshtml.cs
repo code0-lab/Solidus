@@ -22,20 +22,59 @@ namespace DomusMercatorisDotnetMVC.Pages
         }
 
         public int CompanyId { get; set; }
-        public List<ProductCommentsSummaryDto> Products { get; set; } = new();
+        
+        public List<CommentsDto> Comments { get; set; } = new();
+
+        [BindProperty(SupportsGet = true)]
+        public int? Status { get; set; } // null: All, 0: Pending, 1: Approved, 2: Rejected
+
+        [BindProperty(SupportsGet = true, Name = "page")]
         public int PageNumber { get; set; } = 1;
+
         public int PageSize { get; set; } = 10;
         public int TotalCount { get; set; }
         public int TotalPages { get; set; } = 1;
 
         public async Task<IActionResult> OnGetAsync()
         {
-            var pageStr = Request.Query["page"].ToString();
-            if (!string.IsNullOrEmpty(pageStr) && int.TryParse(pageStr, out var p))
+            await LoadCompanyIdAsync();
+
+            if (CompanyId <= 0)
             {
-                PageNumber = Math.Max(1, p);
+                Comments = new List<CommentsDto>();
+                return Page();
             }
 
+            var result = await _commentService.GetCommentsForCompanyAsync(CompanyId, Status, PageNumber, PageSize);
+            TotalCount = result.TotalCount;
+            TotalPages = Math.Max(1, (int)System.Math.Ceiling(TotalCount / (double)PageSize));
+            
+            if (PageNumber > TotalPages && TotalPages > 0) PageNumber = TotalPages;
+            
+            Comments = result.Items;
+            return Page();
+        }
+
+        public async Task<IActionResult> OnPostUpdateStatusAsync(int commentId, bool isApproved)
+        {
+            await LoadCompanyIdAsync();
+            if (CompanyId <= 0) return Forbid();
+
+            var success = await _commentService.SetApprovalAsync(commentId, isApproved, CompanyId);
+            if (!success)
+            {
+                TempData["Error"] = "Comment not found or access denied.";
+            }
+            else
+            {
+                TempData["Success"] = $"Comment {(isApproved ? "approved" : "rejected")} successfully.";
+            }
+
+            return RedirectToPage("/Comments", new { page = PageNumber, status = Status });
+        }
+
+        private async Task LoadCompanyIdAsync()
+        {
             var comp = User.FindFirst("CompanyId")?.Value;
             if (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var companyId))
             {
@@ -53,19 +92,6 @@ namespace DomusMercatorisDotnetMVC.Pages
                     }
                 }
             }
-
-            if (CompanyId <= 0)
-            {
-                Products = new List<ProductCommentsSummaryDto>();
-                return Page();
-            }
-
-            var result = await _commentService.GetProductsWithCommentsForCompanyAsync(CompanyId, PageNumber, PageSize);
-            TotalCount = result.TotalCount;
-            TotalPages = Math.Max(1, (int)System.Math.Ceiling(TotalCount / (double)PageSize));
-            if (PageNumber > TotalPages) PageNumber = TotalPages;
-            Products = result.Items;
-            return Page();
         }
     }
 }

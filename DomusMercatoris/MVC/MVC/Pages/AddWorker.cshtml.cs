@@ -12,6 +12,9 @@ namespace DomusMercatorisDotnetMVC.Pages
         [BindProperty]
         public UserRegisterDto UserRegisterDto { get; set; } = new();
 
+        [BindProperty]
+        public bool IsAutoGeneratePassword { get; set; } = true;
+
         private readonly UserService _userService;
         public AddWorkerModel(UserService userService)
         {
@@ -22,6 +25,15 @@ namespace DomusMercatorisDotnetMVC.Pages
 
         public async Task<IActionResult> OnPostAsync()
         {
+            string? generatedPassword = null;
+
+            if (IsAutoGeneratePassword)
+            {
+                generatedPassword = GenerateRandomPassword();
+                UserRegisterDto.Password = generatedPassword;
+                ModelState.Remove("UserRegisterDto.Password");
+            }
+
             if (!ModelState.IsValid)
             {
                 return Page();
@@ -47,11 +59,43 @@ namespace DomusMercatorisDotnetMVC.Pages
             var user = await _userService.RegisterWorkerAsync(UserRegisterDto, companyId);
             if (user != null)
             {
-                TempData["Message"] = "Worker added.";
-                return RedirectToPage("/Dashboard");
+                if (IsAutoGeneratePassword)
+                {
+                    TempData["GeneratedPassword"] = generatedPassword;
+                    TempData["WorkerEmail"] = user.Email;
+                    // Don't redirect immediately if we want to show the password
+                    return Page();
+                }
+                else
+                {
+                    TempData["Message"] = "Worker added.";
+                    return RedirectToPage("/Dashboard");
+                }
             }
             ModelState.AddModelError(string.Empty, "Registration failed.");
             return Page();
+        }
+
+        private string GenerateRandomPassword()
+        {
+            const string lowers = "abcdefghijklmnopqrstuvwxyz";
+            const string uppers = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            const string digits = "0123456789";
+            const string all = lowers + uppers + digits;
+            
+            var random = new Random();
+            var password = new char[10];
+
+            password[0] = lowers[random.Next(lowers.Length)];
+            password[1] = uppers[random.Next(uppers.Length)];
+            password[2] = digits[random.Next(digits.Length)];
+
+            for (int i = 3; i < password.Length; i++)
+            {
+                password[i] = all[random.Next(all.Length)];
+            }
+
+            return new string(password.OrderBy(x => random.Next()).ToArray());
         }
     }
 }

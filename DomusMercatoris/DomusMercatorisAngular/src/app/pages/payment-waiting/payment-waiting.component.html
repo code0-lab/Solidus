@@ -1,0 +1,28 @@
+<div class="waiting-container">
+    <div class="content-box">
+        <!-- Show spinner if no status OR status is for a different order -->
+        <div class="spinner-container" *ngIf="!paymentService.paymentStatus() || paymentService.paymentStatus()?.orderId?.toString() !== orderId()">
+            <div class="spinner"></div>
+            <h2>Waiting for Payment...</h2>
+            <p>Please complete the payment in your banking app.</p>
+            <p class="order-id">Order ID: #{{ orderId() }}</p>
+            <div class="connection-status">
+                Status: {{ paymentService.connectionState() }}
+            </div>
+        </div>
+
+        <!-- Show success only if approved AND matches current order -->
+        <div class="success-container" *ngIf="paymentService.paymentStatus()?.isApproved && paymentService.paymentStatus()?.orderId?.toString() === orderId()">
+            <div class="checkmark">✅</div>
+            <h2>Payment Successful!</h2>
+            <p>Redirecting...</p>
+        </div>
+
+        <!-- Show error only if NOT approved AND matches current order -->
+        <div class="error-container" *ngIf="paymentService.paymentStatus() && !paymentService.paymentStatus()?.isApproved && paymentService.paymentStatus()?.orderId?.toString() === orderId()">
+            <div class="cross">❌</div>
+            <h2>Payment Failed</h2>
+            <p>Please try again.</p>
+        </div>
+    </div>
+</div>

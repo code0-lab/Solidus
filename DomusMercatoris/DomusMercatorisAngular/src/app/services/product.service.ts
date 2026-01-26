@@ -35,6 +35,21 @@ export class ProductService {
     return this.http.post<{ clusterId: number; clusterName?: string; version: number }>(`${this.apiUrl}/clustering/classify`, formData);
   }
 
+  getProductById(id: number): Observable<Product> {
+    return this.http.get<Product>(`${this.apiUrl}/products/${id}`).pipe(
+      tap(p => {
+        p.imageUrl = this.toAbsoluteImageUrl(p.images && p.images.length > 0 ? p.images[0] : undefined);
+        p.imageUrls = p.images && p.images.length > 0 
+          ? p.images.map(img => this.toAbsoluteImageUrl(img)) 
+          : [this.toAbsoluteImageUrl(undefined)];
+        p.variants = p.variants ? p.variants.map(v => ({
+          ...v,
+          coverImage: this.toAbsoluteImageUrl(v.coverImage)
+        })) : [];
+      })
+    );
+  }
+
   fetchProductsByCluster(clusterId: number, pageNumber: number = 1, pageSize: number = 9, companyId?: number | null, brandId?: number | null): void {
     const url = `${this.apiUrl}/products/by-cluster/${clusterId}`;
     let params = new HttpParams()
@@ -239,7 +254,7 @@ export class ProductService {
       });
   }
 
-  private toAbsoluteImageUrl(img?: string): string {
+  public toAbsoluteImageUrl(img?: string): string {
     const fallback = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZWVlIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzU1NSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+UHJvZHVjdDwvdGV4dD48L3N2Zz4=';
     if (!img || img.length === 0) return fallback;
     try {

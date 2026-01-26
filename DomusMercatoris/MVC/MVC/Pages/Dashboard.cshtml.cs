@@ -56,8 +56,8 @@ namespace DomusMercatorisDotnetMVC.Pages
                 ManagerCount = users.Count(u => u.Roles?.Contains("Manager") ?? false);
                 WorkerCount = users.Count(u => !(u.Roles?.Contains("Manager") ?? false));
                 CompanyName = await _userService.GetCompanyNameAsync(CompanyId) ?? string.Empty;
-                var comments = await _commentService.GetLatestCommentsForCompanyAsync(CompanyId, 5);
-                RecentComments = comments.Where(c => c.IsApproved).ToList();
+                var result = await _commentService.GetCommentsForCompanyAsync(CompanyId, 1, 1, 3);
+                RecentComments = result.Items;
             }
         }
     }

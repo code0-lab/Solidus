@@ -3,7 +3,7 @@
     <div class="brand" routerLink="/">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
         style="margin-right: 8px;">
-        <circle cx="12" cy="12" r="10" fill="#FFD700" stroke="black" stroke-width="2" />
+        <circle cx="12" cy="12" r="10" fill="white" stroke="black" stroke-width="2" />
         <circle cx="12" cy="12" r="7" stroke="black" stroke-width="1" stroke-dasharray="2 2" fill="none" />
         <text x="12" y="16.5" font-family="serif" font-size="14" text-anchor="middle" font-weight="bold"
           fill="black">S</text>
@@ -17,13 +17,38 @@
 
     <div class="nav-actions">
       <button class="icon" aria-label="cart" (click)="handleCartClick()" style="position: relative;">
-        🛒
+        <!-- Cart SVG -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="21" r="1"></circle>
+          <circle cx="20" cy="21" r="1"></circle>
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+        </svg>
         @if (cartService.totalCount() > 0) {
         <span class="cart-badge">{{ cartService.totalCount() }}</span>
         }
       </button>
       <button class="icon" aria-label="profile" (click)="handleProfileClick()">
-        {{ authService.currentUser() ? '👤' : 'LOGIN' }}
+        @if (authService.currentUser()) {
+        @if (authService.currentUser()?.profilePictureUrl && !imageLoadFailed()) {
+        <img [src]="authService.getProfileImageUrl(authService.currentUser()?.profilePictureUrl)" alt="Profile"
+          class="header-avatar" (error)="handleImageError()">
+        } @else {
+        <!-- User Logged In SVG -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        }
+        } @else {
+        <!-- User Guest SVG -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        }
       </button>
     </div>
   </div>
@@ -58,7 +83,31 @@
     </div>
     <div class="cart-footer">
       <div class="total">Total: {{ cartService.totalPrice() | currency:'USD':'symbol' }}</div>
-      <button class="clear" (click)="clearCart()">Clear</button>
+      <div class="actions" style="display: flex; gap: 10px;">
+        <button class="clear" (click)="clearCart()">Clear</button>
+        <button class="checkout" (click)="checkout()" style="background: black; color: white; border: none; padding: 5px 10px; cursor: pointer;">Checkout</button>
+      </div>
+    </div>
+  </div>
+  }
+
+  @if (isProfileOpen && authService.currentUser()) {
+  <div class="profile-dropdown">
+    <div class="profile-header">
+      <span class="name">{{ authService.currentUser()?.firstName }} {{ authService.currentUser()?.lastName }}</span>
+      <span class="email">{{ authService.currentUser()?.email }}</span>
+    </div>
+    <div class="profile-menu">
+      <a routerLink="/profile" (click)="closeProfile()" class="menu-item">
+        My Profile
+      </a>
+      <a routerLink="/my-orders" (click)="closeProfile()" class="menu-item">
+        My Orders
+      </a>
+      <div class="divider"></div>
+      <button (click)="authService.logout(); closeProfile()" class="menu-item logout">
+        Logout
+      </button>
     </div>
   </div>
   }

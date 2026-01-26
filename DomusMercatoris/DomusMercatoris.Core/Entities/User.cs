@@ -24,5 +24,6 @@ namespace DomusMercatoris.Core.Entities
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public string? Address { get; set; }
         public string? Phone { get; set; }
+        public string? ProfilePictureUrl { get; set; }
     }
 }

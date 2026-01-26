@@ -84,6 +84,7 @@
                                             <form method="post" asp-page-handler="ApproveComment" class="d-inline">
                                                 <input type="hidden" name="commentId" value="@c.Id" />
                                                 <input type="hidden" name="productId" value="@Model.Product.Id" />
+                                                <input type="hidden" name="pageNumber" value="@Model.PageNumber" />
                                                 @Html.AntiForgeryToken()
                                                 <button type="submit" class="btn btn-sm btn-outline-success">
                                                     Approve
@@ -100,6 +101,27 @@
                         <div class="text-muted">No comments for this product yet.</div>
                     }
                 </div>
+                @if (Model.TotalPages > 1)
+                {
+                    <div class="card-footer bg-white border-top-0 py-3">
+                        <nav aria-label="Comments pagination">
+                            <ul class="pagination justify-content-center mb-0">
+                                <li class="page-item @(Model.PageNumber <= 1 ? "disabled" : "")">
+                                    <a class="page-link" href="/Product/@(Model.Product?.Id)?page=@(Model.PageNumber - 1)">Previous</a>
+                                </li>
+                                @for (var i = 1; i <= Model.TotalPages; i++)
+                                {
+                                    <li class="page-item @(Model.PageNumber == i ? "active" : "")">
+                                        <a class="page-link" href="/Product/@(Model.Product?.Id)?page=@i">@i</a>
+                                    </li>
+                                }
+                                <li class="page-item @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")">
+                                    <a class="page-link" href="/Product/@(Model.Product?.Id)?page=@(Model.PageNumber + 1)">Next</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                }
             </div>
         </div>
     </div>

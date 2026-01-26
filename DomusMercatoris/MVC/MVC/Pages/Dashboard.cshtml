@@ -22,7 +22,7 @@
                 <div class="card-body">
                     <div class="text-muted">Total Products</div>
                     <div class="fs-4 fw-bold">@Model.ProductCount</div>
-                    <div class="text-muted">Total Sales</div>
+                    <div class="text-muted">Total Orders</div>
                     <div class="fs-4 fw-bold"> Not active</div>
                     <div class="mt-2"><a href="/Products" class="btn btn-sm btn-outline-primary">Manage Products</a></div>
                 </div>
@@ -44,39 +44,44 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Recent Comments</h5>
+                    <button class="btn btn-link text-decoration-none p-0 fw-bold text-dark d-flex align-items-center" type="button" data-bs-toggle="collapse" data-bs-target="#recentCommentsCollapse" aria-expanded="false" aria-controls="recentCommentsCollapse">
+                        <i class="bi bi-chevron-down me-2"></i>
+                        Recent Comments (3 Latest)
+                    </button>
                     <a asp-page="/Comments" class="btn btn-sm btn-outline-secondary">All comments</a>
                 </div>
-                <div class="card-body">
-                    @if (Model.RecentComments != null && Model.RecentComments.Count > 0)
-                    {
-                        <ul class="list-group list-group-flush">
-                            @foreach (var c in Model.RecentComments)
-                            {
-                                <li class="list-group-item px-0 py-3">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <div>
-                                            <div class="fw-bold text-dark">@c.UserName</div>
-                                            <div class="small text-muted">
-                                                <i class="bi bi-clock me-1"></i>@c.CreatedAt.ToLocalTime().ToString("g")
-                                                <span class="mx-2">•</span>
-                                                <a href="/Product/@c.ProductId" class="text-decoration-none fw-bold text-primary">
-                                                    <i class="bi bi-box-seam me-1"></i>@c.ProductName
-                                                </a>
+                <div class="collapse" id="recentCommentsCollapse">
+                    <div class="card-body">
+                        @if (Model.RecentComments != null && Model.RecentComments.Count > 0)
+                        {
+                            <ul class="list-group list-group-flush">
+                                @foreach (var c in Model.RecentComments)
+                                {
+                                    <li class="list-group-item px-0 py-3">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <div class="fw-bold text-dark">@c.UserName</div>
+                                                <div class="small text-muted">
+                                                    <i class="bi bi-clock me-1"></i>@c.CreatedAt.ToLocalTime().ToString("g")
+                                                    <span class="mx-2">•</span>
+                                                    <a href="/Product/@c.ProductId" class="text-decoration-none fw-bold text-primary">
+                                                        <i class="bi bi-box-seam me-1"></i>@c.ProductName
+                                                    </a>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="bg-light p-3 rounded-3 border-start border-4 border-primary">
-                                        <p class="mb-0 text-secondary fst-italic">"@c.Comment"</p>
-                                    </div>
-                                </li>
-                            }
-                        </ul>
-                    }
-                    else
-                    {
-                        <div class="text-muted">No comments for your products yet.</div>
-                    }
+                                        <div class="bg-light p-3 rounded-3 border-start border-4 border-primary">
+                                            <p class="mb-0 text-secondary fst-italic">"@c.Comment"</p>
+                                        </div>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <div class="text-muted">No recent approved comments found.</div>
+                        }
+                    </div>
                 </div>
             </div>
         </div>

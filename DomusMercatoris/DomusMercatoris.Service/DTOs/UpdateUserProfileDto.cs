@@ -12,6 +12,21 @@ namespace DomusMercatoris.Service.DTOs
         /// </summary>
         [StringLength(50)]
         public string? Phone { get; set; }
+        
+        [StringLength(50)]
+        public string? FirstName { get; set; }
+        
+        [StringLength(50)]
+        public string? LastName { get; set; }
+
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Required if changing email.
+        /// </summary>
+        public string? CurrentPassword { get; set; }
 
         /// <summary>
         /// User's physical address.

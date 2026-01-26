@@ -10,7 +10,7 @@ using DomusMercatoris.Data;
 
 namespace DomusMercatorisDotnetMVC.Pages.Moderator
 {
-    [Authorize(Roles = "Moderator")]
+    [Authorize(Roles = "Moderator,Rex")]
     public class IndexModel : PageModel
     {
         private readonly DomusDbContext _context;

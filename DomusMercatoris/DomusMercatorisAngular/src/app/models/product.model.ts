@@ -1,7 +1,7 @@
 export interface Product {
     id: number;
+    companyId: number;
     name: string;
-    sku: string;
     price: number;
     priceText?: string;
     images?: string[];

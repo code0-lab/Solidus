@@ -9,31 +9,31 @@ using System.Linq;
 namespace DomusMercatorisDotnetMVC.Pages
 {
     [Authorize(Roles = "Manager,User")]
-    public class SaleDetailModel : PageModel
+    public class OrderDetailModel : PageModel
     {
         private readonly DomusDbContext _db;
 
-        public SaleDetailModel(DomusDbContext db)
+        public OrderDetailModel(DomusDbContext db)
         {
             _db = db;
         }
 
-        public Sale? Sale { get; set; }
+        public Order? Order { get; set; }
         public CargoTracking? Tracking { get; set; }
 
         public IActionResult OnGet(long id)
         {
-            var sale = _db.Sales
+            var order = _db.Orders
                 .Include(s => s.User)
                 .Include(s => s.FleetingUser)
-                .Include(s => s.SaleProducts)
+                .Include(s => s.OrderItems)
                     .ThenInclude(sp => sp.Product)
-                .Include(s => s.SaleProducts)
+                .Include(s => s.OrderItems)
                     .ThenInclude(sp => sp.VariantProduct)
                 .Include(s => s.CargoTracking)
                 .SingleOrDefault(s => s.Id == id);
 
-            if (sale == null || !sale.IsPaid)
+            if (order == null || !order.IsPaid)
             {
                 return RedirectToPage("/Products");
             }
@@ -63,12 +63,12 @@ namespace DomusMercatorisDotnetMVC.Pages
             bool hasAccess = false;
 
             // 1. Is it the user's own purchase?
-            if (sale.UserId == currentUserId && currentUserId > 0)
+            if (order.UserId == currentUserId && currentUserId > 0)
             {
                 hasAccess = true;
             }
             // 2. Is it a sale for the user's company?
-            else if (companyId > 0 && sale.CompanyId == companyId)
+            else if (companyId > 0 && order.CompanyId == companyId)
             {
                 hasAccess = true;
             }
@@ -78,8 +78,8 @@ namespace DomusMercatorisDotnetMVC.Pages
                 return RedirectToPage("/Account/AccessDenied");
             }
 
-            Sale = sale;
-            Tracking = sale.CargoTracking;
+            Order = order;
+            Tracking = order.CargoTracking;
             
             return Page();
         }

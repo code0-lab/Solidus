@@ -1,0 +1,88 @@
+@page
+@model MVC.Pages.MockBank.IndexModel
+@{
+    ViewData["Title"] = "Mock Bank Panel";
+    Layout = "_Layout";
+}
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>🏦 Mock Bank System</h2>
+        <span class="badge bg-warning text-dark">Simulation Mode</span>
+    </div>
+
+    @if (TempData["Message"] != null)
+    {
+        <div class="alert alert-success">@TempData["Message"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Pending Transactions</h5>
+        </div>
+        <div class="card-body p-0">
+            @if (Model.PendingOrders.Any())
+            {
+                <table class="table table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Amount</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var order in Model.PendingOrders)
+                        {
+                            <tr>
+                                <td>#@order.Id</td>
+                                <td class="fw-bold text-success">@order.TotalPrice.ToString("C2")</td>
+                                <td>@order.CreatedAt.ToLocalTime().ToString("g")</td>
+                                <td>
+                                    <span class="badge bg-info">@order.Status</span>
+                                </td>
+                                <td class="text-end">
+                                    <form method="post" class="d-inline">
+                                        <button type="submit" asp-page-handler="Approve" asp-route-id="@order.Id" class="btn btn-success btn-sm">
+                                            ✅ Approve
+                                        </button>
+                                        <button type="submit" asp-page-handler="Reject" asp-route-id="@order.Id" class="btn btn-danger btn-sm ms-1">
+                                            ❌ Reject
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="text-center p-5 text-muted">
+                    <h4>No pending transactions</h4>
+                    <p>New payment requests will appear here.</p>
+                    <a href="/MockBank" class="btn btn-outline-secondary btn-sm mt-2">🔄 Refresh</a>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="mt-4 text-muted small">
+        <h6>How it works:</h6>
+        <ol>
+            <li>User selects "Credit Card" on checkout.</li>
+            <li>System creates order with status <strong>PaymentPending</strong>.</li>
+            <li>User is redirected to a "Waiting for Bank" page (Angular).</li>
+            <li>Bank (this page) receives the request.</li>
+            <li>When you click <strong>Approve</strong>, a Webhook is sent to the API.</li>
+            <li>API updates the order status and notifies the user via <strong>SignalR</strong>.</li>
+            <li>User's page automatically updates to "Success".</li>
+        </ol>
+    </div>
+</div>

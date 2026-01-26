@@ -27,8 +27,8 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
         {
             if (User.Identity != null && User.Identity.IsAuthenticated)
             {
-                 // If already logged in as moderator, redirect to index
-                 if (User.IsInRole("Moderator"))
+                 // If already logged in as moderator or rex, redirect to index
+                 if (User.IsInRole("Moderator") || User.IsInRole("Rex"))
                  {
                      Response.Redirect("/Moderator/Index");
                  }
@@ -40,8 +40,8 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
             var user = await _userService.UserLoginAsync(Email, Password);
             if (user != null)
             {
-                // Check for Moderator role
-                if (user.Roles == null || !user.Roles.Any(r => r.Trim().Equals("Moderator", StringComparison.OrdinalIgnoreCase)))
+                // Check for Moderator or Rex role
+                if (user.Roles == null || (!user.Roles.Any(r => r.Trim().Equals("Moderator", StringComparison.OrdinalIgnoreCase)) && !user.Roles.Any(r => r.Trim().Equals("Rex", StringComparison.OrdinalIgnoreCase))))
                 {
                     ModelState.AddModelError(string.Empty, "Access Denied: You do not have Moderator privileges.");
                     return Page();

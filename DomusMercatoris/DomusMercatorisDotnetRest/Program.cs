@@ -14,6 +14,7 @@ using DomusMercatoris.Service.Services;
 using DomusMercatoris.Service.Mappings;
 using DomusMercatorisDotnetRest.Infrastructure;
 using DomusMercatorisDotnetRest.Services;
+using DomusMercatorisDotnetRest.Hubs;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,10 +40,11 @@ builder.Services.AddScoped<CargoService>();
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<CompanyService>();
-builder.Services.AddScoped<SalesService>();
+builder.Services.AddScoped<OrdersService>();
 builder.Services.AddScoped<ModeratorService>();
 builder.Services.AddScoped<UsersService>();
 builder.Services.AddScoped<BannerService>();
+builder.Services.AddScoped<CartService>();
 
 // Python AI Service
 builder.Services.AddHostedService<PythonRunnerService>();
@@ -56,7 +58,11 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
 builder.Services.AddControllers()
-    .AddJsonOptions(x => x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+    .AddJsonOptions(x => 
+    {
+        x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        x.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 builder.Services.AddDbContext<DomusDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddEndpointsApiExplorer();
@@ -71,6 +77,8 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddJwtAuth(builder.Configuration);
+
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -133,5 +141,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<PaymentHub>("/paymentHub");
 
 app.Run();

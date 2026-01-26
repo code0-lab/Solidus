@@ -1,17 +1,31 @@
 /* System 1 Global Styles */
+@import url('https://fonts.googleapis.com/css2?family=DotGothic16&family=Pixelify+Sans:wght@400..700&family=Silkscreen:wght@400;700&family=VT323&display=swap');
+
 :root {
   --sys-bg-color: #ffffff;
   --sys-text-color: #000000;
   --sys-border-color: #000000;
-  --sys-desktop-pattern: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAIklEQVQIW2NkQAKrVq36zwjjgzjwq1ev/s+IImCGoRwYGwCLPwj/X95xXwAAAABJRU5ErkJggg=='); /* Simple dither pattern */
+  --sys-desktop-pattern: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAIklEQVQIW2NkQAKrVq36zwjjgzjwq1ev/s+IImCGoRwYGwCLPwj/X95xXwAAAABJRU5ErkJggg==');
+  /* Simple dither pattern */
+
+  /* Fonts */
   --sys-font-family: "Geneva", "Chicago", "Monaco", "Courier New", monospace;
+  --font-heading: "Pixelify Sans", sans-serif;
+  --font-pixel: "Silkscreen", cursive;
+  --font-system: "DotGothic16", sans-serif;
+  --font-terminal: "VT323", monospace;
+
+  --sys-accent-color: #0000FF;
+  /* System Blue */
+
   --sys-window-shadow: 2px 2px 0px #000000;
 }
 
 body {
   margin: 0;
   font-family: var(--sys-font-family);
-  background-color: #808080; /* Fallback */
+  background-color: #808080;
+  /* Fallback */
   background-image: var(--sys-desktop-pattern);
   color: var(--sys-text-color);
   font-size: 14px;
@@ -19,7 +33,13 @@ body {
 }
 
 /* Typography */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
   font-weight: normal;
   margin: 0 0 1rem 0;
   text-transform: uppercase;
@@ -43,13 +63,11 @@ button {
 .sys-window-header {
   border-bottom: 1px solid black;
   padding: 4px 8px;
-  background: repeating-linear-gradient(
-    90deg,
-    white,
-    white 2px,
-    black 2px,
-    black 3px
-  );
+  background: repeating-linear-gradient(90deg,
+      white,
+      white 2px,
+      black 2px,
+      black 3px);
   text-align: center;
   position: relative;
 }
@@ -59,22 +77,29 @@ button {
   padding: 0 8px;
   display: inline-block;
   font-weight: bold;
+  font-family: var(--font-pixel);
+  font-size: 14px;
 }
 
 .sys-button {
   background: white;
-  border: 1px solid black;
-  padding: 4px 12px;
-  box-shadow: 1px 1px 0 black;
+  border: 2px solid black;
+  padding: 6px 14px;
+  box-shadow: 4px 4px 0 black;
   border-radius: 3px;
   font-size: 13px;
   transition: all 0.1s;
+  color: black;
+}
+
+.sys-button:hover {
+  background: black;
+  color: white;
 }
 
 .sys-button:active {
-  background: black;
-  color: white;
-  box-shadow: inset 1px 1px 0 white;
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 black;
 }
 
 /* Overriding Modal Styles */
@@ -84,7 +109,8 @@ button {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.2); /* Less opacity, maybe dithered */
+  background: rgba(0, 0, 0, 0.2);
+  /* Less opacity, maybe dithered */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -108,12 +134,15 @@ button {
     width: 100%;
     max-width: 100%;
   }
+
   .modal-header {
     height: 20px;
   }
+
   .modal-title-box {
     font-size: 12px;
   }
+
   .close-btn {
     width: 14px;
     height: 14px;
@@ -121,16 +150,15 @@ button {
     line-height: 10px;
   }
 }
+
 .modal-header {
   height: 24px;
   border-bottom: 1px solid black;
-  background: repeating-linear-gradient(
-    90deg,
-    white,
-    white 2px,
-    black 2px,
-    black 3px
-  );
+  background: repeating-linear-gradient(90deg,
+      white,
+      white 2px,
+      black 2px,
+      black 3px);
   position: relative;
   display: flex;
   align-items: center;
@@ -148,7 +176,8 @@ button {
 .close-btn {
   position: absolute;
   top: 3px;
-  left: 4px; /* Mac close button was on left */
+  left: 4px;
+  /* Mac close button was on left */
   width: 16px;
   height: 16px;
   border: 1px solid black;
@@ -196,7 +225,7 @@ button {
 
 .submit-btn {
   width: 100%;
-  padding: 8px;
+  padding: 10px;
   background: white;
   color: black;
   border: 2px solid black;
@@ -204,18 +233,18 @@ button {
   font-size: 1rem;
   font-weight: bold;
   cursor: pointer;
-  box-shadow: 2px 2px 0 black;
+  box-shadow: 4px 4px 0 black;
+  transition: all 0.1s;
 }
 
 .submit-btn:hover {
-  background: #eee;
+  background: black;
+  color: white;
 }
 
 .submit-btn:active {
-  background: black;
-  color: white;
-  box-shadow: none;
   transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 black;
 }
 
 /* Icon Button */

@@ -11,6 +11,7 @@ namespace DomusMercatoris.Service.DTOs
         public int CompanyId { get; set; }
         public string? Phone { get; set; }
         public string? Address { get; set; }
+        public string? ProfilePictureUrl { get; set; }
         public List<string> Roles { get; set; } = new List<string>();
         public BanDto? Ban { get; set; }
     }

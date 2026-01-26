@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
-export interface SaleItem {
+export interface OrderItem {
   productId: number;
   variantProductId?: number;
   quantity: number;
@@ -20,10 +20,20 @@ export interface CheckoutPayload {
   companyId: number;
   userId?: number;
   fleetingUser?: FleetingUserPayload;
-  items: SaleItem[];
+  items: OrderItem[];
 }
 
-export interface SaleResponse {
+export interface OrderItemResponse {
+  productId: number;
+  productName?: string;
+  variantProductId?: number;
+  variantName?: string;
+  quantity: number;
+  unitPrice?: number;
+  imageUrl?: string;
+}
+
+export interface OrderResponse {
   id: number;
   isPaid: boolean;
   totalPrice: number;
@@ -31,21 +41,28 @@ export interface SaleResponse {
   userId?: number;
   fleetingUserId?: number;
   cargoTrackingId?: number;
+  status: string;
+  createdAt: string;
+  orderItems: OrderItemResponse[];
 }
 
 @Injectable({ providedIn: 'root' })
-export class SalesService {
+export class OrdersService {
   private http = inject(HttpClient);
   
   private get apiUrl(): string {
     return environment.apiUrl;
   }
 
-  checkout(payload: CheckoutPayload): Observable<SaleResponse> {
-    return this.http.post<SaleResponse>(`${this.apiUrl}/sales/checkout`, payload);
+  checkout(payload: CheckoutPayload): Observable<OrderResponse> {
+    return this.http.post<OrderResponse>(`${this.apiUrl}/orders/checkout`, payload);
   }
 
-  markPaid(id: number): Observable<SaleResponse> {
-    return this.http.post<SaleResponse>(`${this.apiUrl}/sales/${id}/mark-paid`, {});
+  markPaid(id: number): Observable<OrderResponse> {
+    return this.http.post<OrderResponse>(`${this.apiUrl}/orders/${id}/mark-paid`, {});
+  }
+
+  getMyOrders(): Observable<OrderResponse[]> {
+    return this.http.get<OrderResponse[]>(`${this.apiUrl}/orders/my-orders`);
   }
 }

@@ -10,7 +10,7 @@ import { environment } from '../../environments/environment';
 })
 export class AuthService {
   private http = inject(HttpClient);
-  
+
   private get apiUrl(): string {
     return `${environment.apiUrl}/users`;
   }
@@ -39,7 +39,7 @@ export class AuthService {
     if (storedUser) {
       try {
         const user: User = JSON.parse(storedUser);
-        
+
         // Check if token is expired
         if (this.isTokenExpired(user.token)) {
           this.logout();
@@ -59,7 +59,7 @@ export class AuthService {
     try {
       const decoded: any = jwtDecode(token);
       if (!decoded.exp) return false; // Token doesn't have an expiration date
-      
+
       const currentTime = Math.floor(Date.now() / 1000);
       return decoded.exp < currentTime;
     } catch (error) {
@@ -82,7 +82,8 @@ export class AuthService {
       phone: profile.phone ?? null,
       address: profile.address ?? null,
       companyId: profile.companyId,
-      roles: profile.roles || []
+      roles: profile.roles || [],
+      profilePictureUrl: profile.profilePictureUrl
     };
   }
 
@@ -109,7 +110,7 @@ export class AuthService {
   toggleLogin() {
     this.isLoginOpen.set(!this.isLoginOpen());
     if (this.isLoginOpen()) {
-        this.isRegisterMode.set(false);
+      this.isRegisterMode.set(false);
     }
   }
 
@@ -146,21 +147,30 @@ export class AuthService {
     return this.http.post<void>(`${this.apiUrl}/me/password`, payload);
   }
 
-  changeEmail(payload: ChangeEmailRequest): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/me/email`, payload).pipe(
-        tap(() => {
-            // If email changes, we might want to update the local user state or logout
-            // For now, let's just fetch the profile again to get the new email
-            this.fetchProfile().subscribe();
-        })
+
+
+  uploadProfilePicture(file: File): Observable<UserProfileDto> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<UserProfileDto>(`${this.apiUrl}/me/picture`, formData).pipe(
+      tap(profile => {
+        this.updateUserFromProfile(profile);
+      })
     );
+  }
+
+  getProfileImageUrl(url: string | undefined): string {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    if (url.startsWith('/uploads')) return url;
+    return `${environment.apiUrl}${url}`;
   }
 
   private updateUserFromProfile(profile: UserProfileDto) {
     const current = this.currentUser();
     const token = current?.token ?? '';
     const updated = this.mapToUser(profile, token);
-    
+
     this.saveUserToStorage(updated);
   }
 }

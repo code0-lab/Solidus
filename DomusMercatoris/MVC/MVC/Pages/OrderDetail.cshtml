@@ -1,18 +1,18 @@
-@page "/Sale/{id:long}"
-@model DomusMercatorisDotnetMVC.Pages.SaleDetailModel
+@page "/Order/{id:long}"
+@model DomusMercatorisDotnetMVC.Pages.OrderDetailModel
 @{
-    ViewData["PageTitle"] = "Sale Detail";
+    ViewData["PageTitle"] = "Order Detail";
     Layout = "_LayoutAuth";
 }
 
 <div class="container py-4">
     <div class="mb-4">
-        <a asp-page="/Sales" class="btn btn-outline-dark rounded-0 fw-bold">&larr; Back to Sales</a>
+        <a asp-page="/Orders" class="btn btn-outline-dark rounded-0 fw-bold">&larr; Back to Orders</a>
     </div>
 
-    @if (Model.Sale == null)
+    @if (Model.Order == null)
     {
-        <div class="alert alert-warning rounded-0 border-3 border-dark">Sale not found or not paid yet.</div>
+        <div class="alert alert-warning rounded-0 border-3 border-dark">Order not found or not paid yet.</div>
     }
     else
     {
@@ -21,12 +21,12 @@
                 <div class="card mb-4">
                     <div class="card-header">
                         <div class="d-flex justify-content-between align-items-center">
-                            <h4 class="mb-0 fw-bold">Order #@Model.Sale.Id</h4>
-                            @if (Model.Sale.IsRefunded)
+                            <h4 class="mb-0 fw-bold">Order #@Model.Order.Id</h4>
+                            @if (Model.Order.IsRefunded)
                             {
                                 <span class="badge bg-danger fs-6 rounded-0">Refunded</span>
                             }
-                            else if (Model.Sale.IsPaid)
+                            else if (Model.Order.IsPaid)
                             {
                                 <span class="badge bg-success fs-6 rounded-0">Paid</span>
                             }
@@ -35,7 +35,7 @@
                                 <span class="badge bg-warning fs-6 rounded-0 text-dark">Pending</span>
                             }
                         </div>
-                        <small class="text-muted fw-bold">Placed on @Model.Sale.CreatedAt.ToString("f")</small>
+                        <small class="text-muted fw-bold">Placed on @Model.Order.CreatedAt.ToString("f")</small>
                     </div>
 
                     <div class="table-responsive">
@@ -50,7 +50,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var item in Model.Sale.SaleProducts)
+                                @foreach (var item in Model.Order.OrderItems)
                                 {
                                     <tr>
                                         <td class="ps-3">
@@ -84,7 +84,7 @@
                             <tfoot class="border-top-3 border-dark">
                                 <tr class="fw-bold fs-5">
                                     <td colspan="4" class="text-end py-3">Grand Total:</td>
-                                    <td class="text-end pe-3 py-3">@Model.Sale.TotalPrice.ToString("C2")</td>
+                                    <td class="text-end pe-3 py-3">@Model.Order.TotalPrice.ToString("C2")</td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -96,27 +96,27 @@
                 <div class="card mb-4">
                     <div class="card-header fw-bold">Customer Details</div>
                     <div class="card-body">
-                        @if (Model.Sale.User != null)
+                        @if (Model.Order.User != null)
                         {
-                            <p class="mb-1 fs-5 fw-bold">@Model.Sale.User.FirstName @Model.Sale.User.LastName</p>
-                            <p class="mb-1 text-muted">@Model.Sale.User.Email</p>
-                            @if (!string.IsNullOrEmpty(Model.Sale.User.Phone))
+                            <p class="mb-1 fs-5 fw-bold">@Model.Order.User.FirstName @Model.Order.User.LastName</p>
+                            <p class="mb-1 text-muted">@Model.Order.User.Email</p>
+                            @if (!string.IsNullOrEmpty(Model.Order.User.Phone))
                             {
-                                <p class="mb-1"><strong>Phone:</strong> @Model.Sale.User.Phone</p>
+                                <p class="mb-1"><strong>Phone:</strong> @Model.Order.User.Phone</p>
                             }
-                            @if (!string.IsNullOrEmpty(Model.Sale.User.Address))
+                            @if (!string.IsNullOrEmpty(Model.Order.User.Address))
                             {
                                 <hr class="my-2 border-dark" />
-                                <p class="mb-0"><strong>Address:</strong><br/>@Model.Sale.User.Address</p>
+                                <p class="mb-0"><strong>Address:</strong><br/>@Model.Order.User.Address</p>
                             }
                         }
-                        else if (Model.Sale.FleetingUser != null)
+                        else if (Model.Order.FleetingUser != null)
                         {
-                            <p class="mb-1 text-muted">@Model.Sale.FleetingUser.Email</p>
-                            @if (!string.IsNullOrEmpty(Model.Sale.FleetingUser.Address))
+                            <p class="mb-1 text-muted">@Model.Order.FleetingUser.Email</p>
+                            @if (!string.IsNullOrEmpty(Model.Order.FleetingUser.Address))
                             {
                                 <hr class="my-2 border-dark" />
-                                <p class="mb-0"><strong>Address:</strong><br/>@Model.Sale.FleetingUser.Address</p>
+                                <p class="mb-0"><strong>Address:</strong><br/>@Model.Order.FleetingUser.Address</p>
                             }
                         }
                         else

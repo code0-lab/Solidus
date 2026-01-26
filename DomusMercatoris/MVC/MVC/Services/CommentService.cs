@@ -58,17 +58,27 @@ namespace DomusMercatorisDotnetMVC.Services
             return _mapper.Map<CommentsDto>(comment);
         }
 
-        public async Task<List<CommentsDto>> GetCommentsByProductIdAsync(long productId)
+        public async Task<(List<CommentsDto> Items, int TotalCount)> GetCommentsByProductIdAsync(long productId, int pageNumber = 1, int pageSize = 10)
         {
-            var comments = await _db.Comments
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 10;
+
+            var query = _db.Comments
                 .AsNoTracking()
                 .Include(c => c.User)
                 .Include(c => c.Product)
-                .Where(c => c.ProductId == productId)
+                .Where(c => c.ProductId == productId);
+
+            var totalCount = await query.CountAsync();
+
+            var comments = await query
                 .OrderByDescending(c => c.CreatedAt)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
-            return _mapper.Map<List<CommentsDto>>(comments);
+            var items = _mapper.Map<List<CommentsDto>>(comments);
+            return (items, totalCount);
         }
 
         public async Task<bool> SetApprovalAsync(int commentId, bool isApproved, int companyId)
@@ -97,6 +107,46 @@ namespace DomusMercatorisDotnetMVC.Services
                 .Take(take)
                 .ProjectTo<CommentsDto>(_mapper.ConfigurationProvider)
                 .ToListAsync();
+        }
+
+        public async Task<(List<CommentsDto> Items, int TotalCount)> GetCommentsForCompanyAsync(int companyId, int? status, int pageNumber, int pageSize)
+        {
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 10;
+
+            var query = _db.Comments
+                .AsNoTracking()
+                .Include(c => c.Product)
+                .Include(c => c.User)
+                .Where(c => c.Product != null && c.Product.CompanyId == companyId);
+
+            if (status.HasValue)
+            {
+                // Filter by ModerationStatus (0: Pending, 1: Approved, 2: Rejected)
+                query = query.Where(c => c.ModerationStatus == status.Value);
+            }
+
+            var totalCount = await query.CountAsync();
+
+            var items = await query
+                .OrderByDescending(c => c.CreatedAt)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(c => new CommentsDto
+                {
+                    Id = c.Id,
+                    ProductId = c.ProductId,
+                    ProductName = c.Product!.Name,
+                    UserId = c.UserId,
+                    UserName = c.User != null ? (c.User.FirstName + " " + c.User.LastName) : "Unknown",
+                    Comment = c.Text,
+                    IsApproved = c.IsApproved,
+                    ModerationStatus = c.ModerationStatus,
+                    CreatedAt = c.CreatedAt
+                })
+                .ToListAsync();
+
+            return (items, totalCount);
         }
 
         public async Task<(List<ProductCommentsSummaryDto> Items, int TotalCount)> GetProductsWithCommentsForCompanyAsync(int companyId, int pageNumber, int pageSize)

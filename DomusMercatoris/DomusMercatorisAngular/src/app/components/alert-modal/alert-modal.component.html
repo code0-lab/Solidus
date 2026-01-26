@@ -1,0 +1,13 @@
+@if (alertService.isOpen()) {
+<div class="confirm-overlay">
+  <div class="confirm-box">
+    <p>{{ alertService.options().message }}</p>
+    <div class="confirm-actions">
+      @if (alertService.options().type === 'confirm') {
+        <button class="cancel-btn" (click)="alertService.cancel()">{{ alertService.options().cancelText || 'Cancel' }}</button>
+      }
+      <button class="confirm-btn" (click)="alertService.confirm()">{{ alertService.options().confirmText || 'OK' }}</button>
+    </div>
+  </div>
+</div>
+}

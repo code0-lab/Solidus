@@ -9,6 +9,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Http;
+using System.IO;
 
 namespace DomusMercatorisDotnetRest.Services
 {
@@ -73,8 +76,34 @@ namespace DomusMercatorisDotnetRest.Services
             var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == id);
             if (user is null) return null;
 
+            user.FirstName = dto.FirstName ?? user.FirstName;
+            user.LastName = dto.LastName ?? user.LastName;
             user.Phone = dto.Phone;
             user.Address = dto.Address;
+
+            // Handle Email Change
+            if (!string.Equals(user.Email, dto.Email, StringComparison.OrdinalIgnoreCase))
+            {
+                if (string.IsNullOrEmpty(dto.CurrentPassword))
+                {
+                    // If email is changing, current password is required
+                    // In a real app, you might throw a specific exception or return a result object
+                    // For now, we'll return null to indicate failure (controller can handle basic validation)
+                    // But to be more specific, we might need a richer return type. 
+                    // Let's assume the controller validated that if Email != CurrentEmail, Password is present.
+                    // But here we must validate the password is CORRECT.
+                    return null; 
+                }
+
+                var hashedCurrent = HashSha256(dto.CurrentPassword);
+                if (user.Password != hashedCurrent) return null; // Incorrect password
+
+                // Check uniqueness
+                if (await _db.Users.AnyAsync(u => u.Email == dto.Email && u.Id != id))
+                    return null; // Email taken
+
+                user.Email = dto.Email;
+            }
 
             await _db.SaveChangesAsync();
             return _mapper.Map<UserDto>(user);
@@ -143,6 +172,40 @@ namespace DomusMercatorisDotnetRest.Services
             var tokenHandler = new JwtSecurityTokenHandler();
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
+        }
+
+        public async Task<UserDto?> UploadProfilePictureAsync(long userId, IFormFile file)
+        {
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user is null) return null;
+
+            // Regex validation for checks
+            var extension = Path.GetExtension(file.FileName).ToLower();
+            if (!Regex.IsMatch(extension, @"^\.(jpg|jpeg|png|webp)$"))
+            {
+                return null; // Invalid format
+            }
+
+            // Define upload path: ../MVC/MVC/wwwroot/uploads
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "..", "MVC", "MVC", "wwwroot", "uploads");
+            if (!Directory.Exists(uploadsFolder))
+            {
+                Directory.CreateDirectory(uploadsFolder);
+            }
+
+            var uniqueFileName = Guid.NewGuid().ToString() + extension;
+            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            // Save relative URL
+            user.ProfilePictureUrl = $"/uploads/{uniqueFileName}";
+
+            await _db.SaveChangesAsync();
+            return _mapper.Map<UserDto>(user);
         }
     }
 }

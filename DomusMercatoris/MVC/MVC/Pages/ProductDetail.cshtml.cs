@@ -33,6 +33,12 @@ namespace DomusMercatorisDotnetMVC.Pages
         public List<VariantProductDto> Variants { get; set; } = new();
         public List<CommentsDto> Comments { get; set; } = new();
 
+        [BindProperty(SupportsGet = true, Name = "page")]
+        public int PageNumber { get; set; } = 1;
+        public int PageSize { get; set; } = 10;
+        public int TotalCount { get; set; }
+        public int TotalPages { get; set; } = 1;
+
         public async Task<IActionResult> OnGetAsync(long id)
         {
             var comp = User.FindFirst("CompanyId")?.Value;
@@ -47,7 +53,14 @@ namespace DomusMercatorisDotnetMVC.Pages
             }
 
             Variants = await _variantService.GetVariantsByProductIdAsync(id);
-            var comments = await _commentService.GetCommentsByProductIdAsync(id);
+            var result = await _commentService.GetCommentsByProductIdAsync(id, PageNumber, PageSize);
+            
+            TotalCount = result.TotalCount;
+            TotalPages = Math.Max(1, (int)System.Math.Ceiling(TotalCount / (double)PageSize));
+            
+            if (PageNumber > TotalPages && TotalPages > 0) PageNumber = TotalPages;
+
+            var comments = result.Items;
 
             if (User.IsInRole("Manager"))
             {
@@ -75,7 +88,7 @@ namespace DomusMercatorisDotnetMVC.Pages
             }
 
             await _commentService.SetApprovalAsync(commentId, true, companyId);
-            return RedirectToPage(new { id = productId });
+            return RedirectToPage(new { id = productId, page = PageNumber });
         }
 
         public async Task<IActionResult> OnPostDeleteAsync(long id)

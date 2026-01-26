@@ -1,43 +1,43 @@
 @page
-@model DomusMercatorisDotnetMVC.Pages.SalesModel
+@model DomusMercatorisDotnetMVC.Pages.OrdersModel
 @{
-    ViewData["Title"] = "Sales";
+    ViewData["Title"] = "Orders";
     Layout = "_LayoutAuth";
 }
 
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Sales History</h2>
+        <h2>Order History</h2>
     </div>
 
-    @if (Model.Sales.Count == 0)
+    @if (Model.Orders.Count == 0)
     {
         <div class="alert alert-info rounded-0 border-3 border-dark">
-            No sales found for your company yet.
+            No orders found for your company yet.
         </div>
     }
     else
     {
         <div class="row g-4">
-            @foreach (var sale in Model.Sales)
+            @foreach (var order in Model.Orders)
             {
                 <div class="col-12 col-md-6 col-lg-4">
                     <div class="card h-100 rounded-0 border-dark border-2">
                         <div class="card-header bg-transparent border-dark border-bottom-1 rounded-0 d-flex justify-content-between align-items-center">
-                            <span class="fw-bold">Order #@sale.Id</span>
-                            <small class="text-muted">@sale.CreatedAt.ToString("g")</small>
+                            <span class="fw-bold">Order #@order.Id</span>
+                            <small class="text-muted">@order.CreatedAt.ToString("g")</small>
                         </div>
                         <div class="card-body">
                             <div class="mb-3">
-                                <h5 class="fw-bold mb-0">@sale.TotalPrice.ToString("C2")</h5>
+                                <h5 class="fw-bold mb-0">@order.TotalPrice.ToString("C2")</h5>
                                 <div class="text-muted small">
-                                    @if (sale.User != null)
+                                    @if (order.User != null)
                                     {
-                                        <span>@sale.User.FirstName @sale.User.LastName</span>
+                                        <span>@order.User.FirstName @order.User.LastName</span>
                                     }
-                                    else if (sale.FleetingUser != null)
+                                    else if (order.FleetingUser != null)
                                     {
-                                        <span>@sale.FleetingUser.FirstName @sale.FleetingUser.LastName (Guest)</span>
+                                        <span>@order.FleetingUser.FirstName @order.FleetingUser.LastName (Guest)</span>
                                     }
                                     else
                                     {
@@ -49,11 +49,11 @@
                             <div class="mb-3">
                                 <label class="small text-muted fw-bold text-uppercase">Status</label>
                                 <div>
-                                    @if (sale.IsRefunded)
+                                    @if (order.IsRefunded)
                                     {
                                         <span class="badge bg-danger rounded-0 border border-dark text-white">Refunded</span>
                                     }
-                                    else if (sale.IsPaid)
+                                    else if (order.IsPaid)
                                     {
                                         <span class="badge bg-success rounded-0 border border-dark text-white">Paid</span>
                                     }
@@ -62,9 +62,9 @@
                                         <span class="badge bg-warning text-dark rounded-0 border border-dark">Pending</span>
                                     }
 
-                                    @if (sale.CargoTracking != null)
+                                    @if (order.CargoTracking != null)
                                     {
-                                        <span class="badge bg-info text-dark rounded-0 border border-dark ms-1">@sale.CargoTracking.Status</span>
+                                        <span class="badge bg-info text-dark rounded-0 border border-dark ms-1">@order.CargoTracking.Status</span>
                                     }
                                 </div>
                             </div>
@@ -72,7 +72,7 @@
                             <div class="mb-0">
                                 <label class="small text-muted fw-bold text-uppercase">Items</label>
                                 <ul class="list-unstyled mb-0 small">
-                                    @foreach (var item in sale.SaleProducts.Take(3))
+                                    @foreach (var item in order.OrderItems.Take(3))
                                     {
                                         <li class="text-truncate">
                                             @item.Quantity x @(item.Product?.Name ?? "Unknown")
@@ -82,15 +82,15 @@
                                             }
                                         </li>
                                     }
-                                    @if (sale.SaleProducts.Count > 3)
+                                    @if (order.OrderItems.Count > 3)
                                     {
-                                        <li class="text-muted fst-italic">+ @(sale.SaleProducts.Count - 3) more items...</li>
+                                        <li class="text-muted fst-italic">+ @(order.OrderItems.Count - 3) more items...</li>
                                     }
                                 </ul>
                             </div>
                         </div>
                         <div class="card-footer bg-transparent border-dark border-top-1 rounded-0 p-2">
-                            <a asp-page="/SaleDetail" asp-route-id="@sale.Id" class="btn btn-dark w-100 rounded-0">
+                            <a asp-page="/OrderDetail" asp-route-id="@order.Id" class="btn btn-dark w-100 rounded-0">
                                 View Details
                             </a>
                         </div>
@@ -101,19 +101,19 @@
 
         @if (Model.TotalPages > 1)
         {
-            <nav class="mt-4" aria-label="Sales pagination">
+            <nav class="mt-4" aria-label="Orders pagination">
                 <ul class="pagination justify-content-center">
                     <li class="page-item @(Model.PageNumber <= 1 ? "disabled" : "")">
-                        <a class="page-link rounded-0 text-dark" href="/Sales?page=@(Model.PageNumber - 1)" tabindex="-1" aria-disabled="@(Model.PageNumber <= 1)">Previous</a>
+                        <a class="page-link rounded-0 text-dark" href="/Orders?page=@(Model.PageNumber - 1)" tabindex="-1" aria-disabled="@(Model.PageNumber <= 1)">Previous</a>
                     </li>
                     @for (var i = 1; i <= Model.TotalPages; i++)
                     {
                         <li class="page-item @(Model.PageNumber == i ? "active" : "")">
-                            <a class="page-link rounded-0 @(Model.PageNumber == i ? "bg-dark border-dark" : "text-dark")" href="/Sales?page=@i">@i</a>
+                            <a class="page-link rounded-0 @(Model.PageNumber == i ? "bg-dark border-dark" : "text-dark")" href="/Orders?page=@i">@i</a>
                         </li>
                     }
                     <li class="page-item @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")">
-                        <a class="page-link rounded-0 text-dark" href="/Sales?page=@(Model.PageNumber + 1)" aria-disabled="@(Model.PageNumber >= Model.TotalPages)">Next</a>
+                        <a class="page-link rounded-0 text-dark" href="/Orders?page=@(Model.PageNumber + 1)" aria-disabled="@(Model.PageNumber >= Model.TotalPages)">Next</a>
                     </li>
                 </ul>
             </nav>

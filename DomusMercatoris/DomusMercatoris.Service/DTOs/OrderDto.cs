@@ -1,13 +1,18 @@
+using DomusMercatoris.Core.Models;
+
 namespace DomusMercatoris.Service.DTOs
 {
-    public class SaleDto
+    public class OrderDto
     {
         public long Id { get; set; }
         public bool IsPaid { get; set; }
         public decimal TotalPrice { get; set; }
+        public OrderStatus Status { get; set; }
         public int CompanyId { get; set; }
         public long? UserId { get; set; }
         public long? FleetingUserId { get; set; }
         public int? CargoTrackingId { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public List<OrderItemDto> OrderItems { get; set; } = new();
     }
 }

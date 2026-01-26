@@ -101,6 +101,22 @@ namespace DomusMercatorisDotnetRest.Controllers
             return Ok(updated);
         }
 
+        [HttpPost("me/picture")]
+        [Authorize]
+        public async Task<ActionResult<UserDto>> UploadProfilePicture(IFormFile file)
+        {
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+
+            if (file == null || file.Length == 0)
+                return BadRequest("Dosya yüklenmedi.");
+
+            var updated = await _usersService.UploadProfilePictureAsync(userId.Value, file);
+            if (updated is null) return BadRequest("Geçersiz dosya formatı veya kullanıcı bulunamadı.");
+
+            return Ok(updated);
+        }
+
         /// <summary>
         /// Changes the current user's password.
         /// </summary>

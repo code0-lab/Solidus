@@ -283,66 +283,135 @@
         <!-- Right Side: Register Form -->
         <div class="col-md px-0">
             <div class="brutalist-form-section">
-                <h2 class="brutalist-header">REGISTER</h2>
-
-                @if (ModelState.IsValid == false)
+                @if (TempData["GeneratedPassword"] != null)
                 {
-                    <div class="text-danger mb-4">
-                        <ul class="list-unstyled">
-                            @foreach (Microsoft.AspNetCore.Mvc.ModelBinding.ModelStateEntry modelState in ModelState.Values)
-                            {
-                                @foreach (var error in modelState.Errors)
-                                {
-                                    <li>@error.ErrorMessage</li>
-                                }
-                            }
-                        </ul>
+                    <h2 class="brutalist-header">SUCCESS</h2>
+                    <div class="alert alert-success border-0 rounded-0 p-4" style="background: #e8f5e9; color: #1b5e20;">
+                        <h4 class="alert-heading text-uppercase fw-bold mb-3">Account Created</h4>
+                        <p class="mb-3">Your account has been successfully registered. Here is your automatically generated password:</p>
+                        <div class="bg-white p-3 border border-dark text-center mb-3">
+                            <span class="fs-2 fw-bold font-monospace user-select-all">@TempData["GeneratedPassword"]</span>
+                        </div>
+                        <p class="mb-0 small text-uppercase fw-bold text-danger">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                            Please save this password immediately. You will need it to login.
+                        </p>
                     </div>
-                }
-
-                <form method="post" class="d-flex flex-column">
-                    @Html.AntiForgeryToken()
                     
-                    <div class="row">
-                        <div class="col-6">
-                            <input name="UserRegisterDto.FirstName" value="@Model.UserRegisterDto.FirstName" class="brutalist-input" placeholder="First Name">
-                        </div>
-                        <div class="col-6">
-                            <input name="UserRegisterDto.LastName" value="@Model.UserRegisterDto.LastName" class="brutalist-input" placeholder="Last Name">
-                        </div>
+                    <div class="d-flex justify-content-center gap-3 mt-4">
+                        <button type="button" class="brutalist-btn" onclick="downloadCredentials()">
+                            <i class="bi bi-download me-2"></i>Download Credentials
+                        </button>
                     </div>
 
-                    <input name="UserRegisterDto.Email" value="@Model.UserRegisterDto.Email" type="email" class="brutalist-input" placeholder="Email Address">
-                    
-                    <div class="position-relative">
-                        <input name="UserRegisterDto.Password" type="password" value="@Model.UserRegisterDto.Password" class="brutalist-input" placeholder="Password" id="registerPassword" style="padding-right: 40px;">
-                        <i class="bi bi-eye position-absolute top-50 end-0 translate-middle-y me-3" id="toggleRegisterPassword" style="cursor: pointer; z-index: 10; color: #fff;"></i>
+                    <div class="text-center mt-3">
+                        <a href="/Index" class="brutalist-btn text-decoration-none">Proceed to Login</a>
                     </div>
 
                     <script>
-                        document.getElementById('toggleRegisterPassword').addEventListener('click', function () {
-                            const passwordInput = document.getElementById('registerPassword');
-                            const icon = this;
-                            if (passwordInput.type === 'password') {
-                                passwordInput.type = 'text';
-                                icon.classList.remove('bi-eye');
-                                icon.classList.add('bi-eye-slash');
+                        function downloadCredentials() {
+                            const email = '@Model.UserRegisterDto.Email';
+                            const password = '@TempData["GeneratedPassword"]';
+                            const content = `DOMUS MERCATORIS REGISTRATION\n\nEmail: ${email}\nPassword: ${password}\n\nPlease keep this information secure.`;
+                            
+                            const blob = new Blob([content], { type: 'text/plain' });
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'domus-credentials.txt';
+                            document.body.appendChild(a);
+                            a.click();
+                            window.URL.revokeObjectURL(url);
+                            document.body.removeChild(a);
+                        }
+                    </script>
+                }
+                else if (TempData["RegistrationSuccess"] != null)
+                {
+                    <h2 class="brutalist-header">SUCCESS</h2>
+                    <div class="alert alert-success border-0 rounded-0 p-4" style="background: #e8f5e9; color: #1b5e20;">
+                        <h4 class="alert-heading text-uppercase fw-bold mb-3">Account Created</h4>
+                        <p class="mb-3">Your account has been successfully registered.</p>
+                        <p class="mb-0 small text-uppercase fw-bold">
+                            You can now log in with your password.
+                        </p>
+                    </div>
+                    <div class="text-center mt-4">
+                        <a href="/Index" class="brutalist-btn text-decoration-none">Proceed to Login</a>
+                    </div>
+                }
+                else
+                {
+                    <h2 class="brutalist-header">REGISTER</h2>
+
+                    @if (ModelState.IsValid == false)
+                    {
+                        <div class="text-danger mb-4">
+                            <ul class="list-unstyled">
+                                @foreach (Microsoft.AspNetCore.Mvc.ModelBinding.ModelStateEntry modelState in ModelState.Values)
+                                {
+                                    @foreach (var error in modelState.Errors)
+                                    {
+                                        <li>@error.ErrorMessage</li>
+                                    }
+                                }
+                            </ul>
+                        </div>
+                    }
+
+                    <form method="post" class="d-flex flex-column">
+                        @Html.AntiForgeryToken()
+                        
+                        <div class="row">
+                            <div class="col-6">
+                                <input name="UserRegisterDto.FirstName" value="@Model.UserRegisterDto.FirstName" class="brutalist-input" placeholder="First Name">
+                            </div>
+                            <div class="col-6">
+                                <input name="UserRegisterDto.LastName" value="@Model.UserRegisterDto.LastName" class="brutalist-input" placeholder="Last Name">
+                            </div>
+                        </div>
+
+                        <input name="UserRegisterDto.Email" value="@Model.UserRegisterDto.Email" type="email" class="brutalist-input" placeholder="Email Address">
+                        
+                        <input name="UserRegisterDto.CompanyName" value="@Model.UserRegisterDto.CompanyName" class="brutalist-input" placeholder="Company Name">
+
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="autoPassCheck" name="IsAutoGeneratePassword" value="true" @(Model.IsAutoGeneratePassword ? "checked" : "") onchange="togglePasswordFields()">
+                                <input type="hidden" name="IsAutoGeneratePassword" value="false">
+                                <label class="form-check-label text-uppercase" for="autoPassCheck" style="letter-spacing: 0.05em; font-size: 0.9rem;">
+                                    Auto-generate secure password
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="passwordFields" style="display: none;">
+                            <input name="UserRegisterDto.Password" type="password" class="brutalist-input" placeholder="Password">
+                        </div>
+
+                        <button class="brutalist-btn" type="submit">Create Account</button>
+                    </form>
+
+                    <div class="text-center">
+                        <a href="/Index" class="d-block brutalist-link">Already have an account? Login</a>
+                    </div>
+                    
+                    <script>
+                        function togglePasswordFields() {
+                            var isChecked = document.getElementById('autoPassCheck').checked;
+                            var passField = document.getElementById('passwordFields');
+                            if (isChecked) {
+                                passField.style.display = 'none';
                             } else {
-                                passwordInput.type = 'password';
-                                icon.classList.remove('bi-eye-slash');
-                                icon.classList.add('bi-eye');
+                                passField.style.display = 'block';
                             }
+                        }
+                        // Initialize on load
+                        document.addEventListener("DOMContentLoaded", function() {
+                            togglePasswordFields();
                         });
                     </script>
-                    
-                    <input name="UserRegisterDto.CompanyName" value="@Model.UserRegisterDto.CompanyName" class="brutalist-input" placeholder="Company Name">
-
-                    <button class="brutalist-btn" type="submit">Create Account</button>
-                </form>
-
-                <div class="text-center">
-                    <a href="/Index" class="d-block brutalist-link">Already have an account? Login</a>
-                </div>
+                }
             </div>
         </div>
     </div>

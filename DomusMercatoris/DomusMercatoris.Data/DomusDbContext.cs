@@ -21,13 +21,14 @@ namespace DomusMercatoris.Data
         public DbSet<Brand> Brands { get; set; } = null!;
         public DbSet<VariantProduct> VariantProducts { get; set; } = null!;
         public DbSet<CargoTracking> CargoTrackings { get; set; } = null!;
-        public DbSet<Sale> Sales { get; set; } = null!;
-        public DbSet<SaleProduct> SaleProducts { get; set; } = null!;
+        public DbSet<Order> Orders { get; set; } = null!;
+        public DbSet<OrderItem> OrderItems { get; set; } = null!;
         public DbSet<ProductCluster> ProductClusters { get; set; } = null!;
         public DbSet<ProductClusterMember> ProductClusterMembers { get; set; } = null!;
         public DbSet<ProductFeature> ProductFeatures { get; set; } = null!;
         public DbSet<AutoCategory> AutoCategories { get; set; } = null!;
         public DbSet<Banner> Banners { get; set; } = null!;
+        public DbSet<CartItem> CartItems { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -49,6 +50,28 @@ namespace DomusMercatoris.Data
                 l => (l ?? new List<string>()).Aggregate(0, (acc, val) => HashCode.Combine(acc, val == null ? 0 : val.GetHashCode())),
                 l => (l == null ? new List<string>() : l.ToList())
             );
+
+            modelBuilder.Entity<CartItem>(entity =>
+            {
+                entity.HasIndex(c => new { c.UserId, c.ProductId, c.VariantProductId })
+                    .IsUnique()
+                    .HasFilter(null); // Ensure uniqueness even if VariantProductId is null (SQL Server allows one NULL)
+
+                entity.HasOne(c => c.User)
+                    .WithMany()
+                    .HasForeignKey(c => c.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(c => c.Product)
+                    .WithMany()
+                    .HasForeignKey(c => c.ProductId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(c => c.VariantProduct)
+                    .WithMany()
+                    .HasForeignKey(c => c.VariantProductId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
 
             modelBuilder.Entity<User>(entity =>
             {
@@ -147,7 +170,7 @@ namespace DomusMercatoris.Data
                     .OnDelete(DeleteBehavior.SetNull);
             });
 
-            modelBuilder.Entity<Sale>(entity =>
+            modelBuilder.Entity<Order>(entity =>
             {
                 entity.HasIndex(s => new { s.CompanyId, s.CreatedAt });
                 entity.Property(s => s.TotalPrice).HasColumnType("decimal(18,2)");
@@ -167,13 +190,13 @@ namespace DomusMercatoris.Data
                     .WithMany()
                     .HasForeignKey(s => s.FleetingUserId)
                     .OnDelete(DeleteBehavior.SetNull);
-                entity.HasMany(s => s.SaleProducts)
-                    .WithOne(sp => sp.Sale)
-                    .HasForeignKey(sp => sp.SaleId)
+                entity.HasMany(s => s.OrderItems)
+                    .WithOne(sp => sp.Order)
+                    .HasForeignKey(sp => sp.OrderId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            modelBuilder.Entity<SaleProduct>(entity =>
+            modelBuilder.Entity<OrderItem>(entity =>
             {
                 entity.Property(sp => sp.UnitPrice).HasColumnType("decimal(18,2)");
                 entity.HasOne(sp => sp.Product)

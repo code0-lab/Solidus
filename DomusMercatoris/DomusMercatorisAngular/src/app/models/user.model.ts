@@ -8,6 +8,7 @@ export interface User {
     address?: string | null;
     companyId?: number;
     roles: string[];
+    profilePictureUrl?: string;
 }
 
 export interface LoginRequest {
@@ -37,11 +38,16 @@ export interface UserProfileDto {
     phone?: string | null;
     address?: string | null;
     roles: string[];
+    profilePictureUrl?: string;
 }
 
 export interface UpdateProfileRequest {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
     phone?: string | null;
     address?: string | null;
+    currentPassword?: string;
 }
 
 export interface ChangePasswordRequest {

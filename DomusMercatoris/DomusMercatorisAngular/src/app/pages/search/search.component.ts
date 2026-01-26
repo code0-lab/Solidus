@@ -72,6 +72,16 @@ export class SearchComponent {
     this.selectedClusterId.set(null);
     // Do NOT clear products, so they persist in the standard view
     // this.productService.products.set([]); 
+
+    // Clear image file from memory as requested
+    this.imageFile = undefined;
+    this.croppedImageBlob = null;
+  }
+
+  undoCrop() {
+    this.isVisualSearchMode.set(false);
+    this.showCropper.set(true);
+    this.classifyError.set(null);
   }
 
   imageCropped(event: ImageCroppedEvent) {
@@ -79,31 +89,31 @@ export class SearchComponent {
   }
 
   imageLoaded(image: LoadedImage) {
-      // Image loaded
+    // Image loaded
   }
 
   cropperReady() {
-      // Cropper ready
+    // Cropper ready
   }
 
   loadImageFailed() {
-      this.classifyError.set('Image load failed');
-      this.showCropper.set(false);
+    this.classifyError.set('Image load failed');
+    this.showCropper.set(false);
   }
 
   cancelCrop() {
-      this.showCropper.set(false);
-      this.imageFile = undefined;
-      this.croppedImageBlob = null;
+    this.showCropper.set(false);
+    this.imageFile = undefined;
+    this.croppedImageBlob = null;
   }
 
   async confirmCrop() {
     if (!this.croppedImageBlob) return;
-    
+
     this.showCropper.set(false);
     this.isVisualSearchMode.set(true); // Enable Visual Search Mode
     this.isClassifying.set(true);
-    
+
     // Create File from Blob
     const file = new File([this.croppedImageBlob], "cropped.png", { type: "image/png" });
 
