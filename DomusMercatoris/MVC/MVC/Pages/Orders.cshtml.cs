@@ -8,7 +8,7 @@ using DomusMercatorisDotnetMVC.Services;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
-    [Authorize(Roles = "Manager,User")]
+    [Authorize(Policy = "OrdersAccess")]
     public class OrdersModel : PageModel
     {
         private readonly DomusMercatoris.Service.Services.OrderService _orderService;

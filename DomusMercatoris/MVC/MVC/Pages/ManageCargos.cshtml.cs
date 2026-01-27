@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
-    [Authorize(Roles = "Manager,User")]
+    [Authorize(Policy = "ManageCargosAccess")]
     public class ManageCargosModel : PageModel
     {
         private readonly CargoService _cargoService;
@@ -54,6 +54,10 @@ namespace DomusMercatorisDotnetMVC.Pages
             }
 
             // 2. Load List based on Role
+            // Managers and Authorized Workers see all cargos
+            Cargos = await _cargoService.GetAllCargosAsync();
+            
+            /*
             if (User.IsInRole("Manager"))
             {
                 // Managers see all cargos
@@ -72,6 +76,7 @@ namespace DomusMercatorisDotnetMVC.Pages
                     }
                 }
             }
+            */
         }
 
         public async Task<IActionResult> OnPostCreateAsync()

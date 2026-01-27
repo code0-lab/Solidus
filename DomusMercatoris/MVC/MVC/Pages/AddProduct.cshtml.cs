@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
-    [Authorize(Roles = "Manager,User")]
+    [Authorize(Policy = "ProductsAccess")]
     public class AddProductModel : PageModel
     {
         [BindProperty]

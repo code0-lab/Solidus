@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
-    [Authorize(Roles = "Manager,User")]
+    [Authorize(Policy = "ProductsAccess")]
     public class EditProductModel : PageModel
     {
         private readonly ProductService _productService;

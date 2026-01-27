@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
-    [Authorize(Roles = "Manager,User")]
+    [Authorize(Policy = "OrdersAccess")]
     public class OrderDetailModel : PageModel
     {
         private readonly DomusDbContext _db;

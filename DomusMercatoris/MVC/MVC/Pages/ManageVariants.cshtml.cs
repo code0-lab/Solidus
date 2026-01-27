@@ -9,7 +9,7 @@ using DomusMercatoris.Data;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
-    [Authorize(Roles = "Manager,User")]
+    [Authorize(Policy = "ProductsAccess")]
     public class ManageVariantsModel : PageModel
     {
         private readonly VariantProductService _variantService;

@@ -10,7 +10,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace DomusMercatorisDotnetMVC.Pages.Account
 {
-    [Authorize(Roles = "Manager")]
+    [Authorize(Policy = "CompanyBannersAccess")]
     public class CompanyBannersModel : PageModel
     {
         private readonly UserService _userService;

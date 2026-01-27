@@ -78,6 +78,20 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("CategoriesAccess", policy =>
         policy.Requirements.Add(new HybridPageAccessRequirement("Categories", "Manager")));
+    options.AddPolicy("ProductsAccess", policy =>
+        policy.Requirements.Add(new HybridPageAccessRequirement("Products", "Manager")));
+    options.AddPolicy("BrandsAccess", policy =>
+        policy.Requirements.Add(new HybridPageAccessRequirement("Brands", "Manager")));
+    options.AddPolicy("OrdersAccess", policy =>
+        policy.Requirements.Add(new HybridPageAccessRequirement("Orders", "Manager")));
+    options.AddPolicy("CustomersAccess", policy =>
+        policy.Requirements.Add(new HybridPageAccessRequirement("Customers", "Manager")));
+    options.AddPolicy("ManageCargosAccess", policy =>
+        policy.Requirements.Add(new HybridPageAccessRequirement("ManageCargos", "Manager")));
+    options.AddPolicy("WorkersAccess", policy =>
+        policy.Requirements.Add(new HybridPageAccessRequirement("Workers", "Manager")));
+    options.AddPolicy("CompanyBannersAccess", policy =>
+        policy.Requirements.Add(new HybridPageAccessRequirement("CompanyBanners", "Manager")));
 });
 
 var app = builder.Build();

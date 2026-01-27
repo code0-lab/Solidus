@@ -11,7 +11,7 @@ using System.Security.Claims;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
-    [Authorize(Roles = "User,Manager")]
+    [Authorize(Policy = "ProductsAccess")]
     public class ProductDetailModel : PageModel
     {
         private readonly ProductService _productService;

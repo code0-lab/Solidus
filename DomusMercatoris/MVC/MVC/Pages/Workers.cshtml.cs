@@ -6,7 +6,7 @@ using DomusMercatoris.Core.Entities;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
-    [Authorize(Roles = "User,Manager")]
+    [Authorize(Policy = "WorkersAccess")]
     public class WorkersModel : PageModel
     {
         public class EditInput
@@ -31,7 +31,36 @@ namespace DomusMercatorisDotnetMVC.Pages
 
         public List<User> Workers { get; set; } = new();
         public Dictionary<long, HashSet<string>> UserPageAccessMap { get; set; } = new();
-        public List<string> PageAccessKeys { get; } = new() { "Categories" };
+
+        public static readonly Dictionary<string, Dictionary<string, string>> PermissionGroups = new()
+        {
+            { "Catalog Management", new Dictionary<string, string> 
+                { 
+                    { "Products", "Manage Products" },
+                    { "Categories", "Manage Categories" },
+                    { "Brands", "Manage Brands" }
+                } 
+            },
+            { "Sales & Orders", new Dictionary<string, string> 
+                { 
+                    { "Orders", "Manage Orders" },
+                    { "Customers", "Manage Customers" },
+                    { "ManageCargos", "Manage Cargo Settings" }
+                } 
+            },
+            { "Marketing", new Dictionary<string, string> 
+                { 
+                    { "CompanyBanners", "Manage Banners (AI)" }
+                } 
+            },
+            { "Administration", new Dictionary<string, string> 
+                { 
+                    { "Workers", "Manage Workforce" }
+                } 
+            }
+        };
+
+        public List<string> PageAccessKeys => PermissionGroups.SelectMany(g => g.Value.Keys).ToList();
 
         public async Task<IActionResult> OnGetAsync()
         {

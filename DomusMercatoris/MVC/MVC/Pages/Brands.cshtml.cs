@@ -8,7 +8,7 @@ using DomusMercatorisDotnetMVC.Services;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
-    [Authorize(Roles = "Manager")]
+    [Authorize(Policy = "BrandsAccess")]
     public class BrandsModel : PageModel
     {
         private readonly BrandService _brandService;

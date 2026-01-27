@@ -8,7 +8,7 @@ using System.Linq;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
-    [Authorize(Roles = "Manager")]
+    [Authorize(Policy = "CustomersAccess")]
     public class CustomersModel : PageModel
     {
         private readonly UserService _userService;

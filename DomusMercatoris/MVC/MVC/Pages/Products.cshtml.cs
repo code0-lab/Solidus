@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
-    [Authorize(Roles = "User,Manager")]
+    [Authorize(Policy = "ProductsAccess")]
     public class ProductsModel : PageModel
     {
         private readonly ProductService _productService;
