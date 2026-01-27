@@ -15,15 +15,73 @@ namespace DomusMercatorisDotnetMVC.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IWebHostEnvironment _env;
         private readonly IClusteringService _clusteringService;
+        private readonly UserService _userService;
 
-        public ProductService(DomusDbContext db, IHttpContextAccessor httpContextAccessor, IWebHostEnvironment env, IClusteringService clusteringService)
+        public ProductService(DomusDbContext db, IHttpContextAccessor httpContextAccessor, IWebHostEnvironment env, IClusteringService clusteringService, UserService userService)
         {
             _db = db;
             _httpContextAccessor = httpContextAccessor;
             _env = env;
             _clusteringService = clusteringService;
+            _userService = userService;
         }
 
+
+        public async Task<Category?> GetCategoryByIdAsync(int companyId, int id)
+        {
+            return await _db.Categories.AsNoTracking().SingleOrDefaultAsync(c => c.CompanyId == companyId && c.Id == id);
+        }
+
+        private async Task<bool> ProductCategoriesExistsAsync()
+        {
+            try
+            {
+                var conn = _db.Database.GetDbConnection();
+                if (conn.State != System.Data.ConnectionState.Open) await conn.OpenAsync();
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = "SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'ProductCategories'";
+                var obj = await cmd.ExecuteScalarAsync();
+                return obj != null;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<(List<Product> Items, int TotalCount)> GetPagedByCategoryAsync(int companyId, int categoryId, int pageNumber, int pageSize)
+        {
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 9;
+
+            IQueryable<Product> baseQuery;
+
+            if (await ProductCategoriesExistsAsync())
+            {
+                baseQuery = _db.Products
+                    .AsNoTracking()
+                    .Where(p => p.CompanyId == companyId)
+                    .Include(p => p.Categories)
+                    .Where(p => p.CategoryId == categoryId || p.SubCategoryId == categoryId || p.Categories.Any(c => c.Id == categoryId));
+            }
+            else
+            {
+                baseQuery = _db.Products
+                    .AsNoTracking()
+                    .Where(p => p.CompanyId == companyId)
+                    .Where(p => p.CategoryId == categoryId || p.SubCategoryId == categoryId);
+            }
+
+            var totalCount = await baseQuery.CountAsync();
+            
+            var items = await baseQuery
+                .OrderByDescending(p => p.CreatedAt)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (items, totalCount);
+        }
 
         private async Task<(int? rootId, int? subId)> MapCategoryFallbackAsync(List<int> ids, int companyId)
         {
@@ -89,20 +147,9 @@ namespace DomusMercatorisDotnetMVC.Services
 
         private async Task<int> GetCurrentCompanyIdAsync()
         {
-            var ctx = _httpContextAccessor.HttpContext;
-            var compClaim = ctx?.User?.FindFirst("CompanyId")?.Value;
-            if (!string.IsNullOrEmpty(compClaim) && int.TryParse(compClaim, out var cid))
-            {
-                return cid;
-            }
-            
-            var idClaim = ctx?.User?.FindFirst("UserId")?.Value;
-            if (!string.IsNullOrEmpty(idClaim) && long.TryParse(idClaim, out var userId))
-            {
-                var user = await _db.Users.SingleOrDefaultAsync(u => u.Id == userId);
-                if (user != null) return user.CompanyId;
-            }
-            return 0;
+            var user = _httpContextAccessor.HttpContext?.User;
+            if (user == null) return 0;
+            return await _userService.GetCompanyIdFromUserAsync(user);
         }
 
         private async Task<string> SaveFileAsync(IFormFile file, string baseDir, int companyId)
@@ -247,6 +294,17 @@ namespace DomusMercatorisDotnetMVC.Services
                 .SingleOrDefaultAsync(p => p.Id == id && p.CompanyId == companyId);
         }
 
+        public async Task<List<Category>> GetCategoriesByCompanyAsync(int companyId)
+        {
+            return await _db.Categories
+                .AsNoTracking()
+                .Where(c => c.CompanyId == companyId)
+                .OrderBy(c => c.ParentId.HasValue)
+                .ThenBy(c => c.Name)
+                .Select(c => new Category { Id = c.Id, Name = c.Name, ParentId = c.ParentId })
+                .ToListAsync();
+        }
+
         public async Task<Product?> UpdateAsync(long id, ProductUpdateDto dto)
         {
             int companyId = await GetCurrentCompanyIdAsync();
@@ -301,19 +359,32 @@ namespace DomusMercatorisDotnetMVC.Services
             return await _db.Products.CountAsync(p => p.CompanyId == companyId);
         }
 
-        public async Task<List<Product>> GetByCompanyPageAsync(int companyId, int page, int pageSize)
+        public async Task<(List<Product> Items, int TotalCount)> GetPagedByCompanyAsync(int companyId, int page, int pageSize)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 9;
-            var skip = (page - 1) * pageSize;
-            return await _db.Products
+            
+            var query = _db.Products
                 .AsNoTracking()
+                .Where(p => p.CompanyId == companyId);
+
+            var totalCount = await query.CountAsync();
+            var skip = (page - 1) * pageSize;
+            
+            var items = await query
                 .Include(p => p.Variants)
-                .Where(p => p.CompanyId == companyId)
                 .OrderByDescending(p => p.CreatedAt)
                 .Skip(skip)
                 .Take(pageSize)
                 .ToListAsync();
+
+            return (items, totalCount);
+        }
+
+        public async Task<List<Product>> GetByCompanyPageAsync(int companyId, int page, int pageSize)
+        {
+            var result = await GetPagedByCompanyAsync(companyId, page, pageSize);
+            return result.Items;
         }
 
         public async Task<List<Product>> SearchByCompanyAsync(int companyId, string query, int limit = 20)

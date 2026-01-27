@@ -16,29 +16,80 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">          
-                @if (User.IsInRole("Manager"))
+                @inject DomusMercatorisDotnetMVC.Services.UserService UserService
+                @{
+                    var cid = await UserService.GetCompanyIdFromUserAsync(User);
+                    var userIdStr = User.FindFirst("UserId")?.Value;
+                    long uid = 0;
+                    if (!string.IsNullOrEmpty(userIdStr)) { long.TryParse(userIdStr, out uid); }
+                    var accessKeys = new System.Collections.Generic.HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+                    if (cid > 0 && uid > 0)
+                    {
+                        var acc = await UserService.GetUserPageAccessesForCompanyAsync(cid);
+                        foreach (var a in acc.Where(a => a.UserId == uid))
+                        {
+                            accessKeys.Add(a.PageKey);
+                        }
+                    }
+                    bool isManager = User.IsInRole("Manager");
+                    var canWorkers = isManager || accessKeys.Contains("Workers");
+                    var canCustomers = isManager || accessKeys.Contains("Customers");
+                    var canManageCargos = isManager || accessKeys.Contains("ManageCargos");
+                    var canOrders = isManager || accessKeys.Contains("Orders");
+                    var canBanners = isManager || accessKeys.Contains("CompanyBanners");
+                    var canProducts = isManager || accessKeys.Contains("Products");
+                    var canCategories = isManager || accessKeys.Contains("Categories");
+                    var canBrands = isManager || accessKeys.Contains("Brands");
+                    var showCompanyDropdown = isManager || accessKeys.Count > 0;
+                    var showProductSubmenu = canProducts || canCategories || canBrands;
+                }
+                @if (showCompanyDropdown)
                 {
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle text-uppercase fw-bold" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" onclick="return false;">
                             Company management
                         </a>
                         <ul class="dropdown-menu brutalist-dropdown">
-                            <li><a class="dropdown-item" href="/Workers">Manage the workforce</a></li>
-                            <li><a class="dropdown-item" href="/Customers">Manage Customers</a></li>
-                            <li><a class="dropdown-item" href="/ManageCargos">Manage Cargos</a></li>
-                            <li><a class="dropdown-item" href="/Orders">Order History</a></li>
-                            <li><a class="dropdown-item" href="/Account/CompanyBanners">Manage Banners (AI)</a></li>
-                            <li class="dropend">
-                                <button type="button" class="dropdown-item dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                    Manage the products
-                                </button>
-                                <ul class="dropdown-menu brutalist-dropdown">
-                                    <li><a class="dropdown-item" href="/Products">Manage Products</a></li>
-                                    <li><a class="dropdown-item" href="/Categories">Manage Product Categories</a></li>
-                                    <li><a class="dropdown-item" href="/Brands">Manage Brands</a></li>
-                                </ul>
-                            </li>
-                            <li><hr class="dropdown-divider border-black"></li>
+                            @if (User.IsInRole("Manager"))
+                            {
+                                <li><a class="dropdown-item" href="/Workers">Manage the workforce</a></li>
+                                <li><a class="dropdown-item" href="/Customers">Manage Customers</a></li>
+                                <li><a class="dropdown-item" href="/ManageCargos">Manage Cargos</a></li>
+                                <li><a class="dropdown-item" href="/Orders">Order History</a></li>
+                                <li><a class="dropdown-item" href="/Account/CompanyBanners">Manage Banners (AI)</a></li>
+                                <li class="dropend">
+                                    <button type="button" class="dropdown-item dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Manage the products
+                                    </button>
+                                    <ul class="dropdown-menu brutalist-dropdown">
+                                        <li><a class="dropdown-item" href="/Products">Manage Products</a></li>
+                                        <li><a class="dropdown-item" href="/Categories">Manage Product Categories</a></li>
+                                        <li><a class="dropdown-item" href="/Brands">Manage Brands</a></li>
+                                    </ul>
+                                </li>
+                                <li><hr class="dropdown-divider border-black"></li>
+                            }
+                            else
+                            {
+                                @if (canWorkers) { <li><a class="dropdown-item" href="/Workers">Manage the workforce</a></li> }
+                                @if (canCustomers) { <li><a class="dropdown-item" href="/Customers">Manage Customers</a></li> }
+                                @if (canManageCargos) { <li><a class="dropdown-item" href="/ManageCargos">Manage Cargos</a></li> }
+                                @if (canOrders) { <li><a class="dropdown-item" href="/Orders">Order History</a></li> }
+                                @if (canBanners) { <li><a class="dropdown-item" href="/Account/CompanyBanners">Manage Banners (AI)</a></li> }
+                                @if (showProductSubmenu)
+                                {
+                                    <li class="dropend">
+                                        <button type="button" class="dropdown-item dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                            Manage the products
+                                        </button>
+                                        <ul class="dropdown-menu brutalist-dropdown">
+                                            @if (canProducts) { <li><a class="dropdown-item" href="/Products">Manage Products</a></li> }
+                                            @if (canCategories) { <li><a class="dropdown-item" href="/Categories">Manage Product Categories</a></li> }
+                                            @if (canBrands) { <li><a class="dropdown-item" href="/Brands">Manage Brands</a></li> }
+                                        </ul>
+                                    </li>
+                                }
+                            }
                         </ul>
                     </li>
                 }

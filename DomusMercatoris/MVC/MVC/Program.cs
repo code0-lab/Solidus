@@ -2,6 +2,7 @@ using System.Net;
 using System.IO;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -57,6 +58,8 @@ builder.Services.AddHttpClient();
 builder.Services.AddHostedService<PythonRunnerService>();
 builder.Services.AddHttpContextAccessor();
 
+builder.Services.AddScoped<IAuthorizationHandler, HybridPageAccessHandler>();
+
 // Session ve Cookies AddAuthorization
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -70,6 +73,12 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.ExpireTimeSpan = TimeSpan.FromDays(7);
     });
 builder.Services.AddSession();    
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("CategoriesAccess", policy =>
+        policy.Requirements.Add(new HybridPageAccessRequirement("Categories", "Manager")));
+});
 
 var app = builder.Build();
 
@@ -149,57 +158,10 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// Seed Data
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<DomusMercatoris.Data.DomusDbContext>();
-    var encryptionService = scope.ServiceProvider.GetRequiredService<EncryptionService>();
-
-    // Ensure a Company exists
-    if (!db.Companies.Any())
-    {
-        db.Companies.Add(new DomusMercatoris.Core.Entities.Company
-        {
-            Name = "Domus Mercatoris",
-            CreatedAt = DateTime.Now
-        });
-        db.SaveChanges();
-    }
-    var defaultCompanyId = db.Companies.First().CompanyId;
-
-    // Seed Rex User
-    var rexEmail = "rex@domus.com";
-    var rexUser = db.Users.FirstOrDefault(u => u.Email == rexEmail);
-    var rexPasswordHash = BCrypt.Net.BCrypt.HashPassword("rex123");
-    
-    if (rexUser == null)
-    {
-        rexUser = new DomusMercatoris.Core.Entities.User
-        {
-            Email = rexEmail,
-            FirstName = "Rex",
-            LastName = "User",
-            Password = rexPasswordHash,
-            CompanyId = defaultCompanyId,
-            Roles = new List<string> { "Rex" },
-            CreatedAt = DateTime.Now,
-            Address = "Rex HQ",
-            Phone = "555-REX"
-        };
-        db.Users.Add(rexUser);
-        db.SaveChanges();
-    }
-    else
-    {
-        // Update password to ensure it uses BCrypt (fixing previous AES seeding)
-        rexUser.Password = rexPasswordHash;
-        
-        if (!rexUser.Roles.Contains("Rex"))
-        {
-            rexUser.Roles.Add("Rex");
-        }
-        db.SaveChanges();
-    }
+    DomusMercatorisDotnetMVC.Services.DatabaseSeeder.Seed(db);
 }
 
 app.Run();

@@ -22,6 +22,7 @@ namespace DomusMercatorisDotnetMVC.Services
         Task<List<float>?> ExtractFeaturesFromFilesAsync(List<Microsoft.AspNetCore.Http.IFormFile> files);
         Task<ProductCluster?> FindNearestClusterAsync(List<float> featureVector);
         Task SplitClusterAsync(int clusterId, int numberOfSubClusters = 2);
+        Task<ProductClusterMember?> GetClusterMemberByProductIdAsync(long productId);
     }
 
     public class ClusteringService : IClusteringService
@@ -439,6 +440,15 @@ namespace DomusMercatorisDotnetMVC.Services
             }
 
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<ProductClusterMember?> GetClusterMemberByProductIdAsync(long productId)
+        {
+            return await _context.ProductClusterMembers
+                .Include(m => m.ProductCluster)
+                .ThenInclude(c => c.AutoCategories)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(m => m.ProductId == productId);
         }
     }
 

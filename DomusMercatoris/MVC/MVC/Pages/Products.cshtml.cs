@@ -31,38 +31,25 @@ namespace DomusMercatorisDotnetMVC.Pages
             {
                 PageNumber = Math.Max(1, p);
             }
-            var comp = User.FindFirst("CompanyId")?.Value;
-            if (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var companyId))
+
+            var companyId = await _userService.GetCompanyIdFromUserAsync(User);
+            if (companyId <= 0)
             {
-                TotalCount = await _productService.CountByCompanyAsync(companyId);
-                TotalPages = Math.Max(1, (int)Math.Ceiling(TotalCount / (double)PageSize));
-                if (PageNumber > TotalPages) PageNumber = TotalPages;
-                Items = await _productService.GetByCompanyPageAsync(companyId, PageNumber, PageSize);
+                return RedirectToPage("/Index");
             }
-            else
-            {
-                var idClaim = User.FindFirst("UserId")?.Value;
-                if (string.IsNullOrEmpty(idClaim) || !long.TryParse(idClaim, out var userId))
-                {
-                    return RedirectToPage("/Index");
-                }
-                var me = await _userService.GetByIdAsync(userId);
-                if (me == null)
-                {
-                    return RedirectToPage("/Index");
-                }
-                TotalCount = await _productService.CountByCompanyAsync(me.CompanyId);
-                TotalPages = Math.Max(1, (int)Math.Ceiling(TotalCount / (double)PageSize));
-                if (PageNumber > TotalPages) PageNumber = TotalPages;
-                Items = await _productService.GetByCompanyPageAsync(me.CompanyId, PageNumber, PageSize);
-            }
+
+            var result = await _productService.GetPagedByCompanyAsync(companyId, PageNumber, PageSize);
+            Items = result.Items;
+            TotalCount = result.TotalCount;
+            TotalPages = Math.Max(1, (int)Math.Ceiling(TotalCount / (double)PageSize));
+            
+            if (PageNumber > TotalPages && TotalPages > 0) PageNumber = TotalPages;
+            
             return Page();
         }
 
         public async Task<IActionResult> OnPostDeleteAsync(long id, int? page)
         {
-            var comp = User.FindFirst("CompanyId")?.Value;
-            int companyId = (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var c)) ? c : 0;
             var ok = await _productService.DeleteAsync(id);
             TempData["Message"] = ok ? "Product deleted." : "Product not found.";
             var p = page.HasValue && page.Value > 0 ? page.Value : 1;

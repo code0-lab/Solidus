@@ -11,6 +11,11 @@ using Newtonsoft.Json;
 using System.Net.Http;
 using System.Text;
 using Ganss.Xss;
+using DomusMercatoris.Data;
+using DomusMercatoris.Service.Services;
+using Microsoft.EntityFrameworkCore;
+using DomusMercatorisDotnetMVC.Dto.UserDto;
+using DomusMercatoris.Core.Entities;
 
 namespace DomusMercatorisDotnetMVC.Services
 {
@@ -18,10 +23,14 @@ namespace DomusMercatorisDotnetMVC.Services
     {
         private readonly HttpClient _httpClient;
         private readonly HtmlSanitizer _sanitizer;
+        private readonly DomusDbContext _dbContext;
+        private readonly EncryptionService _encryptionService;
 
-        public GeminiService(HttpClient httpClient)
+        public GeminiService(HttpClient httpClient, DomusDbContext dbContext, EncryptionService encryptionService)
         {
             _httpClient = httpClient;
+            _dbContext = dbContext;
+            _encryptionService = encryptionService;
             _sanitizer = new HtmlSanitizer();
             _sanitizer.AllowedAttributes.Add("style");
             _sanitizer.AllowedAttributes.Add("class");
@@ -635,6 +644,102 @@ Each HTML string must be self-contained with inline CSS, ready to be placed insi
                 await Task.Delay(delay);
             }
             return null!; // Should not happen
+        }
+
+        public async Task<string?> GetCompanyGeminiKeyAsync(int companyId)
+        {
+            var company = await _dbContext.Companies.SingleOrDefaultAsync(c => c.CompanyId == companyId);
+            if (string.IsNullOrEmpty(company?.GeminiApiKey)) return null;
+
+            var decrypted = _encryptionService.Decrypt(company.GeminiApiKey);
+            return !string.IsNullOrEmpty(decrypted) ? decrypted : null;
+        }
+
+        public async Task<string?> GetCompanyCommentPromptAsync(int companyId)
+        {
+            var company = await _dbContext.Companies.SingleOrDefaultAsync(c => c.CompanyId == companyId);
+            return company?.GeminiPrompt;
+        }
+
+        public async Task<bool> IsAiModerationEnabledAsync(int companyId)
+        {
+            var company = await _dbContext.Companies.SingleOrDefaultAsync(c => c.CompanyId == companyId);
+            return company?.IsAiModerationEnabled ?? false;
+        }
+
+        public async Task<bool> UpdateCompanyAiModerationAsync(int companyId, bool isEnabled)
+        {
+            var company = await _dbContext.Companies.SingleOrDefaultAsync(c => c.CompanyId == companyId);
+            if (company == null)
+            {
+                return false;
+            }
+            company.IsAiModerationEnabled = isEnabled;
+            await _dbContext.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> UpdateCompanyGeminiKeyAsync(int companyId, string apiKey)
+        {
+            var company = await _dbContext.Companies.SingleOrDefaultAsync(c => c.CompanyId == companyId);
+            if (company == null) return false;
+
+            company.GeminiApiKey = !string.IsNullOrEmpty(apiKey) ? _encryptionService.Encrypt(apiKey) : null;
+            await _dbContext.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> UpdateCompanyGeminiSettingsAsync(int companyId, string apiKey, string? commentPrompt)
+        {
+            var company = await _dbContext.Companies.SingleOrDefaultAsync(c => c.CompanyId == companyId);
+            if (company == null) return false;
+
+            var existingKey = await GetCompanyGeminiKeyAsync(companyId) ?? string.Empty;
+            var keyPart = apiKey;
+            if (string.IsNullOrWhiteSpace(apiKey) || apiKey == "*****")
+            {
+                keyPart = existingKey;
+            }
+
+            company.GeminiApiKey = !string.IsNullOrEmpty(keyPart) ? _encryptionService.Encrypt(keyPart) : null;
+            company.GeminiPrompt = commentPrompt;
+            
+            await _dbContext.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<AiSettingsDto?> GetAiSettingsAsync(int companyId)
+        {
+            var company = await _dbContext.Companies.SingleOrDefaultAsync(c => c.CompanyId == companyId);
+            if (company == null) return null;
+
+            var decryptedKey = !string.IsNullOrEmpty(company.GeminiApiKey) 
+                ? _encryptionService.Decrypt(company.GeminiApiKey) 
+                : string.Empty;
+
+            return new AiSettingsDto
+            {
+                GeminiApiKey = decryptedKey ?? string.Empty,
+                CommentModerationPrompt = company.GeminiPrompt ?? string.Empty,
+                IsAiModerationEnabled = company.IsAiModerationEnabled
+            };
+        }
+
+        public async Task<bool> UpdateAiSettingsAsync(int companyId, AiSettingsDto settings)
+        {
+            var company = await _dbContext.Companies.SingleOrDefaultAsync(c => c.CompanyId == companyId);
+            if (company == null) return false;
+
+            if (!string.IsNullOrWhiteSpace(settings.GeminiApiKey) && settings.GeminiApiKey != "*****")
+            {
+                company.GeminiApiKey = _encryptionService.Encrypt(settings.GeminiApiKey);
+            }
+
+            company.GeminiPrompt = settings.CommentModerationPrompt;
+            company.IsAiModerationEnabled = settings.IsAiModerationEnabled;
+
+            await _dbContext.SaveChangesAsync();
+            return true;
         }
     }
 }

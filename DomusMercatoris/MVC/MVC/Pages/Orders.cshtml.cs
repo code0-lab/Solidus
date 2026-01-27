@@ -1,24 +1,23 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using DomusMercatoris.Data;
 using DomusMercatoris.Core.Entities;
-using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using DomusMercatorisDotnetMVC.Services;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
     [Authorize(Roles = "Manager,User")]
     public class OrdersModel : PageModel
     {
-        private readonly DomusDbContext _db;
+        private readonly DomusMercatoris.Service.Services.OrderService _orderService;
+        private readonly UserService _userService;
 
-        public OrdersModel(DomusDbContext db)
+        public OrdersModel(DomusMercatoris.Service.Services.OrderService orderService, UserService userService)
         {
-            _db = db;
+            _orderService = orderService;
+            _userService = userService;
         }
 
         public List<Order> Orders { get; set; } = new List<Order>();
@@ -32,48 +31,19 @@ namespace DomusMercatorisDotnetMVC.Pages
 
         public async Task OnGetAsync()
         {
-            var comp = User.FindFirst("CompanyId")?.Value;
-            int companyId = 0;
-            if (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var cid))
-            {
-                companyId = cid;
-            }
-            else
-            {
-                var idClaim = User.FindFirst("UserId")?.Value;
-                if (!string.IsNullOrEmpty(idClaim) && long.TryParse(idClaim, out var userId))
-                {
-                    var me = await _db.Users.SingleOrDefaultAsync(u => u.Id == userId);
-                    if (me != null) companyId = me.CompanyId;
-                }
-            }
+            int companyId = await _userService.GetCompanyIdFromUserAsync(User);
 
             if (companyId > 0)
             {
-                var query = _db.Orders
-                    .AsNoTracking()
-                    .Where(s => s.CompanyId == companyId && s.IsPaid);
+                if (PageNumber < 1) PageNumber = 1;
 
-                TotalCount = await query.CountAsync();
+                var result = await _orderService.GetPagedByCompanyIdAsync(companyId, PageNumber, PageSize);
+                
+                Orders = result.Items;
+                TotalCount = result.TotalCount;
                 TotalPages = Math.Max(1, (int)Math.Ceiling(TotalCount / (double)PageSize));
                 
-                if (PageNumber < 1) PageNumber = 1;
-                if (PageNumber > TotalPages) PageNumber = TotalPages;
-
-                var skip = (PageNumber - 1) * PageSize;
-
-                Orders = await query
-                    .Include(s => s.User)
-                    .Include(s => s.FleetingUser)
-                    .Include(s => s.OrderItems)
-                        .ThenInclude(sp => sp.Product)
-                    .Include(s => s.OrderItems)
-                        .ThenInclude(sp => sp.VariantProduct)
-                    .Include(s => s.CargoTracking)
-                    .OrderByDescending(s => s.CreatedAt)
-                    .Skip(skip)
-                    .Take(PageSize)
-                    .ToListAsync();
+                if (PageNumber > TotalPages && TotalPages > 0) PageNumber = TotalPages;
             }
         }
     }

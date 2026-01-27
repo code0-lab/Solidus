@@ -12,9 +12,12 @@ namespace DomusMercatorisDotnetMVC.Pages.Account
     public class ProfileModel : PageModel
     {
         private readonly UserService _userService;
-        public ProfileModel(UserService userService)
+        private readonly GeminiService _geminiService;
+
+        public ProfileModel(UserService userService, GeminiService geminiService)
         {
             _userService = userService;
+            _geminiService = geminiService;
         }
 
         public string FullName { get; set; } = string.Empty;
@@ -71,7 +74,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Account
                     IsAiModerationEnabled = AiPanel.IsAiModerationEnabled
                 };
 
-                bool success = await _userService.UpdateAiSettingsAsync(user.CompanyId, aiSettingsDto);
+                bool success = await _geminiService.UpdateAiSettingsAsync(user.CompanyId, aiSettingsDto);
 
                 if (success)
                 {
@@ -202,7 +205,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Account
             // Load AI settings using service directly (Only for Managers)
             if (Roles.Any(r => r.Trim().Equals("Manager", StringComparison.OrdinalIgnoreCase)))
             {
-                var aiSettings = await _userService.GetAiSettingsAsync(user.CompanyId);
+                var aiSettings = await _geminiService.GetAiSettingsAsync(user.CompanyId);
                 if (aiSettings != null)
                 {
                     AiPanel.ExistingGeminiApiKey = aiSettings.GeminiApiKey;

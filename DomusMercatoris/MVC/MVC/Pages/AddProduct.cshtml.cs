@@ -21,7 +21,6 @@ namespace DomusMercatorisDotnetMVC.Pages
         public ProductCreateDto Product { get; set; } = new();
 
         private readonly ProductService _productService;
-        private readonly DomusDbContext _db;
         private readonly GeminiService _geminiService;
         private readonly UserService _userService;
         private readonly BrandService _brandService;
@@ -30,10 +29,9 @@ namespace DomusMercatorisDotnetMVC.Pages
         public List<Category> Categories { get; set; } = new();
         public List<BrandDto> Brands { get; set; } = new();
 
-        public AddProductModel(ProductService productService, DomusDbContext db, GeminiService geminiService, UserService userService, BrandService brandService, DomusMercatorisDotnetMVC.Services.IClusteringService clusteringService)
+        public AddProductModel(ProductService productService, GeminiService geminiService, UserService userService, BrandService brandService, DomusMercatorisDotnetMVC.Services.IClusteringService clusteringService)
         {
             _productService = productService;
-            _db = db;
             _geminiService = geminiService;
             _userService = userService;
             _brandService = brandService;
@@ -42,25 +40,11 @@ namespace DomusMercatorisDotnetMVC.Pages
         //aşağıdaki task yapısında await ile a senkron yapıldı ve veri tabanının kategori tespitinde kitlenmesi önlendi
         public async Task<IActionResult> OnPostGenerateDescription(List<IFormFile> files)
         {
-            var comp = User.FindFirst("CompanyId")?.Value;
-            int companyId = 0;
-            if (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var cid))
-            {
-                companyId = cid;
-            }
-            else
-            {
-                var idClaim = User.FindFirst("UserId")?.Value;
-                if (!string.IsNullOrEmpty(idClaim) && long.TryParse(idClaim, out var userId))
-                {
-                    var me = await _db.Users.SingleOrDefaultAsync(u => u.Id == userId);
-                    if (me != null) companyId = me.CompanyId;
-                }
-            }
+            var companyId = await _userService.GetCompanyIdFromUserAsync(User);
 
             if (companyId == 0) return new JsonResult(new { success = false, message = "Company not found" });
 
-            var apiKey = await _userService.GetCompanyGeminiKeyAsync(companyId);
+            var apiKey = await _geminiService.GetCompanyGeminiKeyAsync(companyId);
             if (string.IsNullOrEmpty(apiKey))
             {
                 return new JsonResult(new { success = false, message = "Gemini API Key is missing. Please configure it in company settings." });
@@ -77,29 +61,10 @@ namespace DomusMercatorisDotnetMVC.Pages
 
         public async Task OnGet()
         {
-            var comp = User.FindFirst("CompanyId")?.Value;
-            int companyId = 0;
-            if (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var cid))
-            {
-                companyId = cid;
-            }
-            else
-            {
-                var idClaim = User.FindFirst("UserId")?.Value;
-                if (!string.IsNullOrEmpty(idClaim) && long.TryParse(idClaim, out var userId))
-                {
-                    var me = await _db.Users.SingleOrDefaultAsync(u => u.Id == userId);
-                    if (me != null) companyId = me.CompanyId;
-                }
-            }
+            var companyId = await _userService.GetCompanyIdFromUserAsync(User);
             if (companyId > 0)
             {
-                Categories = await _db.Categories.Where(c => c.CompanyId == companyId)
-                    .OrderBy(c => c.ParentId.HasValue)
-                    .ThenBy(c => c.Name)
-                    //sadece gerekli olanları çek (.select)
-                    .Select(c => new Category { Id = c.Id, Name = c.Name, ParentId = c.ParentId })
-                    .ToListAsync();
+                Categories = await _productService.GetCategoriesByCompanyAsync(companyId);
                 
                 Brands = await _brandService.GetBrandsByCompanyAsync(companyId);
             }

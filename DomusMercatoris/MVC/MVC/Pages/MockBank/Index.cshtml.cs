@@ -1,25 +1,23 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using DomusMercatoris.Core.Entities;
-using DomusMercatoris.Data;
-using Microsoft.EntityFrameworkCore;
-using DomusMercatoris.Core.Models;
+using Microsoft.AspNetCore.Authorization;
+using DomusMercatoris.Service.Services;
 using System.Net.Http;
 using System.Text.Json;
 using System.Text;
-using Microsoft.AspNetCore.Authorization;
 
 namespace MVC.Pages.MockBank
 {
     [Authorize(Roles = "Rex")]
     public class IndexModel : PageModel
     {
-        private readonly DomusDbContext _context;
+        private readonly OrderService _orderService;
         private readonly IHttpClientFactory _httpClientFactory;
 
-        public IndexModel(DomusDbContext context, IHttpClientFactory httpClientFactory)
+        public IndexModel(OrderService orderService, IHttpClientFactory httpClientFactory)
         {
-            _context = context;
+            _orderService = orderService;
             _httpClientFactory = httpClientFactory;
         }
 
@@ -27,11 +25,7 @@ namespace MVC.Pages.MockBank
 
         public async Task OnGetAsync()
         {
-            PendingOrders = await _context.Orders
-                .AsNoTracking()
-                .Where(s => s.Status == OrderStatus.PaymentPending)
-                .OrderByDescending(s => s.CreatedAt)
-                .ToListAsync();
+            PendingOrders = await _orderService.GetPendingOrdersAsync();
         }
 
         public async Task<IActionResult> OnPostApproveAsync(long id)

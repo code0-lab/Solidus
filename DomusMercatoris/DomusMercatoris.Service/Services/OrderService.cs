@@ -18,18 +18,51 @@ namespace DomusMercatoris.Service.Services
             _mapper = mapper;
         }
 
-        public async Task<List<OrderDto>> GetByCompanyIdAsync(int companyId)
+        public async Task<(List<Order> Items, int TotalCount)> GetPagedByCompanyIdAsync(int companyId, int pageNumber, int pageSize)
         {
-            var orders = await _db.Orders
+            var query = _db.Orders
+                .AsNoTracking()
+                .Where(o => o.CompanyId == companyId && o.IsPaid);
+
+            var totalCount = await query.CountAsync();
+
+            var items = await query
+                .Include(o => o.User)
+                .Include(o => o.FleetingUser)
                 .Include(o => o.OrderItems)
                     .ThenInclude(i => i.Product)
                 .Include(o => o.OrderItems)
                     .ThenInclude(i => i.VariantProduct)
-                .Where(o => o.CompanyId == companyId && o.IsPaid)
+                .Include(o => o.CargoTracking)
                 .OrderByDescending(o => o.CreatedAt)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
-            return orders.Select(MapToDto).ToList();
+            return (items, totalCount);
+        }
+
+        public async Task<Order?> GetByIdAsync(long id)
+        {
+            return await _db.Orders
+                .AsNoTracking()
+                .Include(o => o.User)
+                .Include(o => o.FleetingUser)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(i => i.Product)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(i => i.VariantProduct)
+                .Include(o => o.CargoTracking)
+                .SingleOrDefaultAsync(o => o.Id == id);
+        }
+
+        public async Task<List<Order>> GetPendingOrdersAsync()
+        {
+            return await _db.Orders
+                .AsNoTracking()
+                .Where(s => s.Status == OrderStatus.PaymentPending)
+                .OrderByDescending(s => s.CreatedAt)
+                .ToListAsync();
         }
 
         private OrderDto MapToDto(Order order)

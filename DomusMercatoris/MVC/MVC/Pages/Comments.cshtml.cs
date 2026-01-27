@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
-    [Authorize(Roles = "Manager,user")]
+    [Authorize(Roles = "Manager,User")]
     public class CommentsModel : PageModel
     {
         private readonly CommentService _commentService;

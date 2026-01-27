@@ -1,23 +1,21 @@
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using DomusMercatoris.Core.Entities;
-using DomusMercatoris.Data;
+using DomusMercatorisDotnetMVC.Services;
 
 namespace DomusMercatorisDotnetMVC.Pages.Moderator
 {
     [Authorize(Roles = "Moderator,Rex")]
     public class IndexModel : PageModel
     {
-        private readonly DomusDbContext _context;
+        private readonly UserService _userService;
 
-        public IndexModel(DomusDbContext context)
+        public IndexModel(UserService userService)
         {
-            _context = context;
+            _userService = userService;
         }
 
         public List<User> Users { get; set; } = new List<User>();
@@ -27,18 +25,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
 
         public async Task OnGetAsync()
         {
-            var query = _context.Users.Include(u => u.Ban).AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(Search))
-            {
-                var s = Search.ToLower().Trim();
-                query = query.Where(u => 
-                    u.Email.ToLower().Contains(s) || 
-                    u.FirstName.ToLower().Contains(s) || 
-                    u.LastName.ToLower().Contains(s));
-            }
-
-            Users = await query.OrderBy(u => u.Email).Take(50).ToListAsync();
+            Users = await _userService.SearchUsersAsync(Search);
         }
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
 using DomusMercatorisDotnetMVC.Dto.UserDto;
@@ -22,6 +23,39 @@ namespace DomusMercatorisDotnetMVC.Services
             _dbContext = dbContext;
             _mapper = mapper;
             _encryptionService = encryptionService;
+        }
+
+        public async Task<int> GetCompanyIdFromUserAsync(ClaimsPrincipal user)
+        {
+            var compClaim = user.FindFirst("CompanyId")?.Value;
+            if (!string.IsNullOrEmpty(compClaim) && int.TryParse(compClaim, out var cid))
+            {
+                return cid;
+            }
+            
+            var idClaim = user.FindFirst("UserId")?.Value;
+            if (!string.IsNullOrEmpty(idClaim) && long.TryParse(idClaim, out var userId))
+            {
+                var userEntity = await _dbContext.Users.AsNoTracking().SingleOrDefaultAsync(u => u.Id == userId);
+                if (userEntity != null) return userEntity.CompanyId;
+            }
+            return 0;
+        }
+
+        public async Task<List<User>> SearchUsersAsync(string? search)
+        {
+            var query = _dbContext.Users.Include(u => u.Ban).AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var s = search.ToLower().Trim();
+                query = query.Where(u => 
+                    u.Email.ToLower().Contains(s) || 
+                    u.FirstName.ToLower().Contains(s) || 
+                    u.LastName.ToLower().Contains(s));
+            }
+
+            return await query.OrderBy(u => u.Email).Take(50).ToListAsync();
         }
 
         public async Task<User?> UserLoginAsync(string Email, string Password)
@@ -146,101 +180,51 @@ namespace DomusMercatorisDotnetMVC.Services
                 .ToListAsync();
         }
 
-        public async Task<string?> GetCompanyGeminiKeyAsync(int companyId)
-        {
-            var company = await _dbContext.Companies.SingleOrDefaultAsync(c => c.CompanyId == companyId);
-            if (string.IsNullOrEmpty(company?.GeminiApiKey)) return null;
 
-            var decrypted = _encryptionService.Decrypt(company.GeminiApiKey);
-            return !string.IsNullOrEmpty(decrypted) ? decrypted : null;
+
+        public async Task<List<UserPageAccess>> GetUserPageAccessesForCompanyAsync(int companyId)
+        {
+            return await _dbContext.UserPageAccesses
+                .AsNoTracking()
+                .Where(a => a.CompanyId == companyId)
+                .ToListAsync();
         }
 
-        public async Task<string?> GetCompanyCommentPromptAsync(int companyId)
+        public async Task UpdateUserPageAccessAsync(int companyId, long userId, List<string> pageKeys)
         {
-            var company = await _dbContext.Companies.SingleOrDefaultAsync(c => c.CompanyId == companyId);
-            return company?.GeminiPrompt;
-        }
+            var keys = pageKeys ?? new List<string>();
+            var normalized = new HashSet<string>(keys.Where(k => !string.IsNullOrWhiteSpace(k)), StringComparer.OrdinalIgnoreCase);
 
-        public async Task<bool> IsAiModerationEnabledAsync(int companyId)
-        {
-            var company = await _dbContext.Companies.SingleOrDefaultAsync(c => c.CompanyId == companyId);
-            return company?.IsAiModerationEnabled ?? false;
-        }
+            var existing = await _dbContext.UserPageAccesses
+                .Where(a => a.CompanyId == companyId && a.UserId == userId)
+                .ToListAsync();
 
-        public async Task<bool> UpdateCompanyAiModerationAsync(int companyId, bool isEnabled)
-        {
-            var company = await _dbContext.Companies.SingleOrDefaultAsync(c => c.CompanyId == companyId);
-            if (company == null)
+            foreach (var access in existing)
             {
-                return false;
-            }
-            company.IsAiModerationEnabled = isEnabled;
-            await _dbContext.SaveChangesAsync();
-            return true;
-        }
-
-        public async Task<bool> UpdateCompanyGeminiKeyAsync(int companyId, string apiKey)
-        {
-            var company = await _dbContext.Companies.SingleOrDefaultAsync(c => c.CompanyId == companyId);
-            if (company == null) return false;
-
-            company.GeminiApiKey = !string.IsNullOrEmpty(apiKey) ? _encryptionService.Encrypt(apiKey) : null;
-            await _dbContext.SaveChangesAsync();
-            return true;
-        }
-
-        public async Task<bool> UpdateCompanyGeminiSettingsAsync(int companyId, string apiKey, string? commentPrompt)
-        {
-            var company = await _dbContext.Companies.SingleOrDefaultAsync(c => c.CompanyId == companyId);
-            if (company == null) return false;
-
-            var existingKey = await GetCompanyGeminiKeyAsync(companyId) ?? string.Empty;
-            var keyPart = apiKey;
-            if (string.IsNullOrWhiteSpace(apiKey) || apiKey == "*****")
-            {
-                keyPart = existingKey;
+                if (!normalized.Contains(access.PageKey))
+                {
+                    _dbContext.UserPageAccesses.Remove(access);
+                }
             }
 
-            company.GeminiApiKey = !string.IsNullOrEmpty(keyPart) ? _encryptionService.Encrypt(keyPart) : null;
-            company.GeminiPrompt = commentPrompt;
-            
-            await _dbContext.SaveChangesAsync();
-            return true;
-        }
-
-        public async Task<AiSettingsDto?> GetAiSettingsAsync(int companyId)
-        {
-            var company = await _dbContext.Companies.SingleOrDefaultAsync(c => c.CompanyId == companyId);
-            if (company == null) return null;
-
-            var decryptedKey = !string.IsNullOrEmpty(company.GeminiApiKey) 
-                ? _encryptionService.Decrypt(company.GeminiApiKey) 
-                : string.Empty;
-
-            return new AiSettingsDto
+            var existingKeys = new HashSet<string>(existing.Select(a => a.PageKey), StringComparer.OrdinalIgnoreCase);
+            foreach (var key in normalized)
             {
-                GeminiApiKey = decryptedKey ?? string.Empty,
-                CommentModerationPrompt = company.GeminiPrompt ?? string.Empty,
-                IsAiModerationEnabled = company.IsAiModerationEnabled
-            };
-        }
-
-        public async Task<bool> UpdateAiSettingsAsync(int companyId, AiSettingsDto settings)
-        {
-            var company = await _dbContext.Companies.SingleOrDefaultAsync(c => c.CompanyId == companyId);
-            if (company == null) return false;
-
-            if (!string.IsNullOrWhiteSpace(settings.GeminiApiKey) && settings.GeminiApiKey != "*****")
-            {
-                company.GeminiApiKey = _encryptionService.Encrypt(settings.GeminiApiKey);
+                if (!existingKeys.Contains(key))
+                {
+                    _dbContext.UserPageAccesses.Add(new UserPageAccess
+                    {
+                        UserId = userId,
+                        CompanyId = companyId,
+                        PageKey = key
+                    });
+                }
             }
 
-            company.GeminiPrompt = settings.CommentModerationPrompt;
-            company.IsAiModerationEnabled = settings.IsAiModerationEnabled;
-
             await _dbContext.SaveChangesAsync();
-            return true;
         }
+
+
 
         public async Task<bool> ChangePasswordAsync(long userId, string currentPassword, string newPassword)
         {

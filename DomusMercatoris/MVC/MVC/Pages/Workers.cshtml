@@ -39,6 +39,7 @@
                     <th>Roles</th>
                     @if (User.IsInRole("Manager"))
                     {
+                        <th>Page Access</th>
                         <th>Actions</th>
                     }
                 </tr>
@@ -69,6 +70,21 @@
                         <td>@string.Join(", ", w.Roles ?? new List<string>())</td>
                         @if (User.IsInRole("Manager"))
                         {
+                            <td>
+                                <form method="post" action="/Workers?handler=UpdatePermissions" class="d-flex flex-wrap gap-2 align-items-center">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="userId" value="@w.Id" />
+                                    @foreach (var key in Model.PageAccessKeys)
+                                    {
+                                        var hasAccess = Model.UserPageAccessMap.ContainsKey(w.Id) && Model.UserPageAccessMap[w.Id].Contains(key);
+                                        <div class="form-check me-2">
+                                            <input class="form-check-input" type="checkbox" name="pageKeys" value="@key" @(hasAccess ? "checked" : null) />
+                                            <label class="form-check-label">@key</label>
+                                        </div>
+                                    }
+                                    <button class="btn btn-sm btn-outline-primary">Save</button>
+                                </form>
+                            </td>
                             <td>
                                 <form method="post" action="/Workers?handler=Delete" onsubmit="return confirm('Delete user?')">
                                     @Html.AntiForgeryToken()

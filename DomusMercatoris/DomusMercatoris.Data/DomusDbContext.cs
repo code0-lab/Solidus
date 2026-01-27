@@ -29,6 +29,7 @@ namespace DomusMercatoris.Data
         public DbSet<AutoCategory> AutoCategories { get; set; } = null!;
         public DbSet<Banner> Banners { get; set; } = null!;
         public DbSet<CartItem> CartItems { get; set; } = null!;
+        public DbSet<UserPageAccess> UserPageAccesses { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -228,6 +229,15 @@ namespace DomusMercatoris.Data
                       .WithMany()
                       .HasForeignKey(f => f.ProductId)
                       .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<UserPageAccess>(entity =>
+            {
+                entity.HasIndex(a => new { a.CompanyId, a.UserId, a.PageKey }).IsUnique();
+                entity.HasOne(a => a.User)
+                    .WithMany()
+                    .HasForeignKey(a => a.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }

@@ -6,10 +6,11 @@ using System.Linq;
 using DomusMercatorisDotnetMVC.Dto.CommentsDto;
 using OrderService = DomusMercatoris.Service.Services.OrderService;
 using DomusMercatoris.Service.DTOs;
+using DomusMercatoris.Core.Entities;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
-    [Authorize(Roles = "Manager,user")]
+    [Authorize(Roles = "Manager,User")]
     public class DashboardModel : PageModel
     {
         private readonly ProductService _productService;
@@ -32,7 +33,7 @@ namespace DomusMercatorisDotnetMVC.Pages
         public string ManagerName { get; set; } = string.Empty;
         public string CompanyName { get; set; } = string.Empty;
         public List<CommentsDto> RecentComments { get; set; } = new();
-        public List<OrderDto> RecentOrders { get; set; } = new();
+        public List<Order> RecentOrders { get; set; } = new();
         public int TotalOrders { get; set; }
 
         public async Task OnGetAsync()
@@ -65,9 +66,9 @@ namespace DomusMercatorisDotnetMVC.Pages
                 var result = await _commentService.GetCommentsForCompanyAsync(CompanyId, 1, 1, 3);
                 RecentComments = result.Items;
 
-                var orders = await _orderService.GetByCompanyIdAsync(CompanyId);
-                TotalOrders = orders.Count;
-                RecentOrders = orders.Take(5).ToList();
+                var orderResult = await _orderService.GetPagedByCompanyIdAsync(CompanyId, 1, 5);
+                TotalOrders = orderResult.TotalCount;
+                RecentOrders = orderResult.Items;
             }
         }
     }

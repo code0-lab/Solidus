@@ -69,7 +69,7 @@
                                     <div class="mt-2">
                                         @foreach(var item in o.OrderItems.Take(3))
                                         {
-                                            <span class="badge bg-light text-dark border me-1">@item.Quantity x @item.ProductName</span>
+                                            <span class="badge bg-light text-dark border me-1">@item.Quantity x @item.Product?.Name</span>
                                         }
                                         @if(o.OrderItems.Count > 3) { <span class="small text-muted">+@(o.OrderItems.Count - 3) more</span> }
                                     </div>

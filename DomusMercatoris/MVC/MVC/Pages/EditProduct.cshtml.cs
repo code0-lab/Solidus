@@ -16,16 +16,16 @@ namespace DomusMercatorisDotnetMVC.Pages
     public class EditProductModel : PageModel
     {
         private readonly ProductService _productService;
-        private readonly DomusDbContext _db;
+        private readonly IClusteringService _clusteringService;
 
         private readonly GeminiService _geminiService;
         private readonly UserService _userService;
         private readonly BrandService _brandService;
 
-        public EditProductModel(ProductService productService, DomusDbContext db, GeminiService geminiService, UserService userService, BrandService brandService)
+        public EditProductModel(ProductService productService, IClusteringService clusteringService, GeminiService geminiService, UserService userService, BrandService brandService)
         {
             _productService = productService;
-            _db = db;
+            _clusteringService = clusteringService;
             _geminiService = geminiService;
             _userService = userService;
             _brandService = brandService;
@@ -51,13 +51,7 @@ namespace DomusMercatorisDotnetMVC.Pages
             {
                 return RedirectToPage("/Products");
             }
-            Categories = await _db.Categories.Where(c => c.CompanyId == companyId) 
-            //            ^ await ile a senkron yapıldı ve veri tabanının kategori tespitinde kitlenmesi önlendi
-                .OrderBy(c => c.ParentId.HasValue)
-                .ThenBy(c => c.Name)
-                //sadece gerekli olanları çek (.select)
-                .Select(c => new Category { Id = c.Id, Name = c.Name, ParentId = c.ParentId })
-                .ToListAsync();
+            Categories = await _productService.GetCategoriesByCompanyAsync(companyId);
             
             Brands = await _brandService.GetBrandsByCompanyAsync(companyId);
 
@@ -71,10 +65,7 @@ namespace DomusMercatorisDotnetMVC.Pages
             Product.Quantity = Existing.Quantity;
             Product.AutoCategoryId = Existing.AutoCategoryId;
 
-            var member = await _db.ProductClusterMembers
-                .Include(m => m.ProductCluster)
-                .ThenInclude(c => c.AutoCategories)
-                .FirstOrDefaultAsync(m => m.ProductId == id);
+            var member = await _clusteringService.GetClusterMemberByProductIdAsync(id);
             
             if (member != null && member.ProductCluster.AutoCategories.Any())
             {
@@ -94,11 +85,7 @@ namespace DomusMercatorisDotnetMVC.Pages
             var comp = User.FindFirst("CompanyId")?.Value;
             var companyId = (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var c)) ? c : 0;
             Existing = await _productService.GetByIdInCompanyAsync(id, companyId);
-            Categories = await _db.Categories.Where(c => c.CompanyId == companyId)
-                .OrderBy(c => c.ParentId.HasValue) //ParentId genelde "Üst Kategori"yi tutar. Eğer null ise o bir Ana Kategoridir. Doluysa (HasValue true ise) bir Alt Kategoridir.
-                .ThenBy(c => c.Name)
-                .Select(c => new Category { Id = c.Id, Name = c.Name, ParentId = c.ParentId })
-                .ToListAsync();
+            Categories = await _productService.GetCategoriesByCompanyAsync(companyId);
             
             Brands = await _brandService.GetBrandsByCompanyAsync(companyId);
 

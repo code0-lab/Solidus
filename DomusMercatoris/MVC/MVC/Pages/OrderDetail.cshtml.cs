@@ -13,10 +13,12 @@ namespace DomusMercatorisDotnetMVC.Pages
     public class OrderDetailModel : PageModel
     {
         private readonly DomusDbContext _db;
+        private readonly DomusMercatoris.Service.Services.OrderService _orderService;
 
-        public OrderDetailModel(DomusDbContext db)
+        public OrderDetailModel(DomusDbContext db, DomusMercatoris.Service.Services.OrderService orderService)
         {
             _db = db;
+            _orderService = orderService;
         }
 
         public Order? Order { get; set; }
@@ -24,16 +26,7 @@ namespace DomusMercatorisDotnetMVC.Pages
 
         public async Task<IActionResult> OnGetAsync(long id)
         {
-            var order = await _db.Orders
-                .AsNoTracking()
-                .Include(s => s.User)
-                .Include(s => s.FleetingUser)
-                .Include(s => s.OrderItems)
-                    .ThenInclude(sp => sp.Product)
-                .Include(s => s.OrderItems)
-                    .ThenInclude(sp => sp.VariantProduct)
-                .Include(s => s.CargoTracking)
-                .SingleOrDefaultAsync(s => s.Id == id);
+            var order = await _orderService.GetByIdAsync(id);
 
             if (order == null || !order.IsPaid)
             {

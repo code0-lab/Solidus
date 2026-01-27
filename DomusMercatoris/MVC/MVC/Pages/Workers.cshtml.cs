@@ -30,6 +30,8 @@ namespace DomusMercatorisDotnetMVC.Pages
         }
 
         public List<User> Workers { get; set; } = new();
+        public Dictionary<long, HashSet<string>> UserPageAccessMap { get; set; } = new();
+        public List<string> PageAccessKeys { get; } = new() { "Categories" };
 
         public async Task<IActionResult> OnGetAsync()
         {
@@ -43,6 +45,7 @@ namespace DomusMercatorisDotnetMVC.Pages
                         string.Equals(r, "Rex", StringComparison.OrdinalIgnoreCase) ||
                         string.Equals(r, "Moderator", StringComparison.OrdinalIgnoreCase)))
                     .ToList();
+                await LoadPageAccessAsync(companyId);
                 return Page();
             }
             var idClaim = User.FindFirst("UserId")?.Value;
@@ -62,6 +65,7 @@ namespace DomusMercatorisDotnetMVC.Pages
                     string.Equals(r, "Rex", StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(r, "Moderator", StringComparison.OrdinalIgnoreCase)))
                 .ToList();
+            await LoadPageAccessAsync(me.CompanyId);
             return Page();
         }
 
@@ -149,6 +153,54 @@ namespace DomusMercatorisDotnetMVC.Pages
                 ModelState.AddModelError(string.Empty, "Delete failed");
             }
             return await OnGetAsync();
+        }
+
+        public async Task<IActionResult> OnPostUpdatePermissionsAsync(long userId, List<string> pageKeys)
+        {
+            if (!User.IsInRole("Manager"))
+            {
+                ModelState.AddModelError(string.Empty, "Unauthorized");
+                return await OnGetAsync();
+            }
+
+            var comp = User.FindFirst("CompanyId")?.Value;
+            int companyId = 0;
+            if (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var cid))
+            {
+                companyId = cid;
+            }
+            else
+            {
+                var idClaim = User.FindFirst("UserId")?.Value;
+                if (!string.IsNullOrEmpty(idClaim) && long.TryParse(idClaim, out var currentUserId))
+                {
+                    var me = await _userService.GetByIdAsync(currentUserId);
+                    if (me != null) companyId = me.CompanyId;
+                }
+            }
+
+            if (companyId == 0)
+            {
+                ModelState.AddModelError(string.Empty, "Authorization error");
+                return await OnGetAsync();
+            }
+
+            var allowed = new HashSet<string>(PageAccessKeys, StringComparer.OrdinalIgnoreCase);
+            var filtered = (pageKeys ?? new List<string>()).Where(k => allowed.Contains(k)).ToList();
+
+            await _userService.UpdateUserPageAccessAsync(companyId, userId, filtered);
+            return await OnGetAsync();
+        }
+
+        private async Task LoadPageAccessAsync(int companyId)
+        {
+            var accesses = await _userService.GetUserPageAccessesForCompanyAsync(companyId);
+            var map = new Dictionary<long, HashSet<string>>();
+            foreach (var group in accesses.GroupBy(a => a.UserId))
+            {
+                map[group.Key] = new HashSet<string>(group.Select(a => a.PageKey), StringComparer.OrdinalIgnoreCase);
+            }
+            UserPageAccessMap = map;
         }
     }
 }

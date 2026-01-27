@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
-    [Authorize(Roles = "Manager,User")]
+    [Authorize(Policy = "CategoriesAccess")]
     public class CategoriesModel : PageModel
     {
         private readonly DomusDbContext _db;

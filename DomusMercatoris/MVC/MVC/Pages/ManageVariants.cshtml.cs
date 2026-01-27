@@ -15,14 +15,14 @@ namespace DomusMercatorisDotnetMVC.Pages
         private readonly VariantProductService _variantService;
         private readonly ProductService _productService;
         private readonly IWebHostEnvironment _env;
-        private readonly DomusDbContext _context;
+        private readonly UserService _userService;
 
-        public ManageVariantsModel(VariantProductService variantService, ProductService productService, IWebHostEnvironment env, DomusDbContext context)
+        public ManageVariantsModel(VariantProductService variantService, ProductService productService, IWebHostEnvironment env, UserService userService)
         {
             _variantService = variantService;
             _productService = productService;
             _env = env;
-            _context = context;
+            _userService = userService;
         }
 
         public Product? Product { get; set; }
@@ -32,12 +32,12 @@ namespace DomusMercatorisDotnetMVC.Pages
         public CreateVariantProductDto NewVariant { get; set; } = new();
 
         [BindProperty]
-        public DomusMercatorisDotnetMVC.Dto.ProductDto.UpdateVariantDto UpdateVariant { get; set; } = new();
+        public UpdateVariantProductDto UpdateVariant { get; set; } = new();
 
         public async Task<IActionResult> OnGetAsync(long productId)
         {
-            var comp = User.FindFirst("CompanyId")?.Value;
-            if (string.IsNullOrEmpty(comp) || !int.TryParse(comp, out var companyId))
+            var companyId = await _userService.GetCompanyIdFromUserAsync(User);
+            if (companyId == 0)
             {
                 return RedirectToPage("/Products");
             }
@@ -56,8 +56,8 @@ namespace DomusMercatorisDotnetMVC.Pages
 
         public async Task<IActionResult> OnPostAsync(long productId)
         {
-            var comp = User.FindFirst("CompanyId")?.Value;
-            if (string.IsNullOrEmpty(comp) || !int.TryParse(comp, out var companyId))
+            var companyId = await _userService.GetCompanyIdFromUserAsync(User);
+            if (companyId == 0)
             {
                 return RedirectToPage("/Products");
             }
@@ -101,8 +101,8 @@ namespace DomusMercatorisDotnetMVC.Pages
 
         public async Task<IActionResult> OnPostUpdateAsync()
         {
-             var comp = User.FindFirst("CompanyId")?.Value;
-            if (string.IsNullOrEmpty(comp) || !int.TryParse(comp, out var companyId))
+             var companyId = await _userService.GetCompanyIdFromUserAsync(User);
+            if (companyId == 0)
             {
                 return RedirectToPage("/Products");
             }
@@ -123,30 +123,22 @@ namespace DomusMercatorisDotnetMVC.Pages
                 return Page();
             }
 
-            var variant = await _context.VariantProducts.FindAsync(UpdateVariant.Id);
-            if (variant == null || variant.ProductId != UpdateVariant.ProductId)
+            try
+            {
+                await _variantService.UpdateVariantAsync(UpdateVariant);
+            }
+            catch (ArgumentException)
             {
                  return RedirectToPage(new { productId = UpdateVariant.ProductId });
             }
-
-            variant.Color = UpdateVariant.Color;
-            variant.Price = UpdateVariant.Price;
-            variant.IsCustomizable = UpdateVariant.IsCustomizable;
-            if (!string.IsNullOrEmpty(UpdateVariant.CoverImage))
-            {
-                variant.CoverImage = UpdateVariant.CoverImage;
-            }
-
-            _context.VariantProducts.Update(variant);
-            await _context.SaveChangesAsync();
 
             return RedirectToPage(new { productId = UpdateVariant.ProductId });
         }
 
         public async Task<IActionResult> OnPostDeleteAsync(long id, long productId)
         {
-             var comp = User.FindFirst("CompanyId")?.Value;
-            if (string.IsNullOrEmpty(comp) || !int.TryParse(comp, out var companyId))
+             var companyId = await _userService.GetCompanyIdFromUserAsync(User);
+            if (companyId == 0)
             {
                 return RedirectToPage("/Products");
             }

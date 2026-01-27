@@ -63,6 +63,28 @@ namespace DomusMercatoris.Service.Services
             return _mapper.Map<VariantProductDto>(variant);
         }
 
+        public async Task<VariantProductDto> UpdateVariantAsync(UpdateVariantProductDto updateDto)
+        {
+            var variant = await _dbContext.VariantProducts.FindAsync(updateDto.Id);
+            if (variant == null || variant.ProductId != updateDto.ProductId)
+            {
+                throw new ArgumentException("Variant not found or product mismatch.");
+            }
+
+            variant.Color = updateDto.Color;
+            variant.Price = updateDto.Price;
+            variant.IsCustomizable = updateDto.IsCustomizable;
+            if (!string.IsNullOrEmpty(updateDto.CoverImage))
+            {
+                variant.CoverImage = updateDto.CoverImage;
+            }
+
+            _dbContext.VariantProducts.Update(variant);
+            await _dbContext.SaveChangesAsync();
+
+            return _mapper.Map<VariantProductDto>(variant);
+        }
+
         public async Task DeleteVariantAsync(long id)
         {
             var variant = await _dbContext.VariantProducts.FindAsync(id);

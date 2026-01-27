@@ -83,7 +83,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Account
             }
 
             // For companies, we use their own configured API key
-            var apiKey = await _userService.GetCompanyGeminiKeyAsync(CurrentCompanyId);
+            var apiKey = await _geminiService.GetCompanyGeminiKeyAsync(CurrentCompanyId);
             if (string.IsNullOrEmpty(apiKey))
             {
                 ModelState.AddModelError(string.Empty, "Your company does not have a Gemini API key configured. Please configure it in your Profile.");
