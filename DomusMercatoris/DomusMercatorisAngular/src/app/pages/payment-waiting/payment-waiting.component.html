@@ -2,27 +2,100 @@
     <div class="content-box">
         <!-- Show spinner if no status OR status is for a different order -->
         <div class="spinner-container" *ngIf="!paymentService.paymentStatus() || paymentService.paymentStatus()?.orderId?.toString() !== orderId()">
-            <div class="spinner"></div>
-            <h2>Waiting for Payment...</h2>
-            <p>Please complete the payment in your banking app.</p>
-            <p class="order-id">Order ID: #{{ orderId() }}</p>
-            <div class="connection-status">
-                Status: {{ paymentService.connectionState() }}
-            </div>
+            
+            <ng-container *ngIf="!isTimedOut(); else timeoutTemplate">
+                
+                <div class="bank-notice">
+                    <div class="bank-header">
+                        <div class="bank-logo">S</div>
+                        <div class="bank-title">Solidus Bank Secure Payment</div>
+                    </div>
+                    
+                    <div class="bank-body">
+                        <p class="greeting">Dear {{ customerName() }},</p>
+                        <p class="instruction">Please use the following code to authorize your transaction.</p>
+                        
+                        <div class="transaction-details">
+                            <div class="detail-row">
+                                <span class="label">Merchant:</span>
+                                <span class="value">Solidus Inc.</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Order ID:</span>
+                                <span class="value">#{{ orderId() }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Amount:</span>
+                                <span class="value highlight">{{ orderDetails()?.totalPrice | currency:'USD' }}</span>
+                            </div>
+                        </div>
+
+                        <div class="code-section">
+                            <label>Verification Code</label>
+                            <div class="input-group">
+                                <input type="text" [(ngModel)]="confirmationCode" class="code-input" placeholder="------" maxlength="6">
+                                <button class="verify-btn" (click)="verifyCode()" [disabled]="!confirmationCode()">
+                                    VERIFY
+                                </button>
+                            </div>
+                            
+                            <div class="reject-section">
+                                <button class="reject-btn" (click)="rejectPayment()">Cancel Transaction</button>
+                            </div>
+
+                            <div class="timer-display" [class.danger]="timeLeft() < 30">
+                                Code expires in: {{ formattedTime() }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bank-footer">
+                        <div class="secure-icon">🔒</div>
+                        <span>256-bit SSL Secure Transaction</span>
+                    </div>
+
+                    <!-- Custom Reject Modal Overlay -->
+                    <div class="modal-overlay" *ngIf="showRejectModal()">
+                        <div class="modal-content">
+                            <div class="modal-icon">⚠️</div>
+                            <h3>Cancel Transaction?</h3>
+                            <p>Are you sure you want to cancel this payment? This action cannot be undone.</p>
+                            <div class="modal-actions">
+                                <button class="btn-cancel" (click)="cancelReject()">No, Keep it</button>
+                                <button class="btn-confirm" (click)="confirmReject()">Yes, Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="connection-status">
+                    Status: {{ paymentService.connectionState() }}
+                </div>
+            </ng-container>
+
+            <ng-template #timeoutTemplate>
+                <div class="timeout-state">
+                    <div class="icon">⚠️</div>
+                    <h2>Session Expired</h2>
+                    <p>For security reasons, this payment session has timed out.</p>
+                    <button class="return-btn" routerLink="/my-orders">Return to Orders</button>
+                </div>
+            </ng-template>
+
         </div>
 
         <!-- Show success only if approved AND matches current order -->
         <div class="success-container" *ngIf="paymentService.paymentStatus()?.isApproved && paymentService.paymentStatus()?.orderId?.toString() === orderId()">
             <div class="checkmark">✅</div>
-            <h2>Payment Successful!</h2>
-            <p>Redirecting...</p>
+            <h2>Payment Approved</h2>
+            <p>Your transaction has been successfully processed.</p>
         </div>
 
         <!-- Show error only if NOT approved AND matches current order -->
         <div class="error-container" *ngIf="paymentService.paymentStatus() && !paymentService.paymentStatus()?.isApproved && paymentService.paymentStatus()?.orderId?.toString() === orderId()">
             <div class="cross">❌</div>
-            <h2>Payment Failed</h2>
-            <p>Please try again.</p>
+            <h2>Payment Declined</h2>
+            <p>Please check your details and try again.</p>
         </div>
     </div>
 </div>

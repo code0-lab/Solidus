@@ -43,6 +43,7 @@ export interface OrderResponse {
   cargoTrackingId?: number;
   status: string;
   createdAt: string;
+  paymentCode?: string;
   orderItems: OrderItemResponse[];
 }
 
@@ -64,5 +65,9 @@ export class OrdersService {
 
   getMyOrders(): Observable<OrderResponse[]> {
     return this.http.get<OrderResponse[]>(`${this.apiUrl}/orders/my-orders`);
+  }
+
+  getOrderById(id: number): Observable<OrderResponse> {
+    return this.http.get<OrderResponse>(`${this.apiUrl}/orders/${id}`);
   }
 }

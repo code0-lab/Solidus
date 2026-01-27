@@ -52,4 +52,26 @@
             </tbody>
         </table>
     </div>
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+                    <a class="page-link" asp-page="./Index" asp-route-PageIndex="@(Model.PageIndex - 1)" asp-route-Search="@Model.Search">Previous</a>
+                </li>
+                
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(Model.PageIndex == i ? "active" : "")">
+                        <a class="page-link" asp-page="./Index" asp-route-PageIndex="@i" asp-route-Search="@Model.Search">@i</a>
+                    </li>
+                }
+
+                <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+                    <a class="page-link" asp-page="./Index" asp-route-PageIndex="@(Model.PageIndex + 1)" asp-route-Search="@Model.Search">Next</a>
+                </li>
+            </ul>
+        </nav>
+    }
 </div>

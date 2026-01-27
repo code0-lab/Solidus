@@ -55,7 +55,9 @@ builder.Services.AddHttpClient<GeminiCommentService>();
 builder.Services.AddScoped<GeminiCommentService>();
 builder.Services.AddHttpClient<IClusteringService, ClusteringService>();
 builder.Services.AddHttpClient();
+builder.Services.AddSingleton<MockBankInfo>();
 builder.Services.AddHostedService<PythonRunnerService>();
+builder.Services.AddHostedService<MockBankRunnerService>();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<IAuthorizationHandler, HybridPageAccessHandler>();

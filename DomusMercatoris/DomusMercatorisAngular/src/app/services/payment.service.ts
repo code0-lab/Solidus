@@ -1,4 +1,5 @@
 import { Injectable, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
 
 export interface PaymentStatus {
@@ -7,6 +8,8 @@ export interface PaymentStatus {
   isApproved: boolean;
 }
 
+import { environment } from '../../environments/environment';
+
 @Injectable({
   providedIn: 'root'
 })
@@ -14,8 +17,21 @@ export class PaymentService {
   private hubConnection: HubConnection | null = null;
   public paymentStatus = signal<PaymentStatus | null>(null);
   public connectionState = signal<string>('Disconnected');
+  public activePaymentCode = signal<string | null>(null);
 
-  constructor() {}
+  private get apiUrl(): string {
+    return environment.apiUrl;
+  }
+
+  constructor(private http: HttpClient) {}
+
+  public verifyCode(orderId: number, code: string) {
+    return this.http.post(`${this.apiUrl}/Payment/verify-code`, { orderId, code });
+  }
+
+  public rejectPayment(orderId: string | number) {
+    return this.http.post(`${this.apiUrl}/Payment/reject/${orderId}`, {});
+  }
 
   public startConnection(orderId: string) {
     this.hubConnection = new HubConnectionBuilder()

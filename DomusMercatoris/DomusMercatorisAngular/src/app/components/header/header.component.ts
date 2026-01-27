@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -8,6 +8,14 @@ import { environment } from '../../../environments/environment';
 import { signal } from '@angular/core';
 import { OrdersService, CheckoutPayload } from '../../services/orders.service';
 import { AlertService } from '../../services/alert.service';
+import { PaymentService } from '../../services/payment.service';
+
+interface Notification {
+  code: string;
+  amount: number;
+  time: Date;
+  read: boolean;
+}
 
 @Component({
   selector: 'app-header',
@@ -23,15 +31,39 @@ export class HeaderComponent {
   cartService = inject(CartService);
   ordersService = inject(OrdersService);
   alertService = inject(AlertService);
+  paymentService = inject(PaymentService);
   isCartOpen = false;
   isProfileOpen = false;
+  isNotificationsOpen = false;
   imageLoadFailed = signal(false);
 
+  notifications = signal<Notification[]>([]);
+
+  constructor() {
+    effect(() => {
+      const code = this.paymentService.activePaymentCode();
+      if (code) {
+        const current = this.notifications();
+        // Prevent duplicates
+        if (!current.find(n => n.code === code)) {
+          const newNotification: Notification = {
+            code,
+            amount: this.cartService.totalPrice(),
+            time: new Date(),
+            read: false
+          };
+          // Add to top
+          this.notifications.update(n => [newNotification, ...n]);
+        }
+      }
+    }, { allowSignalWrites: true });
+  }
 
   handleProfileClick() {
     if (this.authService.currentUser()) {
       this.isProfileOpen = !this.isProfileOpen;
-      this.isCartOpen = false; // Close cart if open
+      this.isCartOpen = false;
+      this.isNotificationsOpen = false;
     } else {
       this.authService.toggleLogin();
     }
@@ -43,8 +75,35 @@ export class HeaderComponent {
 
   handleCartClick() {
     this.isCartOpen = !this.isCartOpen;
-    this.isProfileOpen = false; // Close profile if open
+    this.isProfileOpen = false;
+    this.isNotificationsOpen = false;
   }
+
+  handleNotificationsClick() {
+    this.isNotificationsOpen = !this.isNotificationsOpen;
+    this.isCartOpen = false;
+    this.isProfileOpen = false;
+  }
+
+  closeNotification(code: string, event?: Event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.notifications.update(list => 
+      list.map(n => n.code === code ? { ...n, read: true } : n)
+    );
+  }
+
+  get activeNotification() {
+    // Show the most recent one if it is unread
+    const latest = this.notifications()[0];
+    return latest && !latest.read ? latest : null;
+  }
+
+  get unreadCount() {
+    return this.notifications().filter(n => !n.read).length;
+  }
+
 
   async checkout() {
     const items = this.cartService.items();

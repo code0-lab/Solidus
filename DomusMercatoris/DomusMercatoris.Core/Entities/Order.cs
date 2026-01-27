@@ -23,5 +23,6 @@ namespace DomusMercatoris.Core.Entities
         public CargoTracking? CargoTracking { get; set; }
         public long? FleetingUserId { get; set; }
         public FleetingUser? FleetingUser { get; set; }
+        public string? PaymentCode { get; set; }
     }
 }

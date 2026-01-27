@@ -38,7 +38,8 @@ namespace DomusMercatorisDotnetRest.Services
                 UserId = dto.UserId ?? 0,
                 FleetingUserId = fleetingUserId,
                 CreatedAt = DateTime.UtcNow,
-                Status = OrderStatus.PaymentPending
+                Status = OrderStatus.PaymentPending,
+                PaymentCode = new Random().Next(100000, 999999).ToString()
             };
             _db.Orders.Add(order);
             await _db.SaveChangesAsync();
@@ -145,6 +146,7 @@ namespace DomusMercatorisDotnetRest.Services
                 CargoTrackingId = order.CargoTrackingId,
                 Status = order.Status,
                 CreatedAt = order.CreatedAt,
+                PaymentCode = order.PaymentCode,
                 OrderItems = order.OrderItems.Select(i => new OrderItemDto
                 {
                     ProductId = i.ProductId,

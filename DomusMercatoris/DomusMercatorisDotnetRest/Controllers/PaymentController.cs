@@ -90,11 +90,89 @@ namespace DomusMercatorisDotnetRest.Controllers
 
             return Ok(new { Message = "Processed" });
         }
+
+        [HttpPost("verify-code")]
+        public async Task<IActionResult> VerifyCode([FromBody] VerifyCodeRequest request)
+        {
+            var order = await _orderRepository.GetByIdAsync(request.OrderId);
+            if (order == null) return NotFound();
+
+            if (order.Status != OrderStatus.PaymentPending)
+            {
+                return BadRequest("Order is not pending payment.");
+            }
+
+            if (order.PaymentCode != request.Code)
+            {
+                return BadRequest("Invalid payment code.");
+            }
+
+            // Code valid, approve payment
+            order.Status = OrderStatus.PaymentApproved;
+            order.IsPaid = true;
+            order.PaidAt = DateTime.UtcNow;
+
+            _orderRepository.Update(order);
+            await _orderRepository.SaveChangesAsync();
+
+            // Notify client (user)
+            await _hubContext.Clients.Group(order.Id.ToString()).SendAsync("PaymentStatusChanged", new 
+            { 
+                OrderId = order.Id, 
+                Status = order.Status.ToString(),
+                IsApproved = true
+            });
+
+            // Notify Company
+            await _hubContext.Clients.Group($"Company-{order.CompanyId}").SendAsync("NewOrderReceived", new 
+            {
+                OrderId = order.Id,
+                CreatedAt = order.CreatedAt,
+                TotalPrice = order.TotalPrice,
+                Status = order.Status.ToString()
+            });
+
+            return Ok(new { Message = "Payment Approved" });
+        }
+
+        [HttpPost("reject/{orderId}")]
+        public async Task<IActionResult> RejectPayment(long orderId)
+        {
+            var order = await _orderRepository.GetByIdAsync(orderId);
+            if (order == null) return NotFound();
+
+            // Allow rejecting even if not strictly pending, but logically only pending makes sense.
+            // But user might want to cancel if they changed mind.
+            // If already approved, we shouldn't allow simple reject? 
+            // For now, assume pending check.
+            if (order.Status != OrderStatus.PaymentPending)
+                return BadRequest("Order is not pending.");
+
+            order.Status = OrderStatus.PaymentFailed;
+            _orderRepository.Update(order);
+            await _orderRepository.SaveChangesAsync();
+
+            // Notify client (user)
+            await _hubContext.Clients.Group(order.Id.ToString()).SendAsync("PaymentStatusChanged", new 
+            { 
+                OrderId = order.Id, 
+                Status = order.Status.ToString(),
+                IsApproved = false
+            });
+
+            return Ok(new { Message = "Payment Rejected" });
+        }
     }
 
     public class ProcessPaymentRequest
     {
         public long OrderId { get; set; }
         public bool Approved { get; set; }
+    }
+
+    public class VerifyCodeRequest
+    {
+        public long OrderId { get; set; }
+        public string Code { get; set; }
     }
 }

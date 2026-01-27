@@ -23,9 +23,20 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
         [BindProperty(SupportsGet = true)]
         public string? Search { get; set; }
 
+        [BindProperty(SupportsGet = true)]
+        public int PageIndex { get; set; } = 1;
+
+        public int TotalPages { get; set; }
+        public bool HasPreviousPage => PageIndex > 1;
+        public bool HasNextPage => PageIndex < TotalPages;
+
         public async Task OnGetAsync()
         {
-            Users = await _userService.SearchUsersAsync(Search);
+            if (PageIndex < 1) PageIndex = 1;
+            int pageSize = 10;
+            var result = await _userService.SearchUsersPagedAsync(Search, PageIndex, pageSize);
+            Users = result.Users;
+            TotalPages = (int)System.Math.Ceiling(result.TotalCount / (double)pageSize);
         }
     }
 }

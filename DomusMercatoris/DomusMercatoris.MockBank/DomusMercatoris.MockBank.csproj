@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\DomusMercatoris.Service\DomusMercatoris.Service.csproj" />
+    <ProjectReference Include="..\DomusMercatoris.Data\DomusMercatoris.Data.csproj" />
+    <ProjectReference Include="..\DomusMercatoris.Core\DomusMercatoris.Core.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+</Project>

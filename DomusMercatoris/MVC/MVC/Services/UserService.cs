@@ -58,6 +58,28 @@ namespace DomusMercatorisDotnetMVC.Services
             return await query.OrderBy(u => u.Email).Take(50).ToListAsync();
         }
 
+        public async Task<(List<User> Users, int TotalCount)> SearchUsersPagedAsync(string? search, int pageIndex, int pageSize)
+        {
+            var query = _dbContext.Users.Include(u => u.Ban).AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var s = search.ToLower().Trim();
+                query = query.Where(u => 
+                    u.Email.ToLower().Contains(s) || 
+                    u.FirstName.ToLower().Contains(s) || 
+                    u.LastName.ToLower().Contains(s));
+            }
+
+            var totalCount = await query.CountAsync();
+            var users = await query.OrderBy(u => u.Email)
+                .Skip((pageIndex - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (users, totalCount);
+        }
+
         public async Task<User?> UserLoginAsync(string Email, string Password)
         {
             var user = await _dbContext.Users.Include(u => u.Ban).SingleOrDefaultAsync(u => u.Email == Email);

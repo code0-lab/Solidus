@@ -13,6 +13,7 @@ namespace DomusMercatoris.Service.DTOs
         public long? FleetingUserId { get; set; }
         public int? CargoTrackingId { get; set; }
         public DateTime CreatedAt { get; set; }
+        public string? PaymentCode { get; set; }
         public List<OrderItemDto> OrderItems { get; set; } = new();
     }
 }

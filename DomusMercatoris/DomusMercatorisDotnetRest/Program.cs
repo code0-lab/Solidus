@@ -47,7 +47,9 @@ builder.Services.AddScoped<BannerService>();
 builder.Services.AddScoped<CartService>();
 
 // Python AI Service
+builder.Services.AddSingleton<MockBankInfo>();
 builder.Services.AddHostedService<PythonRunnerService>();
+builder.Services.AddHostedService<MockBankRunnerService>();
 
 // Common Services
 builder.Services.AddSingleton<EncryptionService>();
