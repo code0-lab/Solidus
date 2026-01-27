@@ -33,6 +33,7 @@
                             <th>Order ID</th>
                             <th>Code</th>
                             <th>Amount</th>
+                            <th>Time Left</th>
                             <th>Date</th>
                             <th>Status</th>
                             <th class="text-end">Actions</th>
@@ -41,10 +42,16 @@
                     <tbody>
                         @foreach (var order in Model.PendingOrders)
                         {
+                            // Calculate expiration timestamp (Unix MS) server-side for efficiency
+                            var expireTime = new DateTimeOffset(order.CreatedAt).ToUnixTimeMilliseconds() + 40000;
                             <tr>
                                 <td>#@order.Id</td>
                                 <td><span class="badge bg-dark fs-6 font-monospace">@order.PaymentCode</span></td>
                                 <td class="fw-bold text-success">@order.TotalPrice.ToString("C2")</td>
+                                <td>
+                                    <!-- Store integer timestamp directly -->
+                                    <span class="fw-bold timer" data-expire="@expireTime">Checking...</span>
+                                </td>
                                 <td>@order.CreatedAt.ToLocalTime().ToString("g")</td>
                                 <td>
                                     <span class="badge bg-info">@order.Status</span>
@@ -85,6 +92,47 @@
             <li>When you click <strong>Approve</strong>, a Webhook is sent to the API.</li>
             <li>API updates the order status and notifies the user via <strong>SignalR</strong>.</li>
             <li>User's page automatically updates to "Success".</li>
+            <li>If no action is taken within <strong>40 seconds</strong>, the system automatically rejects the order and restores stock.</li>
         </ol>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Cache DOM elements once
+        const timerElements = Array.from(document.querySelectorAll('.timer')).map(el => ({
+            element: el,
+            expireTime: parseInt(el.dataset.expire, 10)
+        }));
+
+        function updateTimers() {
+            const now = Date.now();
+            
+            timerElements.forEach(item => {
+                const remaining = item.expireTime - now;
+
+                if (remaining <= 0) {
+                    if (item.element.innerText !== "Expired") {
+                        item.element.innerText = "Expired";
+                        item.element.className = "timer badge bg-danger";
+                    }
+                } else {
+                    const seconds = Math.ceil(remaining / 1000);
+                    // Update text only if changed to avoid layout thrashing
+                    const text = seconds + "s";
+                    if (item.element.innerText !== text) {
+                        item.element.innerText = text;
+                        if (seconds < 10) item.element.className = "timer badge bg-warning text-dark";
+                        else item.element.className = "timer badge bg-secondary";
+                    }
+                }
+            });
+
+            // Use requestAnimationFrame for smoother UI updates, or keep setInterval but with efficient logic
+            requestAnimationFrame(updateTimers);
+        }
+
+        // Start loop
+        updateTimers();
+    });
+</script>

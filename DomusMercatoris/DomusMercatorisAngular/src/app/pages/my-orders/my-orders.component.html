@@ -106,7 +106,7 @@
                    @if (!isExpanded(order.id)) {
                      <div class="thumbnails-preview">
                        @for (item of order.orderItems.slice(0, 4); track item.productId) {
-                         <img [src]="resolveImage(item.imageUrl)" class="preview-img" alt="Product">
+                         <img [src]="getProductImage(item.productId)" class="preview-img" alt="Product">
                        }
                        @if (order.orderItems.length > 4) {
                          <span class="more-count">+{{ order.orderItems.length - 4 }}</span>
@@ -131,7 +131,7 @@
                   <div class="order-items">
                     @for (item of order.orderItems; track item.productId) {
                       <div class="order-item-detailed">
-                        <img [src]="resolveImage(item.imageUrl)" class="item-img-large" alt="Product">
+                        <img [src]="getProductImage(item.productId)" class="item-img-large" alt="Product">
                         <div class="item-info">
                           <span class="item-name">{{ item.productName || 'Product #' + item.productId }}</span>
                           @if (item.variantName) {

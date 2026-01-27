@@ -90,6 +90,13 @@ namespace DomusMercatorisDotnetRest.Controllers
 
             if (order == null) return NotFound();
 
+            if (order.Status != OrderStatus.PaymentPending)
+            {
+                if (request.Approved && order.Status == OrderStatus.PaymentApproved) return Ok(new { Message = "Already Approved" });
+                if (!request.Approved && order.Status == OrderStatus.PaymentFailed) return Ok(new { Message = "Already Failed" });
+                return BadRequest(new { Message = $"Order status is {order.Status}, cannot process payment." });
+            }
+
             if (request.Approved)
             {
                 await ApproveOrderAsync(order);

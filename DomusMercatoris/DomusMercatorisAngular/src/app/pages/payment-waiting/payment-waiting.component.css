@@ -247,57 +247,59 @@ p { color: #666; }
 .return-btn {
     margin-top: 20px;
     padding: 10px 20px;
-    background: #1a1a1a;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
 }
 
-/* Modal Overlay */
+/* Modal Overlay Styles */
 .modal-overlay {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(0, 0, 0, 0.6);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 100;
     backdrop-filter: blur(2px);
-    animation: fadeIn 0.2s ease-out;
 }
 
 .modal-content {
     background: white;
-    padding: 30px;
+    padding: 25px;
     border-radius: 8px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-    text-align: center;
     width: 85%;
-    max-width: 350px;
+    max-width: 320px;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
     border: 1px solid #e0e0e0;
-    font-family: Arial, sans-serif;
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
 
 .modal-icon {
-    font-size: 2.5rem;
+    font-size: 3rem;
     margin-bottom: 15px;
 }
 
 .modal-content h3 {
     margin: 0 0 10px 0;
-    color: #1a1a1a;
+    color: #333;
+    font-family: Arial, sans-serif;
     font-size: 1.2rem;
+    font-weight: bold;
 }
 
 .modal-content p {
     color: #666;
-    margin-bottom: 25px;
     font-size: 0.95rem;
+    margin-bottom: 25px;
     line-height: 1.4;
+    font-family: Arial, sans-serif;
 }
 
 .modal-actions {
@@ -306,43 +308,81 @@ p { color: #666; }
     justify-content: center;
 }
 
-.btn-cancel {
-    padding: 10px 20px;
-    background: #f5f5f5;
-    border: 1px solid #ddd;
-    color: #333;
+.btn-cancel, .btn-confirm {
+    padding: 12px 20px;
     border-radius: 4px;
+    font-weight: bold;
     cursor: pointer;
-    font-weight: 500;
-    transition: all 0.2s;
+    font-size: 0.9rem;
+    border: none;
+    flex: 1;
+    transition: background 0.2s;
+    font-family: Arial, sans-serif;
+}
+
+.btn-cancel {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.btn-confirm {
+    background: #d32f2f;
+    color: white;
 }
 
 .btn-cancel:hover {
     background: #e0e0e0;
 }
 
-.btn-confirm {
-    padding: 10px 20px;
-    background: #d32f2f;
-    border: none;
-    color: white;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.2s;
-}
-
 .btn-confirm:hover {
     background: #b71c1c;
 }
 
-@keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.5; }
-    100% { opacity: 1; }
-}
+/* Responsive Design for Mobile */
+@media (max-width: 480px) {
+    .waiting-container {
+        padding: 10px;
+        align-items: flex-start;
+        padding-top: 40px;
+    }
 
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    .bank-body {
+        padding: 15px;
+    }
+
+    .input-group {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .verify-btn {
+        width: 100%;
+        padding: 15px;
+    }
+
+    .code-input {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    .reject-btn {
+        width: 100%;
+        padding: 12px;
+    }
+
+    /* Modal Responsive Tweaks */
+    .modal-content {
+        width: 90%;
+        padding: 20px;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .btn-cancel, .btn-confirm {
+        width: 100%;
+        padding: 14px;
+    }
 }

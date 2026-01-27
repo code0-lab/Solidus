@@ -23,7 +23,8 @@ h2 {
 }
 
 .tabs-header button {
-  background: none;
+  background: rgba(255, 255, 255, 0.5);
+  color: black;
   border: none;
   padding: 10px 20px;
   font-family: var(--sys-font-family);
@@ -39,10 +40,11 @@ h2 {
 }
 
 .tabs-header button:hover {
-  background: #f9f9f9;
+  background: #fff;
 }
 
 .tabs-header button.active {
+  background: white;
   border-bottom-color: black;
   color: black;
 }
