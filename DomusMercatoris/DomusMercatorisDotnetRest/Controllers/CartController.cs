@@ -37,14 +37,22 @@ namespace DomusMercatorisDotnetRest.Controllers
         [HttpPost]
         public async Task<IActionResult> AddToCart([FromBody] AddToCartDto dto)
         {
-            await _cartService.AddToCartAsync(GetUserId(), dto);
+            var warning = await _cartService.AddToCartAsync(GetUserId(), dto);
+            if (warning != null)
+            {
+                return Ok(new { Message = warning, IsWarning = true });
+            }
             return Ok();
         }
 
         [HttpPatch("{itemId}")]
         public async Task<IActionResult> UpdateQuantity(long itemId, [FromBody] UpdateCartItemDto dto)
         {
-            await _cartService.UpdateQuantityAsync(GetUserId(), itemId, dto.Quantity);
+            var warning = await _cartService.UpdateQuantityAsync(GetUserId(), itemId, dto.Quantity);
+            if (warning != null)
+            {
+                return Ok(new { Message = warning, IsWarning = true });
+            }
             return Ok();
         }
 

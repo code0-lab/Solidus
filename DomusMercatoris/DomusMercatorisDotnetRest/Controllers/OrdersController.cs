@@ -5,6 +5,7 @@ using DomusMercatorisDotnetRest.Services;
 using DomusMercatoris.Core.Entities;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using DomusMercatoris.Core.Exceptions;
 
 namespace DomusMercatorisDotnetRest.Controllers
 {
@@ -34,8 +35,20 @@ namespace DomusMercatorisDotnetRest.Controllers
             dto.UserId = userId;
             dto.FleetingUser = null; // Ensure no fleeting user is created if logged in
 
-            var result = await _ordersService.CheckoutAsync(dto);
-            return Ok(result);
+            try
+            {
+                var result = await _ordersService.CheckoutAsync(dto);
+                return Ok(result);
+            }
+            catch (StockInsufficientException ex)
+            {
+                return Conflict(new { Message = ex.Message, Code = "STOCK_ADJUSTED", Adjustments = ex.Adjustments });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Fallback for other errors
+                return BadRequest(new { Message = ex.Message });
+            }
         }
 
         [HttpPost("{id:long}/mark-paid")]

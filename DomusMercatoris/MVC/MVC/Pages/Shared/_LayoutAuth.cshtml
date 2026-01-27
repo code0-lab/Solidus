@@ -52,6 +52,7 @@
         @await Html.PartialAsync("_Footer")
     </div>
     @await RenderSectionAsync("Modals", required: false)
+    @await Html.PartialAsync("_QrModal")
     <script src="/js/site.js?v=@DateTime.Now.Ticks"></script>
     <script src="/lib/tinymce/tinymce.min.js"></script>
     <script>

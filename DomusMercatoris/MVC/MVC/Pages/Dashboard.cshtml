@@ -1,10 +1,79 @@
 @page
+@using System.Text.Encodings.Web
 @model DomusMercatorisDotnetMVC.Pages.DashboardModel
 @{
     ViewData["PageTitle"] = "Dashboard";
     Layout = "_LayoutAuth";
 }
 <div class="container py-4">
+    @if (Model.LowStockProducts != null && Model.LowStockProducts.Any())
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-danger shadow-sm">
+                    <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                        <span class="fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Low Stock Alert</span>
+                        <span class="badge bg-white text-danger">@Model.LowStockProducts.Count Items</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-3">Product</th>
+                                        <th>Shelf</th>
+                                        <th>Stock</th>
+                                        <th class="text-end pe-3">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var p in Model.LowStockProducts)
+                                    {
+                                        <tr>
+                                            <td class="ps-3">
+                                                <div class="d-flex align-items-center">
+                                                    @if(p.Images != null && p.Images.Count > 0)
+                                                    {
+                                                        <img src="@p.Images[0]" class="rounded me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                                    }
+                                                    <div>
+                                                        <div class="fw-bold text-truncate" style="max-width: 200px;">@p.Name</div>
+                                                        <small class="text-muted">SKU: @p.Sku</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                @if(!string.IsNullOrEmpty(p.ShelfNumber))
+                                                {
+                                                    <span class="badge bg-secondary">@p.ShelfNumber</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-danger rounded-pill">@p.Quantity</span>
+                                            </td>
+                                            <td class="text-end pe-3">
+                                                <a href="/QuickStock?id=@p.Id" class="btn btn-sm btn-outline-primary me-1" title="Quick Update">
+                                                    <i class="bi bi-pencil-square"></i>
+                                                </a>
+                                                <button onclick="showQr(@p.Id, '@JavaScriptEncoder.Default.Encode(p.Name)', '@(p.Images != null && p.Images.Count > 0 ? p.Images[0] : "")', '@p.ShelfNumber')" class="btn btn-sm btn-outline-dark" title="Show QR">
+                                                    <i class="bi bi-qr-code"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
     <h3 class="mb-3">My Company</h3>
     <div class="row g-3">
         <div class="col-12 col-md-4">
@@ -127,6 +196,9 @@
         </div>
     </div>
 </div>
+
+@section Modals {
+}
 
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.js"></script>

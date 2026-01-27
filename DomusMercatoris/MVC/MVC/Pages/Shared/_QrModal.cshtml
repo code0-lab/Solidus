@@ -1,0 +1,95 @@
+
+<!-- QR Code Modal -->
+<div class="modal fade" id="qrModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Product QR Code</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <h5 id="qrProductName" class="mb-3"></h5>
+                <div id="qrcode" class="d-flex justify-content-center"></div>
+                <p class="mt-3 text-muted small">Scan to quick update stock</p>
+                <div class="mt-2">
+                    <span class="badge bg-light text-dark border p-2" id="shelfDisplay"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="printQr()">Print Label</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+    // QR Code Logic
+    let qrCodeObj = null;
+    let currentQrImage = '';
+    let currentShelf = '';
+    
+    function showQr(id, name, imageUrl, shelf) {
+        // Decode name if it was encoded for JS safety
+        const decodedName = name.replace(/&#(\d+);/g, function(match, dec) {
+            return String.fromCharCode(dec);
+        });
+        
+        document.getElementById('qrProductName').innerText = decodedName;
+        currentQrImage = imageUrl;
+        currentShelf = shelf;
+        
+        // Update shelf display in modal
+        const shelfDisplay = document.getElementById('shelfDisplay');
+        if(shelf) {
+            shelfDisplay.innerText = "Shelf: " + shelf;
+            shelfDisplay.style.display = 'inline-block';
+        } else {
+            shelfDisplay.style.display = 'none';
+        }
+
+        const container = document.getElementById('qrcode');
+        container.innerHTML = ''; // Clear previous
+        
+        // URL to QuickStock page
+        const url = `${window.location.origin}/QuickStock?id=${id}`;
+        
+        qrCodeObj = new QRCode(container, {
+            text: url,
+            width: 200,
+            height: 200
+        });
+        
+        const modal = new bootstrap.Modal(document.getElementById('qrModal'));
+        modal.show();
+    }
+
+    function printQr() {
+        const content = document.getElementById('qrcode').innerHTML;
+        const name = document.getElementById('qrProductName').innerText;
+        const win = window.open('', '', 'height=600,width=500');
+        win.document.write('<html><head><title>Print Label</title>');
+        win.document.write('</head><body style="text-align:center; font-family:sans-serif;">');
+        win.document.write('<h3>' + name + '</h3>');
+        
+        if (currentQrImage) {
+            let src = currentQrImage;
+            if (src.startsWith('/')) {
+                src = window.location.origin + src;
+            }
+            win.document.write('<img src="' + src + '" style="max-width: 150px; max-height: 150px; margin-bottom: 10px; display:block; margin: 0 auto;" />');
+        }
+        
+        win.document.write(content);
+        
+        if (currentShelf) {
+             win.document.write('<h4 style="margin-top:10px; border:1px solid #000; display:inline-block; padding:5px 10px;">Shelf: ' + currentShelf + '</h4>');
+        }
+        
+        win.document.write('<p>Scan to Update Stock</p>');
+        win.document.write('</body></html>');
+        win.document.close();
+        win.print();
+    }
+</script>

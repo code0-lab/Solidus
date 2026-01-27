@@ -112,6 +112,32 @@ export class SliderComponent implements OnInit {
             transform: translate(2px, 2px);
             box-shadow: 2px 2px 0 #888;
           }
+
+          @media (max-width: 600px) {
+            .content {
+              padding: 1rem;
+              max-width: 95%;
+              border-width: 2px;
+              box-shadow: 4px 4px 0 black;
+            }
+            h1 {
+              font-size: 1.8rem;
+              letter-spacing: 2px;
+            }
+            p {
+              font-size: 0.9rem;
+              margin: 8px 0 12px;
+            }
+            .decoration {
+              gap: 10px;
+              margin-bottom: 12px;
+              font-size: 12px;
+            }
+            .action-btn {
+              padding: 8px 16px;
+              font-size: 1rem;
+            }
+          }
         </style>
       `;
     }

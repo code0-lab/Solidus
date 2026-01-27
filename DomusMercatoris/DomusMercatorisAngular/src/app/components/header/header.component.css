@@ -119,13 +119,31 @@
   padding: 10px;
 }
 
+.qty-input {
+  width: 40px;
+  text-align: center;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 4px;
+  margin: 0 5px;
+  outline: none;
+}
+
+.qty-input:focus {
+  border-color: #000;
+}
+
 .cart-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-  padding-bottom: 10px;
+  padding: 10px;
   border-bottom: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.cart-item.highlighted-item {
+  background-color: #ffe6e6; /* Light red background */
+  border-left: 3px solid red;
 }
 
 .cart-item:last-child {
@@ -199,6 +217,68 @@
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+/* Profile Dropdown */
+.profile-dropdown {
+  position: absolute;
+  top: 60px;
+  right: 10px;
+  width: 250px;
+  background: white;
+  border: 1px solid black;
+  box-shadow: 4px 4px 0 black;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-header {
+  padding: 10px;
+  background: #eee;
+  border-bottom: 1px solid black;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.profile-header .name {
+  font-weight: bold;
+}
+
+.profile-header .email {
+  font-size: 12px;
+  color: #666;
+}
+
+.profile-menu {
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-item {
+  padding: 10px;
+  text-decoration: none;
+  color: black;
+  border-bottom: 1px solid #eee;
+  background: none;
+  border: none;
+  text-align: left;
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+.menu-item:hover {
+  background: #f5f5f5;
+}
+
+.menu-item:last-child {
+  border-bottom: none;
+}
+
+.menu-item.logout {
+  color: red;
 }
 
 /* Payment Notification Styles */

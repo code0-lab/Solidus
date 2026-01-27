@@ -38,6 +38,9 @@ namespace DomusMercatoris.Core.Entities
         [Range(0, int.MaxValue)]
         public int Quantity { get; set; } = 0;
 
+        public string? ShelfNumber { get; set; }
+        public int LowStockThreshold { get; set; } = 5;
+
         public List<string> Images { get; set; } = new List<string>();
 
         public ICollection<Comment> Comments { get; set; } = new List<Comment>();

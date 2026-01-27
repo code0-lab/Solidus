@@ -3,6 +3,7 @@ using DomusMercatoris.Core.Models;
 using DomusMercatoris.Data;
 using DomusMercatoris.Service.DTOs;
 using Microsoft.EntityFrameworkCore;
+using DomusMercatoris.Core.Exceptions;
 
 namespace DomusMercatorisDotnetRest.Services
 {
@@ -18,58 +19,128 @@ namespace DomusMercatorisDotnetRest.Services
         public async Task<OrderDto> CheckoutAsync(OrderCreateDto dto)
         {
             if (dto.UserId == null && dto.FleetingUser == null) throw new ArgumentException("Either UserId or FleetingUser must be provided.");
-            long? fleetingUserId = null;
-            if (!dto.UserId.HasValue && dto.FleetingUser != null)
+
+            using var transaction = await _db.Database.BeginTransactionAsync();
+
+            try 
             {
-                var fu = new FleetingUser
+                // Validate Stock and Adjust Cart if necessary
+                var adjustments = new List<StockAdjustment>();
+                bool stockAdjusted = false;
+
+                foreach (var it in dto.Items)
                 {
-                    Email = dto.FleetingUser.Email,
-                    FirstName = dto.FleetingUser.FirstName,
-                    LastName = dto.FleetingUser.LastName,
-                    Address = dto.FleetingUser.Address
-                };
-                _db.Add(fu);
-                await _db.SaveChangesAsync();
-                fleetingUserId = fu.Id;
-            }
-            var order = new Order
-            {
-                CompanyId = dto.CompanyId,
-                UserId = dto.UserId ?? 0,
-                FleetingUserId = fleetingUserId,
-                CreatedAt = DateTime.UtcNow,
-                Status = OrderStatus.PaymentPending,
-                PaymentCode = new Random().Next(100000, 999999).ToString()
-            };
-            _db.Orders.Add(order);
-            await _db.SaveChangesAsync();
-            decimal total = 0;
-            foreach (var it in dto.Items)
-            {
-                var product = await _db.Products.SingleOrDefaultAsync(p => p.Id == it.ProductId && p.CompanyId == dto.CompanyId);
-                if (product == null) continue;
-                VariantProduct? vp = null;
-                if (it.VariantProductId.HasValue)
-                {
-                    vp = await _db.VariantProducts.SingleOrDefaultAsync(v => v.Id == it.VariantProductId.Value && v.ProductId == product.Id);
+                    var product = await _db.Products.FirstOrDefaultAsync(p => p.Id == it.ProductId);
+                    if (product == null) continue;
+
+                    if (product.Quantity < it.Quantity)
+                    {
+                        stockAdjusted = true;
+                        adjustments.Add(new StockAdjustment
+                        {
+                            ProductId = product.Id,
+                            VariantProductId = it.VariantProductId,
+                            ProductName = product.Name,
+                            RequestedQuantity = it.Quantity,
+                            AvailableQuantity = product.Quantity
+                        });
+
+                        // Update cart item if User is logged in
+                        if (dto.UserId.HasValue)
+                        {
+                            var cartItem = await _db.CartItems.FirstOrDefaultAsync(c => c.UserId == dto.UserId && c.ProductId == it.ProductId && c.VariantProductId == it.VariantProductId);
+                            if (cartItem != null)
+                            {
+                                cartItem.Quantity = product.Quantity;
+                                if (cartItem.Quantity <= 0)
+                                {
+                                    _db.CartItems.Remove(cartItem);
+                                }
+                            }
+                        }
+                    }
                 }
-                var unitPrice = vp != null ? vp.Price : product.Price;
-                var op = new OrderItem
+
+                if (stockAdjusted)
                 {
-                    OrderId = order.Id,
-                    ProductId = product.Id,
-                    VariantProductId = vp?.Id,
-                    UnitPrice = unitPrice,
-                    Quantity = it.Quantity
+                    await _db.SaveChangesAsync();
+                    await transaction.CommitAsync(); // Commit cart changes
+                    throw new StockInsufficientException(adjustments);
+                }
+
+                // Proceed with Order Creation and Stock Deduction
+                long? fleetingUserId = null;
+                if (!dto.UserId.HasValue && dto.FleetingUser != null)
+                {
+                    var fu = new FleetingUser
+                    {
+                        Email = dto.FleetingUser.Email,
+                        FirstName = dto.FleetingUser.FirstName,
+                        LastName = dto.FleetingUser.LastName,
+                        Address = dto.FleetingUser.Address
+                    };
+                    _db.Add(fu);
+                    await _db.SaveChangesAsync();
+                    fleetingUserId = fu.Id;
+                }
+
+                var order = new Order
+                {
+                    CompanyId = dto.CompanyId,
+                    UserId = dto.UserId ?? 0,
+                    FleetingUserId = fleetingUserId,
+                    CreatedAt = DateTime.UtcNow,
+                    Status = OrderStatus.PaymentPending,
+                    PaymentCode = new Random().Next(100000, 999999).ToString()
                 };
-                total += unitPrice * it.Quantity;
-                _db.OrderItems.Add(op);
-                order.OrderItems.Add(op);
+                _db.Orders.Add(order);
+                await _db.SaveChangesAsync();
+
+                decimal total = 0;
+                foreach (var it in dto.Items)
+                {
+                    var product = await _db.Products.SingleOrDefaultAsync(p => p.Id == it.ProductId && p.CompanyId == dto.CompanyId);
+                    if (product == null) continue;
+
+                    // Double check stock (concurrency)
+                    if (product.Quantity < it.Quantity)
+                    {
+                        throw new InvalidOperationException($"Stock insufficient for {product.Name}.");
+                    }
+
+                    // Deduct Stock
+                    product.Quantity -= it.Quantity;
+                    _db.Entry(product).State = EntityState.Modified;
+
+                    VariantProduct? vp = null;
+                    if (it.VariantProductId.HasValue)
+                    {
+                        vp = await _db.VariantProducts.SingleOrDefaultAsync(v => v.Id == it.VariantProductId.Value && v.ProductId == product.Id);
+                    }
+                    var unitPrice = vp != null ? vp.Price : product.Price;
+                    var op = new OrderItem
+                    {
+                        OrderId = order.Id,
+                        ProductId = product.Id,
+                        VariantProductId = vp?.Id,
+                        UnitPrice = unitPrice,
+                        Quantity = it.Quantity
+                    };
+                    total += unitPrice * it.Quantity;
+                    _db.OrderItems.Add(op);
+                    order.OrderItems.Add(op);
+                }
+                order.TotalPrice = total;
+                await _db.SaveChangesAsync();
+                
+                await transaction.CommitAsync();
+                return MapToDto(order);
             }
-            order.TotalPrice = total;
-            await _db.SaveChangesAsync();
-            
-            return MapToDto(order);
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         public async Task<OrderDto?> MarkPaidAsync(long id)

@@ -1,0 +1,71 @@
+@page
+@model DomusMercatorisDotnetMVC.Pages.QuickStockModel
+@{
+    ViewData["Title"] = "Quick Stock Update";
+    Layout = "_LayoutAuth";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-lightning-charge-fill me-2"></i>Quick Stock Update</h4>
+                </div>
+                <div class="card-body">
+                    @if (Model.Product == null)
+                    {
+                        <div class="alert alert-danger">Product not found.</div>
+                        <a href="/Dashboard" class="btn btn-secondary">Back to Dashboard</a>
+                    }
+                    else
+                    {
+                        <form method="post">
+                            <input type="hidden" asp-for="Id" />
+                            
+                            <div class="text-center mb-4">
+                                @if (Model.Product.Images != null && Model.Product.Images.Count > 0)
+                                {
+                                    <img src="@Model.Product.Images[0]" class="img-thumbnail mb-2" style="max-height: 150px;" />
+                                }
+                                <h5>@Model.Product.Name</h5>
+                                <p class="text-muted">SKU: @Model.Product.Sku</p>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Shelf Number</label>
+                                <input asp-for="ShelfNumber" class="form-control" placeholder="Enter shelf number..." />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Current Stock</label>
+                                <div class="input-group input-group-lg">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="adjust(-1)"><i class="bi bi-dash"></i></button>
+                                    <input asp-for="Quantity" class="form-control text-center fw-bold" type="number" id="qtyInput" />
+                                    <button type="button" class="btn btn-outline-secondary" onclick="adjust(1)"><i class="bi bi-plus"></i></button>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg">Update Stock</button>
+                                <a href="/Dashboard" class="btn btn-outline-secondary">Cancel</a>
+                            </div>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function adjust(val) {
+            const input = document.getElementById('qtyInput');
+            let current = parseInt(input.value) || 0;
+            let next = current + val;
+            if (next < 0) next = 0;
+            input.value = next;
+        }
+    </script>
+}

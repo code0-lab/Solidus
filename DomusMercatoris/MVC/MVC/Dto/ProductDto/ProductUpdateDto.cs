@@ -29,6 +29,9 @@ namespace DomusMercatorisDotnetMVC.Dto.ProductDto
         [Range(0, int.MaxValue)]
         public int Quantity { get; set; } = 0;
 
+        public string? ShelfNumber { get; set; }
+        public int LowStockThreshold { get; set; } = 5;
+
         public List<IFormFile?> ImageFiles { get; set; } = new List<IFormFile?>();
         public List<string> RemoveImages { get; set; } = new List<string>();
         public List<string> ImageOrder { get; set; } = new List<string>();

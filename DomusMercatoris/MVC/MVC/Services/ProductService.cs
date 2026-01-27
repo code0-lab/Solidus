@@ -83,6 +83,15 @@ namespace DomusMercatorisDotnetMVC.Services
             return (items, totalCount);
         }
 
+        public async Task<List<Product>> GetLowStockProductsAsync(int companyId)
+        {
+            return await _db.Products
+                .AsNoTracking()
+                .Where(p => p.CompanyId == companyId && p.Quantity <= p.LowStockThreshold)
+                .OrderBy(p => p.Quantity)
+                .ToListAsync();
+        }
+
         private async Task<(int? rootId, int? subId)> MapCategoryFallbackAsync(List<int> ids, int companyId)
         {
             // Fetch all categories for the company at once to avoid N+1 and recursive queries

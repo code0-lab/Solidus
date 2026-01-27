@@ -34,6 +34,7 @@ namespace DomusMercatorisDotnetMVC.Pages
         public string CompanyName { get; set; } = string.Empty;
         public List<CommentsDto> RecentComments { get; set; } = new();
         public List<Order> RecentOrders { get; set; } = new();
+        public List<Product> LowStockProducts { get; set; } = new();
         public int TotalOrders { get; set; }
 
         public async Task OnGetAsync()
@@ -59,6 +60,7 @@ namespace DomusMercatorisDotnetMVC.Pages
             if (CompanyId >= 0)
             {
                 ProductCount = await _productService.CountByCompanyAsync(CompanyId);
+                LowStockProducts = await _productService.GetLowStockProductsAsync(CompanyId);
                 var users = await _userService.GetByCompanyAsync(CompanyId);
                 ManagerCount = users.Count(u => u.Roles?.Contains("Manager") ?? false);
                 WorkerCount = users.Count(u => !(u.Roles?.Contains("Manager") ?? false));

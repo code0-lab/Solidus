@@ -4,6 +4,7 @@ import { Product, VariantProduct } from '../models/product.model';
 import { AuthService } from './auth.service';
 import { environment } from '../../environments/environment';
 import { Subject, debounceTime, firstValueFrom } from 'rxjs';
+import { AlertService } from './alert.service';
 
 export interface CartItem {
   id?: number; // Database ID
@@ -42,10 +43,13 @@ interface SyncCartItemDto {
 export class CartService {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
+  private alertService = inject(AlertService);
   private apiUrl = `${environment.apiUrl}/cart`;
   private readonly LOCAL_CART_KEY = 'local_cart';
 
   items = signal<CartItem[]>([]);
+  highlightedItemIds = signal<number[]>([]);
+  itemWarnings = signal<Map<number, string>>(new Map()); // itemId -> warning message
 
   totalCount = computed(() => this.items().reduce((sum, i) => sum + i.qty, 0));
   totalPrice = computed(() => this.items().reduce((sum, i) => {
@@ -74,7 +78,12 @@ export class CartService {
     this.updateSubject.pipe(
       debounceTime(500)
     ).subscribe(update => {
-       this.http.patch(`${this.apiUrl}/${update.itemId}`, { quantity: update.qty }).subscribe();
+       this.http.patch<any>(`${this.apiUrl}/${update.itemId}`, { quantity: update.qty }).subscribe(res => {
+         if (res && res.isWarning) {
+             this.alertService.showAlert(res.message);
+             this.fetchCart();
+         }
+       });
     });
   }
 
@@ -163,7 +172,10 @@ export class CartService {
         variantProductId: variant?.id,
         quantity
       };
-      this.http.post(this.apiUrl, dto).subscribe(() => {
+      this.http.post<any>(this.apiUrl, dto).subscribe(res => {
+        if (res && res.isWarning) {
+            this.alertService.showAlert(res.message);
+        }
         this.fetchCart(); // Refresh cart from DB
       });
     } else {
@@ -195,6 +207,12 @@ export class CartService {
     } else {
        this.remove(item);
     }
+  }
+
+  public updateQuantity(item: CartItem, newQty: number) {
+      if (newQty > 0) {
+          this.updateItemQty(item, newQty);
+      }
   }
 
   private updateItemQty(item: CartItem, newQty: number) {

@@ -180,6 +180,29 @@ using (var scope = app.Services.CreateScope())
     DomusMercatorisDotnetMVC.Services.DatabaseSeeder.Seed(db);
 }
 
+// Print Local Network URL on Startup
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    var addresses = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()
+        .Where(i => i.NetworkInterfaceType == System.Net.NetworkInformation.NetworkInterfaceType.Wireless80211 || 
+                    i.NetworkInterfaceType == System.Net.NetworkInformation.NetworkInterfaceType.Ethernet)
+        .SelectMany(i => i.GetIPProperties().UnicastAddresses)
+        .Where(a => a.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork && 
+                    !System.Net.IPAddress.IsLoopback(a.Address))
+        .Select(a => a.Address.ToString())
+        .ToList();
+
+    var port = app.Urls.FirstOrDefault()?.Split(':').Last() ?? "5147"; // Default to 5147 if not found
+
+    Console.WriteLine("\n----------------------------------------------------------");
+    Console.WriteLine($" Application Started! Access it via:");
+    Console.WriteLine($" > Local:   http://localhost:{port}");
+    foreach (var ip in addresses)
+    {
+        Console.WriteLine($" > Network: http://{ip}:{port}");
+    }
+    Console.WriteLine("----------------------------------------------------------\n");
+});
 
 app.Run();
 

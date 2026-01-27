@@ -127,17 +127,32 @@
       <span class="count">{{ cartService.totalCount() }} items</span>
     </div>
     <div class="cart-items">
-      @for (item of cartService.items(); track item) {
-      <div class="cart-item">
+      @for (item of cartService.items(); track item.id || (item.product.id + '_' + (item.variant ? item.variant.id : ''))) {
+      <div class="cart-item" [class.highlighted-item]="cartService.highlightedItemIds().includes(item.id!)">
         <div class="title">
           {{ item.product.name }}
           @if (item.variant) {
           <span class="variant-info" style="font-size: 0.8em; color: #888;">({{ item.variant.color }})</span>
           }
         </div>
+        @if (cartService.highlightedItemIds().includes(item.id!)) {
+           <div class="stock-warning" style="color: red; font-size: 0.8em; margin-bottom: 4px;">
+             {{ cartService.itemWarnings().get(item.id!) || 'Quantity reduced due to low stock' }}
+           </div>
+        }
         <div class="controls">
           <button (click)="dec(item)">-</button>
-          <span class="qty">{{ item.qty }}</span>
+          <input type="text" 
+                 class="qty-input" 
+                 [ngModel]="item.qty" 
+                 [ngModelOptions]="{updateOn: 'blur'}"
+                 (ngModelChange)="onQtyChange(item, $event)" 
+                 (keydown)="preventInvalidInput($event)"
+                 (keydown.enter)="$any($event.target).blur()"
+                 (paste)="onPaste($event)"
+                 (blur)="onBlur(item, $event)"
+                 inputmode="numeric"
+                 pattern="[0-9]*">
           <button (click)="inc(item)">+</button>
           <button class="remove" (click)="remove(item)">×</button>
         </div>

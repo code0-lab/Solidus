@@ -8,17 +8,28 @@
   width: 100%;
 }
 
-.product-row {
+.product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 30px;
-  padding: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 24px;
+  padding: 16px;
   box-sizing: border-box;
+  width: 100%;
+}
+
+/* Mobile adjustments */
+@media (max-width: 576px) {
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
+    padding: 12px;
+  }
 }
 
 /* Ensure card height is consistent */
 .product-card {
-  height: 330px;
+  height: 100%;
+  min-height: 330px;
   /* Fixed height for cards (Desktop default) */
   background: white;
   border: 2px solid black;
@@ -29,9 +40,17 @@
   padding: 0;
   /* Removed padding to let window bar hit edges */
   box-sizing: border-box;
+  transition: transform 0.1s ease-in-out;
+}
+
+.product-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 black;
 }
 
 .product-card:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 black;
   background: black;
   color: white;
 }

@@ -20,6 +20,9 @@
             <a href="/Product/Edit/@Model.Id" class="btn btn-sm btn-dark rounded-0 border-2 me-2" title="Edit" onclick="event.stopPropagation();">
                 <i class="bi bi-pencil-square"></i>
             </a>
+            <button type="button" class="btn btn-sm btn-dark rounded-0 border-2 me-2" title="Print Label" onclick="event.stopPropagation(); showQr(@Model.Id, '@System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Model.Name)', '@(Model.Images != null && Model.Images.Count > 0 ? Model.Images[0] : "")', '@Model.ShelfNumber')">
+                <i class="bi bi-qr-code"></i>
+            </button>
             <button type="button" class="btn btn-sm btn-dark rounded-0 border-2" title="Delete" onclick="event.stopPropagation(); deleteProduct(@Model.Id, event)">
                 <i class="bi bi-trash"></i>
             </button>
