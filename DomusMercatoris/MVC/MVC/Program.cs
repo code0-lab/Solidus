@@ -164,4 +164,7 @@ using (var scope = app.Services.CreateScope())
     DomusMercatorisDotnetMVC.Services.DatabaseSeeder.Seed(db);
 }
 
+
 app.Run();
+
+public partial class Program { }

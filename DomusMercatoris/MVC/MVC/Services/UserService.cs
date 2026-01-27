@@ -157,9 +157,16 @@ namespace DomusMercatorisDotnetMVC.Services
             }
 
             // Security Check: Prevent deletion of Rex or Moderator
-            if ((user.Roles ?? new List<string>()).Any(r => r == "Rex" || r == "Moderator"))
+            if ((user.Roles ?? new List<string>()).Any(r => r == "Rex" || r == "Moderator") || string.Equals(user.Email, "rex@domus.com", StringComparison.OrdinalIgnoreCase))
             {
                 return false;
+            }
+
+            // Remove UserPageAccess records first (Cascade delete manually due to Restrict behavior)
+            var accesses = await _dbContext.UserPageAccesses.Where(a => a.UserId == id).ToListAsync();
+            if (accesses.Any())
+            {
+                _dbContext.UserPageAccesses.RemoveRange(accesses);
             }
 
             _dbContext.Users.Remove(user);

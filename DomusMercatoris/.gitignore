@@ -49,4 +49,4 @@ ENV/
 .u2net/
 
 # MVC Uploads
-MVC/MVC/wwwroot/uploads/products/
+MVC/MVC/wwwroot/uploads/

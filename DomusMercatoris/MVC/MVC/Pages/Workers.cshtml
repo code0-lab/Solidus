@@ -29,8 +29,10 @@
             </ul>
         </div>
     }
-    <div class="table-responsive">
-        <table class="table table-striped">
+
+    <!-- Desktop View (Table) -->
+    <div class="table-responsive d-none d-md-block">
+        <table class="table table-striped align-middle">
             <thead>
                 <tr>
                     <th>First Name</th>
@@ -48,23 +50,7 @@
                 @foreach (var w in Model.Workers)
                 {
                     <tr>
-                        <td>
-                            @if (User.IsInRole("Manager"))
-                            {
-                                <form method="post" action="/Workers?handler=Update" class="d-flex gap-2">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="Edit.Id" value="@w.Id" />
-                                    <input name="Edit.FirstName" value="@w.FirstName" class="form-control" />
-                                    <input name="Edit.LastName" value="@w.LastName" class="form-control" />
-                                    <input name="Edit.Email" value="@w.Email" class="form-control" />
-                                    <button class="btn btn-sm btn-primary">Save</button>
-                                </form>
-                            }
-                            else
-                            {
-                                @w.FirstName
-                            }
-                        </td>
+                        <td>@w.FirstName</td>
                         <td>@w.LastName</td>
                         <td>@w.Email</td>
                         <td>@string.Join(", ", w.Roles ?? new List<string>())</td>
@@ -77,7 +63,7 @@
                                     @foreach (var key in Model.PageAccessKeys)
                                     {
                                         var hasAccess = Model.UserPageAccessMap.ContainsKey(w.Id) && Model.UserPageAccessMap[w.Id].Contains(key);
-                                        <div class="form-check me-2">
+                                        <div class="form-check me-2 mb-0">
                                             <input class="form-check-input" type="checkbox" name="pageKeys" value="@key" @(hasAccess ? "checked" : null) />
                                             <label class="form-check-label">@key</label>
                                         </div>
@@ -86,11 +72,17 @@
                                 </form>
                             </td>
                             <td>
-                                <form method="post" action="/Workers?handler=Delete" onsubmit="return confirm('Delete user?')">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="DeleteId" value="@w.Id" />
-                                    <button class="btn btn-sm btn-dark rounded-0 border-2">Delete</button>
-                                </form>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-sm btn-primary rounded-0" 
+                                            onclick="openEditModal(@w.Id, '@w.FirstName', '@w.LastName', '@w.Email')">
+                                        Edit
+                                    </button>
+                                    <form method="post" action="/Workers?handler=Delete" onsubmit="return confirm('Delete user?')">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="DeleteId" value="@w.Id" />
+                                        <button class="btn btn-sm btn-dark rounded-0 border-2">Delete</button>
+                                    </form>
+                                </div>
                             </td>
                         }
                     </tr>
@@ -98,4 +90,112 @@
             </tbody>
         </table>
     </div>
+
+    <!-- Mobile View (Cards) -->
+    <div class="d-md-none">
+        @foreach (var w in Model.Workers)
+        {
+            <div class="card mb-3 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h5 class="card-title mb-1">@w.FirstName @w.LastName</h5>
+                            <h6 class="card-subtitle text-muted small">@w.Email</h6>
+                        </div>
+                        <span class="badge bg-secondary">@string.Join(", ", w.Roles ?? new List<string>())</span>
+                    </div>
+
+                    @if (User.IsInRole("Manager"))
+                    {
+                        <hr />
+                        <div class="mb-3">
+                            <label class="form-label small text-uppercase text-muted fw-bold">Page Access</label>
+                            <form method="post" action="/Workers?handler=UpdatePermissions">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="userId" value="@w.Id" />
+                                <div class="d-flex flex-wrap gap-3 align-items-center">
+                                    @foreach (var key in Model.PageAccessKeys)
+                                    {
+                                        var hasAccess = Model.UserPageAccessMap.ContainsKey(w.Id) && Model.UserPageAccessMap[w.Id].Contains(key);
+                                        <div class="form-check mb-0">
+                                            <input class="form-check-input" type="checkbox" name="pageKeys" value="@key" @(hasAccess ? "checked" : null) />
+                                            <label class="form-check-label">@key</label>
+                                        </div>
+                                    }
+                                    <button class="btn btn-sm btn-outline-primary ms-auto">Save</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary w-100" 
+                                    onclick="openEditModal(@w.Id, '@w.FirstName', '@w.LastName', '@w.Email')">
+                                Edit Details
+                            </button>
+                            <form method="post" action="/Workers?handler=Delete" onsubmit="return confirm('Delete user?')" class="w-100">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="DeleteId" value="@w.Id" />
+                                <button class="btn btn-dark w-100">Delete</button>
+                            </form>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
 </div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editWorkerModal" tabindex="-1" aria-labelledby="editWorkerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editWorkerModalLabel">Edit Worker</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="/Workers?handler=Update">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <input type="hidden" id="editId" name="Edit.Id" />
+                    <div class="mb-3">
+                        <label for="editFirstName" class="form-label">First Name</label>
+                        <input type="text" class="form-control" id="editFirstName" name="Edit.FirstName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editLastName" class="form-label">Last Name</label>
+                        <input type="text" class="form-control" id="editLastName" name="Edit.LastName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editEmail" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="editEmail" name="Edit.Email" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var editBtns = document.querySelectorAll('.edit-worker-btn');
+        editBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var id = this.getAttribute('data-id');
+                var firstName = this.getAttribute('data-firstname');
+                var lastName = this.getAttribute('data-lastname');
+                var email = this.getAttribute('data-email');
+                
+                document.getElementById('editId').value = id;
+                document.getElementById('editFirstName').value = firstName;
+                document.getElementById('editLastName').value = lastName;
+                document.getElementById('editEmail').value = email;
+                
+                var modal = new bootstrap.Modal(document.getElementById('editWorkerModal'));
+                modal.show();
+            });
+        });
+    });
+</script>

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>DomusMercatorisDotnetMVC</AssemblyName>
     <RootNamespace>DomusMercatorisDotnetMVC</RootNamespace>
+    <UserSecretsId>03edafc0-603f-4a71-bf4f-27c9ee915b7d</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
