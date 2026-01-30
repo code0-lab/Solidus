@@ -30,6 +30,9 @@ namespace DomusMercatoris.Data
         public DbSet<Banner> Banners { get; set; } = null!;
         public DbSet<CartItem> CartItems { get; set; } = null!;
         public DbSet<UserPageAccess> UserPageAccesses { get; set; } = null!;
+        public DbSet<WorkTask> WorkTasks { get; set; } = null!;
+        public DbSet<RefundRequest> RefundRequests { get; set; } = null!;
+        public DbSet<UserCompanyMembership> UserCompanyMemberships { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -72,6 +75,21 @@ namespace DomusMercatoris.Data
                     .WithMany()
                     .HasForeignKey(c => c.VariantProductId)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<UserCompanyMembership>(entity =>
+            {
+                entity.HasIndex(m => new { m.UserId, m.CompanyId }).IsUnique();
+                
+                entity.HasOne(m => m.User)
+                    .WithMany()
+                    .HasForeignKey(m => m.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(m => m.Company)
+                    .WithMany()
+                    .HasForeignKey(m => m.CompanyId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<User>(entity =>
@@ -238,6 +256,37 @@ namespace DomusMercatoris.Data
                     .WithMany()
                     .HasForeignKey(a => a.UserId)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<WorkTask>(entity =>
+            {
+                entity.HasOne(t => t.Order)
+                    .WithMany()
+                    .HasForeignKey(t => t.OrderId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(t => t.AssignedToUser)
+                    .WithMany()
+                    .HasForeignKey(t => t.AssignedToUserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(t => t.CreatedByUser)
+                    .WithMany()
+                    .HasForeignKey(t => t.CreatedByUserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(t => t.Parent)
+                    .WithMany(p => p.Children)
+                    .HasForeignKey(t => t.ParentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<RefundRequest>(entity =>
+            {
+                entity.HasOne(r => r.OrderItem)
+                      .WithMany()
+                      .HasForeignKey(r => r.OrderItemId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }

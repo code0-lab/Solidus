@@ -74,10 +74,10 @@
                                             <i class="bi bi-key-fill"></i>
                                         </button>
                                     }
-                                    <form method="post" action="/Workers?handler=Delete" onsubmit="return confirm('Delete user?')">
+                                    <form method="post" action="/Workers?handler=Delete" id="deleteForm_@w.Id">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="DeleteId" value="@w.Id" />
-                                        <button class="btn btn-sm btn-dark rounded-0 border-2">Delete</button>
+                                        <button type="button" class="btn btn-sm btn-dark rounded-0 border-2" onclick="confirmDelete(@w.Id, '@w.FirstName @w.LastName')">Delete</button>
                                     </form>
                                 </div>
                             </td>
@@ -295,4 +295,28 @@
             document.querySelectorAll('.perm-checkbox').forEach(c => c.checked = false);
         });
     });
+
+    function confirmDelete(userId, userName) {
+        // Check for active tasks first
+        fetch('/Workers?handler=CheckUserTasks&userId=' + userId)
+            .then(response => response.json())
+            .then(data => {
+                if (data.count > 0) {
+                    if (confirm('Warning: ' + userName + ' has ' + data.count + ' active task(s). Deleting this user will also delete their assigned tasks permanently. Are you sure you want to proceed?')) {
+                        document.getElementById('deleteForm_' + userId).submit();
+                    }
+                } else {
+                    if (confirm('Are you sure you want to delete ' + userName + '?')) {
+                        document.getElementById('deleteForm_' + userId).submit();
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Fallback to standard confirm if check fails
+                if (confirm('Are you sure you want to delete ' + userName + '?')) {
+                    document.getElementById('deleteForm_' + userId).submit();
+                }
+            });
+    }
 </script>

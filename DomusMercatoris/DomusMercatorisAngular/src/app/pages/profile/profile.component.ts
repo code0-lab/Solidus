@@ -6,7 +6,9 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
 import { AlertService } from '../../services/alert.service';
-import { environment } from '../../../environments/environment';
+import { MembershipService, Membership, CompanySummary } from '../../services/membership.service';
+import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/operators';
+import { Subject, of } from 'rxjs';
 
 @Component({
   selector: 'app-profile',
@@ -24,13 +26,18 @@ export class ProfileComponent implements OnInit {
   fb = inject(FormBuilder);
   toastService = inject(ToastService);
   alertService = inject(AlertService);
+  membershipService = inject(MembershipService);
 
   profileForm!: FormGroup;
   passwordForm!: FormGroup;
 
   isSaving = signal(false);
-  activeTab = signal<'edit' | 'password'>('edit');
+  activeTab = signal<'edit' | 'password' | 'companies'>('edit');
   imageLoadFailed = signal(false);
+
+  memberships = signal<Membership[]>([]);
+  searchResults = signal<CompanySummary[]>([]);
+  searchQuery = new Subject<string>();
 
   ngOnInit() {
     const user = this.authService.currentUser();
@@ -39,11 +46,29 @@ export class ProfileComponent implements OnInit {
       return;
     }
 
+    // Search subscription - Moved up and added error handling
+    this.searchQuery.pipe(
+      takeUntilDestroyed(this.destroyRef),
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap(query => 
+        this.membershipService.searchCompanies(query).pipe(
+          catchError(err => {
+            console.error('Search error:', err);
+            this.toastService.error('Failed to search companies');
+            return of([]);
+          })
+        )
+      )
+    ).subscribe(results => {
+      this.searchResults.set(results);
+    });
+
     this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       if (params['tab']) {
         const tab = params['tab'];
-        if (['edit', 'password'].includes(tab)) {
-          this.setActiveTab(tab as 'edit' | 'password');
+        if (['edit', 'password', 'companies'].includes(tab)) {
+          this.setActiveTab(tab as 'edit' | 'password' | 'companies');
         }
       }
     });
@@ -69,9 +94,54 @@ export class ProfileComponent implements OnInit {
       ? null : { mismatch: true };
   }
 
-  setActiveTab(tab: 'edit' | 'password') {
+  setActiveTab(tab: 'edit' | 'password' | 'companies') {
     this.activeTab.set(tab);
     if (tab === 'password') this.passwordForm.reset();
+    if (tab === 'companies') {
+        this.loadMemberships();
+        // Trigger initial search to show available companies
+        this.searchQuery.next('');
+    }
+  }
+
+  loadMemberships() {
+    this.membershipService.getMyMemberships().subscribe(data => {
+      this.memberships.set(data);
+    });
+  }
+
+  onSearch(event: Event) {
+    const query = (event.target as HTMLInputElement).value;
+    this.searchQuery.next(query);
+  }
+
+  joinCompany(company: CompanySummary) {
+    this.membershipService.joinCompany(company.id).subscribe({
+      next: () => {
+        this.toastService.show('Joined company successfully', 'success');
+        this.loadMemberships();
+        // Update search result status locally
+        this.searchResults.update(results => 
+            results.map(r => r.id === company.id ? {...r, isMember: true} : r)
+        );
+      },
+      error: () => this.toastService.show('Failed to join company', 'error')
+    });
+  }
+
+  leaveCompany(companyId: number) {
+    if (confirm('Are you sure you want to leave this company?')) {
+        this.membershipService.leaveCompany(companyId).subscribe({
+        next: () => {
+            this.toastService.show('Left company successfully', 'success');
+            this.loadMemberships();
+            this.searchResults.update(results => 
+                results.map(r => r.id === companyId ? {...r, isMember: false} : r)
+            );
+        },
+        error: () => this.toastService.show('Failed to leave company', 'error')
+        });
+    }
   }
 
   // Helper to check if form value is different from initial user data

@@ -57,6 +57,7 @@ export class PaymentWaitingComponent implements OnInit, OnDestroy {
             this.cartService.clear();
             this.paymentService.activePaymentCode.set(null); // Clear code
             sessionStorage.removeItem(`payment_expiry_${this.orderId()}`); // Clean up timer storage
+            localStorage.removeItem('active_checkout_id'); // Clear active checkout lock
             if (this.timerInterval) clearInterval(this.timerInterval);
 
             // Wait a bit to show success animation
@@ -67,6 +68,7 @@ export class PaymentWaitingComponent implements OnInit, OnDestroy {
                 });
             }, 2000);
         } else {
+            localStorage.removeItem('active_checkout_id'); // Clear active checkout lock on failure
             this.alertService.showAlert('Payment Failed! Please try again.', () => {
               this.router.navigate(['/']); // Redirect to cart or retry
             });
@@ -133,6 +135,7 @@ export class PaymentWaitingComponent implements OnInit, OnDestroy {
         this.paymentService.activePaymentCode.set(null); // Clear code
         clearInterval(this.timerInterval);
         sessionStorage.removeItem(`payment_expiry_${this.orderId()}`);
+        localStorage.removeItem('active_checkout_id'); // Clear active checkout lock
 
         // Automatically reject payment on timeout
         this.paymentService.rejectPayment(this.orderId()).subscribe({

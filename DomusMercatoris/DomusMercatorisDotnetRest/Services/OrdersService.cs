@@ -20,6 +20,18 @@ namespace DomusMercatorisDotnetRest.Services
         {
             if (dto.UserId == null && dto.FleetingUser == null) throw new ArgumentException("Either UserId or FleetingUser must be provided.");
 
+            // Check for existing pending orders for logged-in users
+            if (dto.UserId.HasValue)
+            {
+                var hasPendingOrder = await _db.Orders
+                    .AnyAsync(o => o.UserId == dto.UserId && o.Status == OrderStatus.PaymentPending);
+                
+                if (hasPendingOrder)
+                {
+                    throw new InvalidOperationException("You already have a pending payment session. Please complete or cancel it before starting a new one.");
+                }
+            }
+
             using var transaction = await _db.Database.BeginTransactionAsync();
 
             try 
@@ -190,18 +202,41 @@ namespace DomusMercatorisDotnetRest.Services
             return await _db.CargoTrackings.FindAsync(order.CargoTrackingId);
         }
 
-        public async Task<List<OrderDto>> GetByUserIdAsync(long userId)
+        public async Task<PaginatedResult<OrderDto>> GetByUserIdAsync(long userId, int pageNumber = 1, int pageSize = 10, string? tab = null)
         {
-            var orders = await _db.Orders
+            var query = _db.Orders
+                .AsNoTracking()
+                .Where(o => o.UserId == userId && o.Status != OrderStatus.Created && o.Status != OrderStatus.PaymentPending);
+
+            if (tab == "failed-orders")
+            {
+                query = query.Where(o => o.Status == OrderStatus.PaymentFailed);
+            }
+            else if (tab == "orders")
+            {
+                query = query.Where(o => o.Status != OrderStatus.PaymentFailed);
+            }
+
+            var totalCount = await query.CountAsync();
+
+            var orders = await query
+                .Include(o => o.CargoTracking)
                 .Include(o => o.OrderItems)
                     .ThenInclude(i => i.Product)
                 .Include(o => o.OrderItems)
                     .ThenInclude(i => i.VariantProduct)
-                .Where(o => o.UserId == userId && o.Status != OrderStatus.Created && o.Status != OrderStatus.PaymentPending)
                 .OrderByDescending(o => o.CreatedAt)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
-            return orders.Select(MapToDto).ToList();
+            return new PaginatedResult<OrderDto>
+            {
+                Items = orders.Select(MapToDto).ToList(),
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = totalCount
+            };
         }
 
         private OrderDto MapToDto(Order order)
@@ -215,11 +250,13 @@ namespace DomusMercatorisDotnetRest.Services
                 UserId = order.UserId,
                 FleetingUserId = order.FleetingUserId,
                 CargoTrackingId = order.CargoTrackingId,
+                CargoTrackingNumber = order.CargoTracking?.TrackingNumber,
                 Status = order.Status,
                 CreatedAt = order.CreatedAt,
                 PaymentCode = order.PaymentCode,
                 OrderItems = order.OrderItems.Select(i => new OrderItemDto
                 {
+                    Id = i.Id,
                     ProductId = i.ProductId,
                     ProductName = i.Product?.Name,
                     VariantProductId = i.VariantProductId,

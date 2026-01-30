@@ -1,0 +1,30 @@
+<div class="container py-3">
+  <h3>My Refund Requests</h3>
+
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Quantity</th>
+        <th>Amount</th>
+        <th>Status</th>
+        <th>Reason</th>
+        <th>Rejection Reason</th>
+        <th>Requested</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (item of refunds(); track item.id) {
+        <tr>
+          <td>{{ item.productName }}</td>
+          <td>{{ item.quantity }}</td>
+          <td>{{ item.refundAmount | currency }}</td>
+          <td><span [class]="statusClass(item.status)">{{ item.status }}</span></td>
+          <td>{{ item.reason }}</td>
+          <td>{{ item.rejectionReason || '-' }}</td>
+          <td>{{ item.createdAt | date: 'short' }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

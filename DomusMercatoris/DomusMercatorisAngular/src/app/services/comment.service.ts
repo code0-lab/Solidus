@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Comment, CreateCommentDto } from '../models/comment.model';
+import { Comment, CreateCommentDto, UpdateCommentDto } from '../models/comment.model';
 import { Observable, tap } from 'rxjs';
 
 @Injectable({
@@ -26,6 +26,13 @@ export class CommentService {
   createComment(dto: CreateCommentDto): Observable<Comment> {
     return this.http.post<Comment>(this.apiUrl, dto).pipe(
       tap(() => this.fetchComments(dto.productId))
+    );
+  }
+
+  updateComment(id: number, text: string, productId: number): Observable<void> {
+    const dto: UpdateCommentDto = { text };
+    return this.http.put<void>(`${this.apiUrl}/${id}`, dto).pipe(
+      tap(() => this.fetchComments(productId))
     );
   }
 

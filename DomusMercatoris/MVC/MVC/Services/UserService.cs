@@ -25,6 +25,12 @@ namespace DomusMercatorisDotnetMVC.Services
             _encryptionService = encryptionService;
         }
 
+        public async Task<int> GetPendingTaskCountAsync(long userId)
+        {
+            return await _dbContext.WorkTasks
+                .CountAsync(t => t.AssignedToUserId == userId && !t.IsCompleted);
+        }
+
         public async Task<int> GetCompanyIdFromUserAsync(ClaimsPrincipal user)
         {
             var compClaim = user.FindFirst("CompanyId")?.Value;
@@ -170,7 +176,7 @@ namespace DomusMercatorisDotnetMVC.Services
             return true;
         }
 
-        public async Task<bool> DeleteUserInCompanyAsync(long id, int companyId)
+        public async Task<bool> DeleteUserInCompanyAsync(long id, int companyId, long currentManagerId)
         {
             var user = await _dbContext.Users.SingleOrDefaultAsync(u => u.Id == id && u.CompanyId == companyId);
             if (user == null)
@@ -182,6 +188,20 @@ namespace DomusMercatorisDotnetMVC.Services
             if ((user.Roles ?? new List<string>()).Any(r => r == "Rex" || r == "Moderator") || string.Equals(user.Email, "rex@domus.com", StringComparison.OrdinalIgnoreCase))
             {
                 return false;
+            }
+
+            // 1. Delete tasks assigned to this user
+            var assignedTasks = await _dbContext.WorkTasks.Where(t => t.AssignedToUserId == id).ToListAsync();
+            if (assignedTasks.Any())
+            {
+                _dbContext.WorkTasks.RemoveRange(assignedTasks);
+            }
+
+            // 2. Reassign tasks created by this user to the current manager (to avoid Restrict constraint)
+            var createdTasks = await _dbContext.WorkTasks.Where(t => t.CreatedByUserId == id).ToListAsync();
+            foreach (var task in createdTasks)
+            {
+                task.CreatedByUserId = currentManagerId;
             }
 
             // Remove UserPageAccess records first (Cascade delete manually due to Restrict behavior)

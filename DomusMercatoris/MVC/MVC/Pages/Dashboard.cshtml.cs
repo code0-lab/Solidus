@@ -7,6 +7,12 @@ using DomusMercatorisDotnetMVC.Dto.CommentsDto;
 using OrderService = DomusMercatoris.Service.Services.OrderService;
 using DomusMercatoris.Service.DTOs;
 using DomusMercatoris.Core.Entities;
+using DomusMercatoris.Data;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using System;
+using RefundService = DomusMercatoris.Service.Services.RefundService;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
@@ -17,13 +23,17 @@ namespace DomusMercatorisDotnetMVC.Pages
         private readonly UserService _userService;
         private readonly CommentService _commentService;
         private readonly OrderService _orderService;
+        private readonly RefundService _refundService;
+        private readonly DomusDbContext _db;
 
-        public DashboardModel(ProductService productService, UserService userService, CommentService commentService, OrderService orderService)
+        public DashboardModel(ProductService productService, UserService userService, CommentService commentService, OrderService orderService, RefundService refundService, DomusDbContext db)
         {
             _productService = productService;
             _userService = userService;
             _commentService = commentService;
             _orderService = orderService;
+            _refundService = refundService;
+            _db = db;
         }
 
         public int CompanyId { get; set; }
@@ -32,6 +42,7 @@ namespace DomusMercatorisDotnetMVC.Pages
         public int ManagerCount { get; set; }
         public string ManagerName { get; set; } = string.Empty;
         public string CompanyName { get; set; } = string.Empty;
+        public int PendingRefundCount { get; set; }
         public List<CommentsDto> RecentComments { get; set; } = new();
         public List<Order> RecentOrders { get; set; } = new();
         public List<Product> LowStockProducts { get; set; } = new();
@@ -60,6 +71,7 @@ namespace DomusMercatorisDotnetMVC.Pages
             if (CompanyId >= 0)
             {
                 ProductCount = await _productService.CountByCompanyAsync(CompanyId);
+                PendingRefundCount = await _refundService.GetPendingRefundsCountAsync(CompanyId);
                 LowStockProducts = await _productService.GetLowStockProductsAsync(CompanyId);
                 var users = await _userService.GetByCompanyAsync(CompanyId);
                 ManagerCount = users.Count(u => u.Roles?.Contains("Manager") ?? false);

@@ -70,4 +70,10 @@ export class PaymentService {
       this.connectionState.set('Disconnected');
     }
   }
+
+  public resetState() {
+    this.activePaymentCode.set(null);
+    this.paymentStatus.set(null);
+    this.stopConnection();
+  }
 }

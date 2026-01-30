@@ -45,6 +45,9 @@ builder.Services.AddScoped<ModeratorService>();
 builder.Services.AddScoped<UsersService>();
 builder.Services.AddScoped<BannerService>();
 builder.Services.AddScoped<CartService>();
+builder.Services.AddScoped<TaskService>();
+builder.Services.AddScoped<RefundService>();
+builder.Services.AddScoped<MembershipService>();
 
 // Python AI Service
 builder.Services.AddSingleton<MockBankInfo>();

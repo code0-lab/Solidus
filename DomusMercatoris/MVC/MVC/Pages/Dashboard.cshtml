@@ -74,6 +74,24 @@
         </div>
     }
 
+    @if (Model.PendingRefundCount > 0)
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-warning d-flex align-items-center justify-content-between shadow-sm" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-exclamation-circle-fill me-2 fs-4"></i>
+                        <div>
+                            <div class="fw-bold">Refund Requests Pending</div>
+                            <div>You have <strong>@Model.PendingRefundCount</strong> pending refund request(s) requiring your attention.</div>
+                        </div>
+                    </div>
+                    <a href="/Refunds" class="btn btn-warning text-white fw-bold">Review Requests</a>
+                </div>
+            </div>
+        </div>
+    }
+
     <h3 class="mb-3">My Company</h3>
     <div class="row g-3">
         <div class="col-12 col-md-4">

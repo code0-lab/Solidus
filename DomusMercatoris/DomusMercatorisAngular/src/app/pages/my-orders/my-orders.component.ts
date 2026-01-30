@@ -1,8 +1,10 @@
 import { Component, inject, OnInit, ChangeDetectionStrategy, signal, computed, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { OrdersService, OrderResponse, CheckoutPayload } from '../../services/orders.service';
+import { RefundsService } from '../../services/refunds.service';
 import { ToastService } from '../../services/toast.service';
 import { AuthService } from '../../services/auth.service';
 import { ProductService } from '../../services/product.service';
@@ -12,13 +14,14 @@ import { map, catchError } from 'rxjs/operators';
 @Component({
   selector: 'app-my-orders',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './my-orders.component.html',
   styleUrl: './my-orders.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MyOrdersComponent implements OnInit {
   ordersService = inject(OrdersService);
+  refundsService = inject(RefundsService);
   toastService = inject(ToastService);
   router = inject(Router);
   route = inject(ActivatedRoute);
@@ -30,9 +33,24 @@ export class MyOrdersComponent implements OnInit {
   orders = signal<OrderResponse[]>([]);
   expandedOrderIds = signal<Set<number>>(new Set());
   productImages = signal<Map<number, string>>(new Map());
+
+  // Pagination
+  currentPage = signal(1);
+  pageSize = signal(10);
+  totalItems = signal(0);
+  totalPages = signal(0);
+
+  // Refund Modal State
+  refundModalOpen = signal(false);
+  refundItem = signal<{ id: number; name: string; maxQty: number } | null>(null);
+  refundReason = signal('');
+  refundQuantity = signal(1);
   
-  failedOrders = computed(() => this.orders().filter(o => o.status === 'PaymentFailed')); // PaymentFailed
-  pastOrders = computed(() => this.orders().filter(o => o.status !== 'PaymentFailed')); // Active/Completed orders
+  // Loading State
+  isLoading = signal(false);
+  
+  // Since backend filters by tab, orders() contains the correct list for the current tab
+  currentTabOrders = computed(() => this.orders());
 
   ngOnInit() {
     // Redirect if not logged in
@@ -45,7 +63,12 @@ export class MyOrdersComponent implements OnInit {
       if (params['tab']) {
         const tab = params['tab'];
         if (['orders', 'failed-orders'].includes(tab)) {
-          this.setActiveTab(tab as 'orders' | 'failed-orders');
+           // Only update if different to avoid loop if we navigate programmatically
+           if (this.activeTab() !== tab) {
+               this.activeTab.set(tab as 'orders' | 'failed-orders');
+               this.currentPage.set(1); // Reset page on tab change
+               this.loadOrders();
+           }
         }
       }
     });
@@ -53,14 +76,45 @@ export class MyOrdersComponent implements OnInit {
     this.loadOrders();
   }
 
+  setActiveTab(tab: 'orders' | 'failed-orders') {
+      if (this.activeTab() === tab) return;
+      this.activeTab.set(tab);
+      this.currentPage.set(1);
+      this.orders.set([]); // Clear data to prevent flash of incorrect content
+      this.loadOrders();
+      
+      // Optional: Update URL without reload
+      const url = this.router.createUrlTree([], { relativeTo: this.route, queryParams: { tab } }).toString();
+      this.router.navigateByUrl(url);
+  }
+
   loadOrders() {
-    this.ordersService.getMyOrders().subscribe({
+    this.isLoading.set(true);
+    
+    const request$ = this.activeTab() === 'orders' 
+      ? this.ordersService.getSuccessfulOrders(this.currentPage(), this.pageSize())
+      : this.ordersService.getFailedOrders(this.currentPage(), this.pageSize());
+
+    request$.subscribe({
       next: (data) => {
-        this.orders.set(data);
-        this.fetchMissingImages(data);
+        this.orders.set(data.items);
+        this.totalItems.set(data.totalCount);
+        this.totalPages.set(data.totalPages);
+        this.fetchMissingImages(data.items);
+        this.isLoading.set(false);
       },
-      error: (err) => console.error('Failed to load orders', err)
+      error: (err) => {
+        console.error('Failed to load orders', err);
+        this.isLoading.set(false);
+      }
     });
+  }
+
+  onPageChange(page: number) {
+      if (page < 1 || page > this.totalPages()) return;
+      this.currentPage.set(page);
+      this.loadOrders();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   fetchMissingImages(orders: OrderResponse[]) {
@@ -88,10 +142,6 @@ export class MyOrdersComponent implements OnInit {
         return newMap;
       });
     });
-  }
-
-  setActiveTab(tab: 'orders' | 'failed-orders') {
-    this.activeTab.set(tab);
   }
 
   toggleOrder(orderId: number) {
@@ -137,6 +187,19 @@ export class MyOrdersComponent implements OnInit {
     return `status-${code}`;
   }
 
+  getProgressPercentage(status: string): number {
+    const progressMap: { [key: string]: number } = {
+      'Created': 5,
+      'PaymentPending': 10,
+      'PaymentApproved': 25,
+      'PaymentFailed': 0,
+      'Preparing': 50,
+      'Shipped': 75,
+      'Delivered': 100
+    };
+    return progressMap[status] ?? 0;
+  }
+
   retryOrder(order: OrderResponse) {
     if (!order.companyId) {
         this.toastService.error('Order data invalid');
@@ -160,6 +223,61 @@ export class MyOrdersComponent implements OnInit {
         error: (err) => {
              this.toastService.error('Failed to retry order');
         }
+    });
+  }
+
+  // Refund Logic
+  handleRefundRequest(order: OrderResponse, item: any) {
+    if (order.status === 'Shipped') {
+      this.toastService.show('Order cannot be canceled during shipping process', 'error');
+      return;
+    }
+    
+    this.openRefundModal(item);
+  }
+
+  openRefundModal(item: any) {
+    this.refundItem.set({
+      id: item.id, // OrderItem Id
+      name: item.productName,
+      maxQty: item.quantity
+    });
+    this.refundQuantity.set(1);
+    this.refundReason.set('');
+    this.refundModalOpen.set(true);
+  }
+
+  closeRefundModal() {
+    this.refundModalOpen.set(false);
+    this.refundItem.set(null);
+  }
+
+  submitRefundRequest() {
+    const item = this.refundItem();
+    if (!item) return;
+
+    if (this.refundQuantity() < 1 || this.refundQuantity() > item.maxQty) {
+      this.toastService.show('Invalid quantity.', 'error');
+      return;
+    }
+    if (!this.refundReason().trim()) {
+      this.toastService.show('Please provide a reason.', 'error');
+      return;
+    }
+
+    this.refundsService.createRefundRequest({
+      orderItemId: item.id,
+      quantity: this.refundQuantity(),
+      reason: this.refundReason()
+    }).subscribe({
+      next: () => {
+        this.toastService.show('Refund request submitted successfully.', 'success');
+        this.closeRefundModal();
+      },
+      error: (err) => {
+        console.error(err);
+        this.toastService.show('Failed to submit refund request.', 'error');
+      }
     });
   }
 }

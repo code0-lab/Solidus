@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy, effect, OnDestroy } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -9,21 +9,14 @@ import { environment } from '../../../environments/environment';
 import { signal } from '@angular/core';
 import { OrdersService, CheckoutPayload } from '../../services/orders.service';
 import { AlertService } from '../../services/alert.service';
-import { PaymentService } from '../../services/payment.service';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
-
-interface Notification {
-  code: string;
-  amount: number;
-  time: Date;
-  read: boolean;
-}
+import { HeaderNotificationComponent } from '../header-notification/header-notification.component';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, RouterLink, SearchBarComponent, FormsModule],
+  imports: [CommonModule, RouterLink, SearchBarComponent, FormsModule, HeaderNotificationComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -34,33 +27,14 @@ export class HeaderComponent implements OnDestroy {
   cartService = inject(CartService);
   ordersService = inject(OrdersService);
   alertService = inject(AlertService);
-  paymentService = inject(PaymentService);
+  
   isCartOpen = false;
   isProfileOpen = false;
-  isNotificationsOpen = false;
   imageLoadFailed = signal(false);
 
-  notifications = signal<Notification[]>([]);
+  @ViewChild(HeaderNotificationComponent) notification?: HeaderNotificationComponent;
   
-  constructor() {
-    effect(() => {
-      const code = this.paymentService.activePaymentCode();
-      if (code) {
-        const current = this.notifications();
-        // Prevent duplicates
-        if (!current.find(n => n.code === code)) {
-          const newNotification: Notification = {
-            code,
-            amount: this.cartService.totalPrice(),
-            time: new Date(),
-            read: false
-          };
-          // Add to top
-          this.notifications.update(n => [newNotification, ...n]);
-        }
-      }
-    }, { allowSignalWrites: true });
-  }
+  constructor() {}
 
   ngOnDestroy() {
     // Clean up if needed
@@ -70,7 +44,7 @@ export class HeaderComponent implements OnDestroy {
     if (this.authService.currentUser()) {
       this.isProfileOpen = !this.isProfileOpen;
       this.isCartOpen = false;
-      this.isNotificationsOpen = false;
+      this.notification?.close();
     } else {
       this.authService.toggleLogin();
     }
@@ -83,36 +57,46 @@ export class HeaderComponent implements OnDestroy {
   handleCartClick() {
     this.isCartOpen = !this.isCartOpen;
     this.isProfileOpen = false;
-    this.isNotificationsOpen = false;
+    this.notification?.close();
   }
 
-  handleNotificationsClick() {
-    this.isNotificationsOpen = !this.isNotificationsOpen;
+  onNotificationOpened() {
     this.isCartOpen = false;
     this.isProfileOpen = false;
   }
 
-  closeNotification(code: string, event?: Event) {
-    if (event) {
-      event.stopPropagation();
-    }
-    this.notifications.update(list => 
-      list.map(n => n.code === code ? { ...n, read: true } : n)
-    );
-  }
-
-  get activeNotification() {
-    // Show the most recent one if it is unread
-    const latest = this.notifications()[0];
-    return latest && !latest.read ? latest : null;
-  }
-
-  get unreadCount() {
-    return this.notifications().filter(n => !n.read).length;
-  }
 
 
   async checkout() {
+    // Check for active checkout in localStorage
+    const activeOrderId = localStorage.getItem('active_checkout_id');
+    if (activeOrderId) {
+      // Verify if this order is still pending via API
+      this.ordersService.getOrderById(+activeOrderId).subscribe({
+        next: (order) => {
+          if (order.status === 'PaymentPending') {
+            this.isCartOpen = false;
+            this.alertService.showAlert('You have a pending payment session. Redirecting...');
+            this.router.navigate(['/payment-waiting', activeOrderId]);
+          } else {
+            // Status is not pending (e.g. Paid, Cancelled, etc.), so it's stale.
+            localStorage.removeItem('active_checkout_id');
+            this.performCheckout();
+          }
+        },
+        error: () => {
+          // If error (e.g. 404), assume invalid and clear
+          localStorage.removeItem('active_checkout_id');
+          this.performCheckout();
+        }
+      });
+      return;
+    }
+
+    this.performCheckout();
+  }
+
+  performCheckout() {
     const items = this.cartService.items();
     if (items.length === 0) return;
 
@@ -148,6 +132,8 @@ export class HeaderComponent implements OnDestroy {
       next: (res) => {
         // Do not clear cart here. Wait for payment success.
         this.isCartOpen = false;
+        // Store active checkout ID to prevent multiple checkouts
+        localStorage.setItem('active_checkout_id', res.id.toString());
         // Redirect to Waiting Payment page
         this.router.navigate(['/payment-waiting', res.id]);
       },

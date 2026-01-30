@@ -101,29 +101,78 @@
 }
 
 .login-prompt {
+  margin-top: auto;
   text-align: center;
   padding: 20px;
-  background: white;
-  border: 1px dashed black;
-  margin-top: auto;
-}
-
-.login-prompt p {
-  color: black;
-  margin-bottom: 10px;
+  border: var(--border-black);
+  background: #f8f9fa;
 }
 
 .login-btn {
-  border: var(--border-black);
+  margin-top: 10px;
   padding: 5px 15px;
+  border: var(--border-black);
+  font-weight: bold;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-track { background: white; border-left: var(--border-black); }
-::-webkit-scrollbar-thumb {
-  background: white;
-  border: var(--border-black);
-  box-shadow: inset 1px 1px 0 white, inset -1px -1px 0 black;
+.badge-pending {
+  background: #f0ad4e;
+  color: white;
+  padding: 2px 5px;
+  font-size: 10px;
+  border-radius: 3px;
+  margin-left: 5px;
 }
-::-webkit-scrollbar-thumb:hover { background: #eee; }
+
+.edit-link {
+  background: none;
+  border: none;
+  color: #007bff;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  margin-top: 5px;
+  display: block;
+}
+
+.edit-mode textarea {
+  width: 100%;
+  padding: 5px;
+  border: var(--border-black);
+  resize: vertical;
+  min-height: 50px;
+  margin-bottom: 5px;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 5px;
+  justify-content: flex-end;
+}
+
+.save-btn, .cancel-btn {
+  padding: 3px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  border: var(--border-black);
+  box-shadow: 1px 1px 0 black;
+  background: white;
+}
+
+.save-btn:active, .cancel-btn:active {
+  box-shadow: none;
+  transform: translate(1px, 1px);
+}
+
+.save-btn {
+  background: black;
+  color: white;
+}
+
+.cancel-btn {
+  background: white;
+  color: black;
+}

@@ -3,6 +3,7 @@ namespace DomusMercatoris.Service.DTOs
 {
     public class OrderItemDto
     {
+        public long Id { get; set; }
         [Required]
         public long ProductId { get; set; }
         public string? ProductName { get; set; }

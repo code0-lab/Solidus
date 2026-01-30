@@ -45,7 +45,9 @@ builder.Services.AddScoped<BrandService>();
 builder.Services.AddScoped<VariantProductService>();
 builder.Services.AddScoped<CargoService>();
 builder.Services.AddScoped<DomusMercatorisDotnetMVC.Services.CommentService>();
+builder.Services.AddScoped<DomusMercatorisDotnetMVC.Services.TaskService>();
 builder.Services.AddScoped<DomusMercatoris.Service.Services.OrderService>();
+builder.Services.AddScoped<DomusMercatoris.Service.Services.RefundService>();
 builder.Services.AddHttpClient<GeminiService>();
 builder.Services.AddScoped<GeminiService>();
 builder.Services.AddScoped<BannerService>();
@@ -88,12 +90,12 @@ builder.Services.AddAuthorization(options =>
         policy.Requirements.Add(new HybridPageAccessRequirement("Orders", "Manager")));
     options.AddPolicy("CustomersAccess", policy =>
         policy.Requirements.Add(new HybridPageAccessRequirement("Customers", "Manager")));
-    options.AddPolicy("ManageCargosAccess", policy =>
-        policy.Requirements.Add(new HybridPageAccessRequirement("ManageCargos", "Manager")));
     options.AddPolicy("WorkersAccess", policy =>
         policy.Requirements.Add(new HybridPageAccessRequirement("Workers", "Manager")));
     options.AddPolicy("CompanyBannersAccess", policy =>
         policy.Requirements.Add(new HybridPageAccessRequirement("CompanyBanners", "Manager")));
+    options.AddPolicy("RefundsAccess", policy =>
+        policy.Requirements.Add(new HybridPageAccessRequirement("Refunds", "Manager")));
 });
 
 var app = builder.Build();
@@ -116,6 +118,7 @@ app.UseMiddleware<BanEnforcementMiddleware>();
 
 app.MapStaticAssets();
 app.MapRazorPages().WithStaticAssets();
+app.MapControllers();
 
 // Ensure uploads directory exists
 using (var scope0 = app.Services.CreateScope())

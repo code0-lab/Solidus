@@ -28,6 +28,11 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/my-orders/my-orders.component').then(m => m.MyOrdersComponent),
     canActivate: [authGuard]
   },
+  {
+    path: 'my-refund-requests',
+    loadComponent: () => import('./pages/my-refunds/my-refunds.component').then(m => m.MyRefundsComponent),
+    canActivate: [authGuard]
+  },
   { 
     path: '403', 
     loadComponent: () => import('./pages/forbidden/forbidden.component').then(m => m.ForbiddenComponent) 

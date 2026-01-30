@@ -37,8 +37,8 @@
                     bool isManager = User.IsInRole("Manager");
                     var canWorkers = isManager || accessKeys.Contains("Workers");
                     var canCustomers = isManager || accessKeys.Contains("Customers");
-                    var canManageCargos = isManager || accessKeys.Contains("ManageCargos");
                     var canOrders = isManager || accessKeys.Contains("Orders");
+                    var canRefunds = isManager || accessKeys.Contains("Refunds");
                     var canBanners = isManager || accessKeys.Contains("CompanyBanners");
                     var canProducts = isManager || accessKeys.Contains("Products");
                     var canCategories = isManager || accessKeys.Contains("Categories");
@@ -57,8 +57,8 @@
                             {
                                 <li><a class="dropdown-item" href="/Workers">Manage the workforce</a></li>
                                 <li><a class="dropdown-item" href="/Customers">Manage Customers</a></li>
-                                <li><a class="dropdown-item" href="/ManageCargos">Manage Cargos</a></li>
                                 <li><a class="dropdown-item" href="/Orders">Order History</a></li>
+                                <li><a class="dropdown-item" href="/Refunds">Refund Requests</a></li>
                                 <li><a class="dropdown-item" href="/Account/CompanyBanners">Manage Banners (AI)</a></li>
                                 <li class="dropend">
                                     <button type="button" class="dropdown-item dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
@@ -76,8 +76,8 @@
                             {
                                 @if (canWorkers) { <li><a class="dropdown-item" href="/Workers">Manage the workforce</a></li> }
                                 @if (canCustomers) { <li><a class="dropdown-item" href="/Customers">Manage Customers</a></li> }
-                                @if (canManageCargos) { <li><a class="dropdown-item" href="/ManageCargos">Manage Cargos</a></li> }
                                 @if (canOrders) { <li><a class="dropdown-item" href="/Orders">Order History</a></li> }
+                                @if (canRefunds) { <li><a class="dropdown-item" href="/Refunds">Refund Requests</a></li> }
                                 @if (canBanners) { <li><a class="dropdown-item" href="/Account/CompanyBanners">Manage Banners (AI)</a></li> }
                                 @if (showProductSubmenu)
                                 {
@@ -133,7 +133,7 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end brutalist-dropdown">
                             <li><a class="dropdown-item" href="/Account/Profile">Profile</a></li>
-                            <li><a class="dropdown-item" href="/CargoTracking">Track Cargo</a></li>
+                            <li><a class="dropdown-item" href="/Tasks">My Tasks</a></li>
                             <li><hr class="dropdown-divider border-black"></li>
                             <li><a class="dropdown-item" onclick="return logoutConfirm()" href="/Index?handler=Logout">Logout</a></li>
                         </ul>

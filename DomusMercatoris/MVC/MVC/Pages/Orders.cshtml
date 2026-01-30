@@ -1,8 +1,13 @@
 @page
 @model DomusMercatorisDotnetMVC.Pages.OrdersModel
+@using DomusMercatoris.Core.Models
+@using DomusMercatoris.Core.Entities
 @{
     ViewData["Title"] = "Orders";
     Layout = "_LayoutAuth";
+
+    var activeOrders = Model.Orders.Where(o => o.Status != OrderStatus.Shipped && o.Status != OrderStatus.Delivered).ToList();
+    var completedOrders = Model.Orders.Where(o => o.Status == OrderStatus.Shipped || o.Status == OrderStatus.Delivered).ToList();
 }
 
 <div class="container-fluid">
@@ -10,113 +15,432 @@
         <h2>Order History</h2>
     </div>
 
-    @if (Model.Orders.Count == 0)
-    {
-        <div class="alert alert-info rounded-0 border-3 border-dark">
-            No orders found for your company yet.
-        </div>
-    }
-    else
-    {
-        <div class="row g-4">
-            @foreach (var order in Model.Orders)
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-4 rounded-0" id="orderTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active rounded-0 text-dark fw-bold" id="recent-tab" data-bs-toggle="tab" data-bs-target="#recent" type="button" role="tab" aria-controls="recent" aria-selected="true">
+                Recent Orders
+                @if(activeOrders.Count > 0) { <span class="badge bg-secondary ms-1">@activeOrders.Count</span> }
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link rounded-0 text-dark" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completed" type="button" role="tab" aria-controls="completed" aria-selected="false">
+                Completed Orders
+                @if(completedOrders.Count > 0) { <span class="badge bg-success ms-1">@completedOrders.Count</span> }
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="orderTabsContent">
+        <!-- Recent Orders Tab -->
+        <div class="tab-pane fade show active" id="recent" role="tabpanel" aria-labelledby="recent-tab">
+            @if (activeOrders.Count == 0)
             {
-                <div class="col-12 col-md-6 col-lg-4">
-                    <div class="card h-100 rounded-0 border-dark border-2">
-                        <div class="card-header bg-transparent border-dark border-bottom-1 rounded-0 d-flex justify-content-between align-items-center">
-                            <span class="fw-bold">Order #@order.Id</span>
-                            <small class="text-muted">@order.CreatedAt.ToString("g")</small>
-                        </div>
-                        <div class="card-body">
-                            <div class="mb-3">
-                                <h5 class="fw-bold mb-0">@order.TotalPrice.ToString("C2")</h5>
-                                <div class="text-muted small">
-                                    @if (order.User != null)
-                                    {
-                                        <span>@order.User.FirstName @order.User.LastName</span>
-                                    }
-                                    else if (order.FleetingUser != null)
-                                    {
-                                        <span>@order.FleetingUser.FirstName @order.FleetingUser.LastName (Guest)</span>
-                                    }
-                                    else
-                                    {
-                                        <span>Unknown Customer</span>
-                                    }
+                <div class="alert alert-info rounded-0 border-3 border-dark">
+                    No active orders found.
+                </div>
+            }
+            else
+            {
+                <div class="row g-4">
+                    @foreach (var order in activeOrders)
+                    {
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <div class="card h-100 rounded-0 border-dark border-2">
+                                <div class="card-header bg-transparent border-dark border-bottom-1 rounded-0 d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold">Order #@order.Id</span>
+                                    <small class="text-muted">@order.CreatedAt.ToString("g")</small>
                                 </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="small text-muted fw-bold text-uppercase">Status</label>
-                                <div>
-                                    @if (order.IsRefunded)
-                                    {
-                                        <span class="badge bg-danger rounded-0 border border-dark text-white">Refunded</span>
-                                    }
-                                    else if (order.IsPaid)
-                                    {
-                                        <span class="badge bg-success rounded-0 border border-dark text-white">Paid</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-warning text-dark rounded-0 border border-dark">Pending</span>
-                                    }
-
-                                    @if (order.CargoTracking != null)
-                                    {
-                                        <span class="badge bg-info text-dark rounded-0 border border-dark ms-1">@order.CargoTracking.Status</span>
-                                    }
-                                </div>
-                            </div>
-
-                            <div class="mb-0">
-                                <label class="small text-muted fw-bold text-uppercase">Items</label>
-                                <ul class="list-unstyled mb-0 small">
-                                    @foreach (var item in order.OrderItems.Take(3))
-                                    {
-                                        <li class="text-truncate">
-                                            @item.Quantity x @(item.Product?.Name ?? "Unknown")
-                                            @if (item.VariantProduct != null)
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <h5 class="fw-bold mb-0">@order.TotalPrice.ToString("C2")</h5>
+                                        <div class="text-muted small">
+                                            @if (order.User != null)
                                             {
-                                                <span class="text-muted">(@item.VariantProduct.Color)</span>
+                                                <span>@order.User.FirstName @order.User.LastName</span>
                                             }
-                                        </li>
-                                    }
-                                    @if (order.OrderItems.Count > 3)
+                                            else if (order.FleetingUser != null)
+                                            {
+                                                <span>@order.FleetingUser.FirstName @order.FleetingUser.LastName (Guest)</span>
+                                            }
+                                            else
+                                            {
+                                                <span>Unknown Customer</span>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="small text-muted fw-bold text-uppercase">Status</label>
+                                        <div>
+                                            @if (order.IsRefunded)
+                                            {
+                                                <span class="badge bg-danger rounded-0 border border-dark text-white">Refunded</span>
+                                            }
+                                            else if (order.IsPaid)
+                                            {
+                                                <span class="badge bg-success rounded-0 border border-dark text-white">Paid</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-warning text-dark rounded-0 border border-dark">Pending</span>
+                                            }
+
+                                            @if (order.CargoTracking != null)
+                                            {
+                                                <span class="badge bg-info text-dark rounded-0 border border-dark ms-1">@order.CargoTracking.Status</span>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-0">
+                                        <label class="small text-muted fw-bold text-uppercase">Items</label>
+                                        <ul class="list-unstyled mb-0 small">
+                                            @foreach (var item in order.OrderItems.Take(3))
+                                            {
+                                                <li class="text-truncate">
+                                                    @item.Quantity x @(item.Product?.Name ?? "Unknown")
+                                                    @if (item.VariantProduct != null)
+                                                    {
+                                                        <span class="text-muted">(@item.VariantProduct.Color)</span>
+                                                    }
+                                                </li>
+                                            }
+                                            @if (order.OrderItems.Count > 3)
+                                            {
+                                                <li class="text-muted fst-italic">+ @(order.OrderItems.Count - 3) more items...</li>
+                                            }
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-transparent border-dark border-top-1 rounded-0 p-2">
+                                    <a asp-page="/OrderDetail" asp-route-id="@order.Id" class="btn btn-dark w-100 rounded-0">
+                                        View Details
+                                    </a>
+                                    @if (Model.OrderAssignedUsers.ContainsKey(order.Id))
                                     {
-                                        <li class="text-muted fst-italic">+ @(order.OrderItems.Count - 3) more items...</li>
+                                        var task = Model.OrderAssignedUsers[order.Id];
+                                        <button type="button" class="btn btn-success w-100 rounded-0 mt-2 assign-task-btn" 
+                                                data-order-id="@order.Id"
+                                                data-task-id="@task.Id"
+                                                data-task-title="@task.Title"
+                                                data-task-desc="@task.Description"
+                                                data-task-assigned="@task.AssignedToUserId"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#assignTaskModal">
+                                            <i class="bi bi-check-circle-fill"></i> Assigned: @(task.AssignedToUser?.Email ?? "Unknown")
+                                        </button>
                                     }
-                                </ul>
+                                    else
+                                    {
+                                        <button type="button" class="btn btn-outline-dark w-100 rounded-0 mt-2 assign-task-btn" 
+                                                data-order-id="@order.Id"
+                                                data-task-id=""
+                                                data-task-title=""
+                                                data-task-desc=""
+                                                data-task-assigned="" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#assignTaskModal">
+                                            <i class="bi bi-person-check"></i> Assign Task
+                                        </button>
+                                    }
+                                </div>
                             </div>
                         </div>
-                        <div class="card-footer bg-transparent border-dark border-top-1 rounded-0 p-2">
-                            <a asp-page="/OrderDetail" asp-route-id="@order.Id" class="btn btn-dark w-100 rounded-0">
-                                View Details
-                            </a>
-                        </div>
-                    </div>
+                    }
                 </div>
             }
         </div>
 
-        @if (Model.TotalPages > 1)
-        {
-            <nav class="mt-4" aria-label="Orders pagination">
-                <ul class="pagination justify-content-center">
-                    <li class="page-item @(Model.PageNumber <= 1 ? "disabled" : "")">
-                        <a class="page-link rounded-0 text-dark" href="/Orders?page=@(Model.PageNumber - 1)" tabindex="-1" aria-disabled="@(Model.PageNumber <= 1)">Previous</a>
-                    </li>
-                    @for (var i = 1; i <= Model.TotalPages; i++)
+        <!-- Completed Orders Tab -->
+        <div class="tab-pane fade" id="completed" role="tabpanel" aria-labelledby="completed-tab">
+             @if (completedOrders.Count == 0)
+            {
+                <div class="alert alert-light rounded-0 border border-dark text-muted text-center py-5">
+                    No completed orders yet.
+                </div>
+            }
+            else
+            {
+                <div class="row g-4">
+                    @foreach (var order in completedOrders)
                     {
-                        <li class="page-item @(Model.PageNumber == i ? "active" : "")">
-                            <a class="page-link rounded-0 @(Model.PageNumber == i ? "bg-dark border-dark" : "text-dark")" href="/Orders?page=@i">@i</a>
-                        </li>
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <div class="card h-100 rounded-0 border-dark border-2">
+                                <div class="card-header bg-transparent border-dark border-bottom-1 rounded-0 d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold">Order #@order.Id</span>
+                                    <small class="text-muted">@order.CreatedAt.ToString("g")</small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <h5 class="fw-bold mb-0">@order.TotalPrice.ToString("C2")</h5>
+                                        <div class="text-muted small">
+                                            @if (order.User != null)
+                                            {
+                                                <span>@order.User.FirstName @order.User.LastName</span>
+                                            }
+                                            else if (order.FleetingUser != null)
+                                            {
+                                                <span>@order.FleetingUser.FirstName @order.FleetingUser.LastName (Guest)</span>
+                                            }
+                                            else
+                                            {
+                                                <span>Unknown Customer</span>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="small text-muted fw-bold text-uppercase">Status</label>
+                                        <div>
+                                            @if (order.IsRefunded)
+                                            {
+                                                <span class="badge bg-danger rounded-0 border border-dark text-white">Refunded</span>
+                                            }
+                                            else if (order.IsPaid)
+                                            {
+                                                <span class="badge bg-success rounded-0 border border-dark text-white">Paid</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-warning text-dark rounded-0 border border-dark">Pending</span>
+                                            }
+
+                                            @if (order.CargoTracking != null)
+                                            {
+                                                <span class="badge bg-info text-dark rounded-0 border border-dark ms-1">@order.CargoTracking.Status</span>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-0">
+                                        <label class="small text-muted fw-bold text-uppercase">Items</label>
+                                        <ul class="list-unstyled mb-0 small">
+                                            @foreach (var item in order.OrderItems.Take(3))
+                                            {
+                                                <li class="text-truncate">
+                                                    @item.Quantity x @(item.Product?.Name ?? "Unknown")
+                                                    @if (item.VariantProduct != null)
+                                                    {
+                                                        <span class="text-muted">(@item.VariantProduct.Color)</span>
+                                                    }
+                                                </li>
+                                            }
+                                            @if (order.OrderItems.Count > 3)
+                                            {
+                                                <li class="text-muted fst-italic">+ @(order.OrderItems.Count - 3) more items...</li>
+                                            }
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-transparent border-dark border-top-1 rounded-0 p-2">
+                                    <a asp-page="/OrderDetail" asp-route-id="@order.Id" class="btn btn-dark w-100 rounded-0">
+                                        View Details
+                                    </a>
+                                    @if (Model.OrderAssignedUsers.ContainsKey(order.Id))
+                                    {
+                                        var task = Model.OrderAssignedUsers[order.Id];
+                                        <button type="button" class="btn btn-success w-100 rounded-0 mt-2 assign-task-btn" 
+                                                data-order-id="@order.Id"
+                                                data-task-id="@task.Id"
+                                                data-task-title="@task.Title"
+                                                data-task-desc="@task.Description"
+                                                data-task-assigned="@task.AssignedToUserId"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#assignTaskModal">
+                                            <i class="bi bi-check-circle-fill"></i> Assigned: @(task.AssignedToUser?.Email ?? "Unknown")
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" class="btn btn-outline-dark w-100 rounded-0 mt-2 assign-task-btn" 
+                                                data-order-id="@order.Id"
+                                                data-task-id=""
+                                                data-task-title=""
+                                                data-task-desc=""
+                                                data-task-assigned="" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#assignTaskModal">
+                                            <i class="bi bi-person-check"></i> Assign Task
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        </div>
                     }
-                    <li class="page-item @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")">
-                        <a class="page-link rounded-0 text-dark" href="/Orders?page=@(Model.PageNumber + 1)" aria-disabled="@(Model.PageNumber >= Model.TotalPages)">Next</a>
+                </div>
+            }
+        </div>
+    </div>
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="mt-4" aria-label="Orders pagination">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(Model.PageNumber <= 1 ? "disabled" : "")">
+                    <a class="page-link rounded-0 text-dark" href="/Orders?page=@(Model.PageNumber - 1)" tabindex="-1" aria-disabled="@(Model.PageNumber <= 1)">Previous</a>
+                </li>
+                @for (var i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(Model.PageNumber == i ? "active" : "")">
+                        <a class="page-link rounded-0 @(Model.PageNumber == i ? "bg-dark border-dark" : "text-dark")" href="/Orders?page=@i">@i</a>
                     </li>
-                </ul>
-            </nav>
-        }
+                }
+                <li class="page-item @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link rounded-0 text-dark" href="/Orders?page=@(Model.PageNumber + 1)" aria-disabled="@(Model.PageNumber >= Model.TotalPages)">Next</a>
+                </li>
+            </ul>
+        </nav>
     }
 </div>
+
+@section Modals {
+    <!-- Assign/Edit Task Modal -->
+    <div class="modal fade" id="assignTaskModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content rounded-0">
+                <div class="modal-header border-bottom border-dark">
+                    <h5 class="modal-title" id="assignTaskModalLabel">Assign Task for Order #<span id="taskOrderDisplay"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="post" asp-page-handler="AssignTask" id="assignTaskForm">
+                        <input type="hidden" asp-for="NewTask.OrderId" id="taskOrderId" />
+                        <input type="hidden" asp-for="NewTask.Id" id="taskId" />
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Task Title</label>
+                            <input asp-for="NewTask.Title" id="taskTitle" class="form-control rounded-0" required />
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Assign To</label>
+                            <!-- Search Input -->
+                            <div class="input-group mb-2">
+                                <span class="input-group-text rounded-0 bg-white"><i class="bi bi-search"></i></span>
+                                <input type="text" id="workerSearch" class="form-control rounded-0" placeholder="Search employee..." autocomplete="off">
+                            </div>
+                            
+                            <select asp-for="NewTask.AssignedToUserId" id="taskAssignedTo" class="form-select rounded-0" required size="5">
+                                <option value="">Select Employee...</option>
+                                @foreach (var w in Model.Workers)
+                                {
+                                    var isMyself = w.Id == Model.CurrentUserId;
+                                    var displayText = $"{w.FirstName} {w.LastName} ({w.Email})";
+                                    if(isMyself) displayText += " (--myself)";
+                                    
+                                    <option value="@w.Id">@displayText</option>
+                                }
+                            </select>
+                            <small class="text-muted">Select an employee from the list.</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Description (Optional)</label>
+                            <textarea asp-for="NewTask.Description" id="taskDescription" class="form-control rounded-0" rows="3"></textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-4 border-top pt-3">
+                             <button type="button" class="btn btn-danger rounded-0" id="deleteTaskBtn" style="display:none;">
+                                <i class="bi bi-trash"></i> Delete Task
+                            </button>
+                            <div>
+                                <button type="button" class="btn btn-secondary rounded-0" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-dark rounded-0" id="saveTaskBtn">Assign Task</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Delete Form -->
+    <form method="post" asp-page-handler="DeleteTask" id="deleteTaskForm">
+        <input type="hidden" name="taskId" id="deleteTaskId" />
+    </form>
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var assignBtns = document.querySelectorAll('.assign-task-btn');
+            var modalTitle = document.getElementById('assignTaskModalLabel');
+            var saveBtn = document.getElementById('saveTaskBtn');
+            var deleteBtn = document.getElementById('deleteTaskBtn');
+            var deleteForm = document.getElementById('deleteTaskForm');
+            
+            // Search Logic
+            var workerSearch = document.getElementById('workerSearch');
+            var select = document.getElementById('taskAssignedTo');
+            var originalOptions = [];
+            
+            // Store original options
+            if(select) {
+                 Array.from(select.options).forEach(function(opt) {
+                    if(opt.value) { // Skip placeholder
+                         originalOptions.push({value: opt.value, text: opt.text});
+                    }
+                });
+
+                workerSearch.addEventListener('input', function() {
+                    var filter = this.value.toLowerCase();
+                    // Clear current options except first (placeholder) if desired, or just rebuild all
+                    select.innerHTML = '<option value="">Select Employee...</option>';
+                    
+                    originalOptions.forEach(function(opt) {
+                        if (opt.text.toLowerCase().includes(filter)) {
+                            var el = document.createElement('option');
+                            el.value = opt.value;
+                            el.text = opt.text;
+                            select.appendChild(el);
+                        }
+                    });
+                });
+            }
+
+            assignBtns.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var orderId = this.getAttribute('data-order-id');
+                    var taskId = this.getAttribute('data-task-id');
+                    var title = this.getAttribute('data-task-title');
+                    var desc = this.getAttribute('data-task-desc');
+                    var assignedTo = this.getAttribute('data-task-assigned');
+
+                    document.getElementById('taskOrderId').value = orderId;
+                    document.getElementById('taskOrderDisplay').textContent = orderId;
+                    
+                    if (taskId) {
+                        // Edit Mode
+                        modalTitle.textContent = 'Edit Task for Order #' + orderId;
+                        saveBtn.textContent = 'Update Task';
+                        deleteBtn.style.display = 'inline-block';
+                        
+                        document.getElementById('taskId').value = taskId;
+                        document.getElementById('taskTitle').value = title;
+                        document.getElementById('taskDescription').value = desc;
+                        document.getElementById('taskAssignedTo').value = assignedTo;
+                        document.getElementById('deleteTaskId').value = taskId;
+                    } else {
+                        // Create Mode
+                        modalTitle.textContent = 'Assign Task for Order #' + orderId;
+                        saveBtn.textContent = 'Assign Task';
+                        deleteBtn.style.display = 'none';
+                        
+                        document.getElementById('taskId').value = '';
+                        document.getElementById('taskTitle').value = '';
+                        document.getElementById('taskDescription').value = '';
+                        document.getElementById('taskAssignedTo').value = '';
+                        document.getElementById('deleteTaskId').value = '';
+                    }
+                });
+            });
+
+            deleteBtn.addEventListener('click', function() {
+                if(confirm('Are you sure you want to delete this task?')) {
+                    deleteForm.submit();
+                }
+            });
+        });
+    </script>
+}

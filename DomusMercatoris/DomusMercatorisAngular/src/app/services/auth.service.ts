@@ -4,12 +4,14 @@ import { User, LoginResponse, UserProfileDto, LoginRequest, RegisterRequest, Com
 import { Observable, tap } from 'rxjs';
 import { jwtDecode } from 'jwt-decode';
 import { environment } from '../../environments/environment';
+import { PaymentService } from './payment.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   private http = inject(HttpClient);
+  private paymentService = inject(PaymentService);
 
   private get apiUrl(): string {
     return `${environment.apiUrl}/users`;
@@ -103,6 +105,7 @@ export class AuthService {
 
   logout() {
     this.currentUser.set(null);
+    this.paymentService.resetState();
     localStorage.removeItem(this.USER_KEY);
   }
 

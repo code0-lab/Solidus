@@ -5,8 +5,25 @@
         <div class="comment-header">
           <strong>{{ comment.userFullName }}</strong>
           <span class="date">{{ comment.createdAt | date:'dd.MM.yyyy' }}</span>
+          @if (!comment.isApproved) {
+            <span class="badge-pending">Pending</span>
+          }
         </div>
-        <p>{{ comment.text }}</p>
+        
+        @if (editingCommentId() === comment.id) {
+          <div class="edit-mode">
+            <textarea [(ngModel)]="editCommentText" rows="3"></textarea>
+            <div class="edit-actions">
+              <button class="save-btn" (click)="saveEdit(comment)">Save</button>
+              <button class="cancel-btn" (click)="cancelEdit()">Cancel</button>
+            </div>
+          </div>
+        } @else {
+          <p>{{ comment.text }}</p>
+          @if (authService.currentUser()?.id === comment.userId) {
+            <button class="edit-link" (click)="startEdit(comment)">Edit</button>
+          }
+        }
       </div>
     }
     @if (commentService.comments().length === 0) {

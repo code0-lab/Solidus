@@ -1,0 +1,258 @@
+.icon {
+  min-width: 36px;
+  height: 36px;
+  font-size: 18px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 4px;
+}
+
+.icon:active {
+  background: #eee;
+  color: black;
+}
+
+.cart-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: red;
+  color: white;
+  font-size: 10px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid white;
+}
+
+/* Floating Notification */
+.payment-notification-floating {
+  position: absolute;
+  top: 60px; /* Below navbar */
+  right: 60px; /* Align with bell roughly */
+  width: 340px; /* Increased width for better spacing */
+  background: white;
+  border: 1px solid black;
+  box-shadow: 4px 4px 0 black;
+  z-index: 1100; /* Above dropdowns */
+  animation: slideDown 0.3s ease-out;
+  font-family: var(--sys-font-family);
+}
+
+.notification-arrow {
+  position: absolute;
+  top: -6px;
+  right: 20px;
+  width: 10px;
+  height: 10px;
+  background: white;
+  border-left: 1px solid black;
+  border-top: 1px solid black;
+  transform: rotate(45deg);
+}
+
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  background: #f0f0f0;
+  border-bottom: 1px solid black;
+  position: relative;
+  gap: 15px; /* Ensure minimum space between left and right */
+}
+
+.header-center {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: 20px; /* Shift bank info to the right */
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto; /* Ensure it stays on the right */
+}
+
+.bank-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.bank-name {
+  font-weight: bold;
+  font-size: 14px;
+  white-space: nowrap; /* Prevent wrapping */
+}
+
+.time {
+  font-size: 12px;
+  color: #666;
+  white-space: nowrap;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  margin: 0;
+  color: #333;
+}
+
+.close-btn:hover {
+  background: #e0e0e0;
+  color: black;
+}
+
+.close-btn:hover {
+  color: red;
+}
+
+.notification-body {
+  padding: 15px;
+}
+
+.msg-text {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+}
+
+.msg-code {
+  font-size: 14px;
+  margin: 0 0 10px 0;
+}
+
+.code-box {
+  background: #eee;
+  padding: 2px 6px;
+  border: 1px solid #ccc;
+  font-family: monospace;
+  font-weight: bold;
+  font-size: 16px;
+  letter-spacing: 1px;
+}
+
+.msg-warning {
+  margin: 0;
+  font-size: 12px;
+  color: #d32f2f;
+  font-weight: bold;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Dropdown Styles (Reused/Copied) */
+.cart-dropdown {
+  position: absolute;
+  top: 60px;
+  right: 10px;
+  width: 300px;
+  background: white;
+  border: 1px solid black;
+  box-shadow: 4px 4px 0 black;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+.cart-header {
+  padding: 10px;
+  background: #eee;
+  border-bottom: 1px solid black;
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+}
+
+.cart-items {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.cart-item:last-child {
+  border-bottom: none;
+}
+
+.empty {
+  text-align: center;
+  color: #888;
+  font-style: italic;
+  padding: 10px;
+}
+
+/* Notification Item Specifics */
+.note-content {
+  width: 100%;
+}
+
+.note-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.bank-name-small {
+  font-weight: bold;
+  color: #555;
+}
+
+.note-time {
+  color: #999;
+}
+
+.note-msg {
+  font-size: 14px;
+}
+
+.unread {
+  background-color: #f0f8ff; /* Light alice blue for unread */
+  padding: 5px;
+  margin: -5px -5px 10px -5px; /* Negative margin to fill area if padded */
+  border-radius: 4px;
+}
+
+.delete-note-btn {
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  padding: 5px;
+  margin-left: 10px;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+
+.delete-note-btn:hover {
+  color: red;
+}

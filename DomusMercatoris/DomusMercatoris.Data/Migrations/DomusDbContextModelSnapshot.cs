@@ -17,7 +17,7 @@ namespace DomusMercatoris.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.10")
+                .HasAnnotation("ProductVersion", "9.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -697,6 +697,43 @@ namespace DomusMercatoris.Data.Migrations
                     b.ToTable("ProductFeatures");
                 });
 
+            modelBuilder.Entity("DomusMercatoris.Core.Entities.RefundRequest", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("OrderItemId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderItemId");
+
+                    b.ToTable("RefundRequests");
+                });
+
             modelBuilder.Entity("DomusMercatoris.Core.Entities.User", b =>
                 {
                     b.Property<long>("Id")
@@ -748,6 +785,33 @@ namespace DomusMercatoris.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("DomusMercatoris.Core.Entities.UserCompanyMembership", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("JoinedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId");
+
+                    b.HasIndex("UserId", "CompanyId")
+                        .IsUnique();
+
+                    b.ToTable("UserCompanyMemberships");
                 });
 
             modelBuilder.Entity("DomusMercatoris.Core.Entities.UserPageAccess", b =>
@@ -811,6 +875,58 @@ namespace DomusMercatoris.Data.Migrations
                     b.HasIndex("ProductId");
 
                     b.ToTable("VariantProducts");
+                });
+
+            modelBuilder.Entity("DomusMercatoris.Core.Entities.WorkTask", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("AssignedToUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("CreatedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("bit");
+
+                    b.Property<long?>("OrderId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("ParentId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssignedToUserId");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("ParentId");
+
+                    b.ToTable("WorkTasks");
                 });
 
             modelBuilder.Entity("AutoCategoryProductCluster", b =>
@@ -1103,6 +1219,17 @@ namespace DomusMercatoris.Data.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("DomusMercatoris.Core.Entities.RefundRequest", b =>
+                {
+                    b.HasOne("DomusMercatoris.Core.Entities.OrderItem", "OrderItem")
+                        .WithMany()
+                        .HasForeignKey("OrderItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("OrderItem");
+                });
+
             modelBuilder.Entity("DomusMercatoris.Core.Entities.User", b =>
                 {
                     b.HasOne("DomusMercatoris.Core.Entities.Company", "Company")
@@ -1112,6 +1239,25 @@ namespace DomusMercatoris.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Company");
+                });
+
+            modelBuilder.Entity("DomusMercatoris.Core.Entities.UserCompanyMembership", b =>
+                {
+                    b.HasOne("DomusMercatoris.Core.Entities.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DomusMercatoris.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Company");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("DomusMercatoris.Core.Entities.UserPageAccess", b =>
@@ -1134,6 +1280,39 @@ namespace DomusMercatoris.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("DomusMercatoris.Core.Entities.WorkTask", b =>
+                {
+                    b.HasOne("DomusMercatoris.Core.Entities.User", "AssignedToUser")
+                        .WithMany()
+                        .HasForeignKey("AssignedToUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DomusMercatoris.Core.Entities.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DomusMercatoris.Core.Entities.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("DomusMercatoris.Core.Entities.WorkTask", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("AssignedToUser");
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("Order");
+
+                    b.Navigation("Parent");
                 });
 
             modelBuilder.Entity("DomusMercatoris.Core.Entities.AutoCategory", b =>
@@ -1184,6 +1363,11 @@ namespace DomusMercatoris.Data.Migrations
                     b.Navigation("Ban");
 
                     b.Navigation("Comments");
+                });
+
+            modelBuilder.Entity("DomusMercatoris.Core.Entities.WorkTask", b =>
+                {
+                    b.Navigation("Children");
                 });
 #pragma warning restore 612, 618
         }

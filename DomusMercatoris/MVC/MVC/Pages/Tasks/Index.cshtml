@@ -1,0 +1,283 @@
+@page
+@model DomusMercatorisDotnetMVC.Pages.Tasks.IndexModel
+@{
+    ViewData["PageTitle"] = "Tasks";
+    Layout = "_LayoutAuth";
+}
+
+<div id="task-system-wrapper">
+    @if (Model.MyTasks != null && Model.MyTasks.Any())
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-primary shadow-sm">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <span class="fw-bold"><i class="bi bi-list-task me-2"></i>My Tasks</span>
+                        <span class="badge bg-white text-primary">@Model.MyTasks.Count Pending</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-3" style="width: 50px;">Done</th>
+                                        <th>Task</th>
+                                        <th>Order</th>
+                                        <th>Created At</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var t in Model.MyTasks)
+                                    {
+                                        var displayTitle = t.Title;
+                                        if (displayTitle == "Kargolama") displayTitle = "Shipping";
+                                        else if (displayTitle == "Paketleme") displayTitle = "Packaging";
+
+                                        var displayDesc = t.Description;
+                                        if (displayDesc == "Paketi kargoya ver ve takip numarasını gir.") displayDesc = "Ship the package and enter the tracking number.";
+                                        else if (displayDesc == "Siparişi hazırla ve paketle.") displayDesc = "Prepare and package the order items.";
+
+                                        <tr>
+                                            <td class="ps-3">
+                                                @if (t.Title == "Shipping" || t.Title == "Kargolama")
+                                                {
+                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-0" onclick="openTrackingModal(@t.Id)">
+                                                        <i class="bi bi-truck"></i> Ship
+                                                    </button>
+                                                }
+                                                else
+                                                {
+                                                    <div class="form-check">
+                                                        <input class="form-check-input task-checkbox" type="checkbox" value="@t.Id" id="task_@t.Id">
+                                                    </div>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="fw-bold">@displayTitle</div>
+                                                @if (!string.IsNullOrEmpty(displayDesc))
+                                                {
+                                                    <small class="text-muted">@displayDesc</small>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (t.OrderId.HasValue)
+                                                {
+                                                    <a href="/Orders?id=@t.OrderId" class="text-decoration-none">Order #@t.OrderId</a>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                            </td>
+                                            <td>@t.CreatedAt.ToString("MMM dd, HH:mm")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (Model.CanManageTasks && Model.ManagedTasks != null && Model.ManagedTasks.Any())
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-dark shadow-sm">
+                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                        <span class="fw-bold"><i class="bi bi-kanban me-2"></i>All Tasks (Recent)</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-3">Status</th>
+                                        <th>Task</th>
+                                        <th>Assigned To</th>
+                                        <th>Order</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var t in Model.ManagedTasks)
+                                    {
+                                        <tr class="@(t.IsCompleted ? "bg-light text-muted" : "")">
+                                            <td class="ps-3">
+                                                @if (t.IsCompleted)
+                                                {
+                                                    <span class="badge bg-success">Completed</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-warning text-dark">Pending</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="fw-bold">@t.Title</div>
+                                                @if (!string.IsNullOrEmpty(t.Description))
+                                                {
+                                                    <small>@t.Description</small>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (t.AssignedToUser != null)
+                                                {
+                                                    <span class="badge bg-info text-dark">@t.AssignedToUser.FirstName @t.AssignedToUser.LastName</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">Unassigned</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (t.OrderId.HasValue)
+                                                {
+                                                    <a href="/Orders?id=@t.OrderId" class="text-decoration-none">Order #@t.OrderId</a>
+                                                }
+                                                else
+                                                {
+                                                    <span>-</span>
+                                                }
+                                            </td>
+                                            <td>@t.CreatedAt.ToString("MMM dd")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Tracking Modal (Needs to be placed outside task-system-wrapper if loaded via AJAX, but for now putting it here and appending to body via JS if needed, or assuming partial is rendered in a container) -->
+<!-- Note: Since this is often loaded via AJAX, we should be careful about duplicate modals. -->
+<div class="modal fade" id="trackingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-0">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Enter Tracking Information</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="trackingForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="trackingTaskId" name="taskId" />
+                    <div class="mb-3">
+                        <label class="form-label">Tracking Number</label>
+                        <div class="input-group">
+                            <input type="text" id="trackingNumber" name="trackingNumber" class="form-control rounded-0" required placeholder="Enter tracking number..." />
+                            <button type="button" class="btn btn-outline-secondary" onclick="generateRandomTracking()">
+                                <i class="bi bi-shuffle"></i> Random
+                            </button>
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary rounded-0">Complete & Ship</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Ensure functions are global for access from inline onclick
+    window.generateRandomTracking = function() {
+        var randomNum = 'TRK-' + Math.floor(Math.random() * 1000000000);
+        document.getElementById('trackingNumber').value = randomNum;
+    };
+
+    window.openTrackingModal = function(taskId) {
+        document.getElementById('trackingTaskId').value = taskId;
+        document.getElementById('trackingNumber').value = '';
+        var modalEl = document.getElementById('trackingModal');
+        
+        // Move to body to prevent z-index/backdrop issues
+        if (modalEl && modalEl.parentElement !== document.body) {
+            document.body.appendChild(modalEl);
+        }
+
+        var modal = bootstrap.Modal.getInstance(modalEl);
+        if (!modal) {
+            modal = new bootstrap.Modal(modalEl);
+        }
+        modal.show();
+    };
+
+    // Use event delegation or check existence to prevent multiple bindings if reloaded
+    var form = document.getElementById('trackingForm');
+    if (form) {
+        // Remove existing listener if any (requires named function, but anonymous is hard to remove)
+        // Instead, we can clone the node to strip listeners, or just use a flag.
+        // Or better, assign onsubmit directly.
+        form.onsubmit = function(e) {
+            e.preventDefault();
+            var taskId = document.getElementById('trackingTaskId').value;
+            var trackingNo = document.getElementById('trackingNumber').value;
+            
+            if(!trackingNo) return;
+
+            // Post to CompleteWithTracking handler
+            var formData = new FormData();
+            formData.append('taskId', taskId);
+            formData.append('trackingNumber', trackingNo);
+            
+            fetch('/Tasks/Index?handler=CompleteTracking', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    location.reload(); 
+                } else {
+                    alert('Error completing task.');
+                }
+            })
+            .catch(err => console.error(err));
+        };
+    }
+
+    // Checkbox Listener for "Packaging" and other tasks
+    var checkboxes = document.querySelectorAll('.task-checkbox');
+    checkboxes.forEach(function(checkbox) {
+        // Avoid adding multiple listeners if re-run
+        // Use a data attribute to mark as initialized?
+        // Or just re-assign onchange
+        checkbox.onchange = function() {
+            var taskId = this.value;
+            var isCompleted = this.checked;
+            var formData = new FormData();
+            formData.append('taskId', taskId);
+            formData.append('isCompleted', isCompleted);
+            
+            fetch('/Tasks/Index?handler=UpdateStatus', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                   // Optional: Toast or reload
+                   // location.reload();
+                } else {
+                   this.checked = !isCompleted; // Revert
+                   alert('Error updating status.');
+                }
+            })
+            .catch(err => console.error(err));
+        };
+    });
+</script>

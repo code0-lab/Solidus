@@ -45,7 +45,8 @@ namespace DomusMercatorisDotnetMVC.Pages
                 { 
                     { "Orders", "Manage Orders" },
                     { "Customers", "Manage Customers" },
-                    { "ManageCargos", "Manage Cargo Settings" }
+                    { "ManageCargos", "Manage Cargo Settings" },
+                    { "Refunds", "Manage Refunds" }
                 } 
             },
             { "Marketing", new Dictionary<string, string> 
@@ -56,6 +57,11 @@ namespace DomusMercatorisDotnetMVC.Pages
             { "Administration", new Dictionary<string, string> 
                 { 
                     { "Workers", "Manage Workforce" }
+                } 
+            },
+            { "Task Management", new Dictionary<string, string> 
+                { 
+                    { "Tasks", "Manage All Tasks" }
                 } 
             }
         };
@@ -150,16 +156,20 @@ namespace DomusMercatorisDotnetMVC.Pages
             }
             var comp = User.FindFirst("CompanyId")?.Value;
             int companyId;
+            var idClaim = User.FindFirst("UserId")?.Value;
+            long currentUserId = 0;
+            if (!string.IsNullOrEmpty(idClaim)) long.TryParse(idClaim, out currentUserId);
+
             if (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out companyId))
             {
-                var ok1 = await _userService.DeleteUserInCompanyAsync(DeleteId, companyId);
+                var ok1 = await _userService.DeleteUserInCompanyAsync(DeleteId, companyId, currentUserId);
                 if (!ok1)
                 {
                     ModelState.AddModelError(string.Empty, "Delete failed");
                 }
                 return await OnGetAsync();
             }
-            var idClaim = User.FindFirst("UserId")?.Value;
+            // var idClaim = User.FindFirst("UserId")?.Value; // reused
             long userId;
             if (string.IsNullOrEmpty(idClaim) || !long.TryParse(idClaim, out userId))
             {
@@ -176,12 +186,40 @@ namespace DomusMercatorisDotnetMVC.Pages
                 ModelState.AddModelError(string.Empty, "Unauthorized");
                 return await OnGetAsync();
             }
-            var ok = await _userService.DeleteUserInCompanyAsync(DeleteId, me.CompanyId);
+            var ok = await _userService.DeleteUserInCompanyAsync(DeleteId, me.CompanyId, userId);
             if (!ok)
             {
                 ModelState.AddModelError(string.Empty, "Delete failed");
             }
             return await OnGetAsync();
+        }
+
+        public async Task<JsonResult> OnGetCheckUserTasksAsync(long userId)
+        {
+            var comp = User.FindFirst("CompanyId")?.Value;
+            if (string.IsNullOrEmpty(comp) || !int.TryParse(comp, out var companyId))
+            {
+                 var idClaim = User.FindFirst("UserId")?.Value;
+                 if (string.IsNullOrEmpty(idClaim) || !long.TryParse(idClaim, out var uId)) return new JsonResult(new { count = 0 });
+                 
+                 var me = await _userService.GetByIdAsync(uId);
+                 if (me == null) return new JsonResult(new { count = 0 });
+                 companyId = me.CompanyId;
+            }
+
+            // Check only assigned tasks as requested
+            var workers = await _userService.GetByCompanyAsync(companyId);
+            if(!workers.Any(w => w.Id == userId)) return new JsonResult(new { count = 0 });
+
+            // We can use TaskService or DbContext. Let's use TaskService if available, but it's not injected here.
+            // Wait, TaskService is NOT injected. I should inject it or use _userService to access context?
+            // _userService has _dbContext but it's private.
+            // I should inject TaskService or use _userService to add a helper method.
+            // Actually, I can just add a helper in UserService: GetPendingTaskCountForUserAsync
+            
+            // Let's assume I'll add GetPendingTaskCountAsync to UserService for simplicity here
+            var count = await _userService.GetPendingTaskCountAsync(userId);
+            return new JsonResult(new { count });
         }
 
         public async Task<IActionResult> OnPostUpdatePermissionsAsync(long userId, List<string> pageKeys)

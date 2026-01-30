@@ -71,15 +71,33 @@ namespace DomusMercatorisDotnetRest.Controllers
             return Ok(res);
         }
 
+        /// <summary>
+        /// Retrieves successful orders for the current user.
+        /// </summary>
         [HttpGet("my-orders")]
         [Authorize]
-        [ProducesResponseType(typeof(List<OrderDto>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<List<OrderDto>>> GetMyOrders()
+        [ProducesResponseType(typeof(PaginatedResult<OrderDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<PaginatedResult<OrderDto>>> GetSuccessfulOrders([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             var userId = GetUserId();
             if (userId == null) return Unauthorized();
 
-            var res = await _ordersService.GetByUserIdAsync(userId.Value);
+            var res = await _ordersService.GetByUserIdAsync(userId.Value, page, pageSize, "orders");
+            return Ok(res);
+        }
+
+        /// <summary>
+        /// Retrieves failed orders for the current user.
+        /// </summary>
+        [HttpGet("my-orders/failed")]
+        [Authorize]
+        [ProducesResponseType(typeof(PaginatedResult<OrderDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<PaginatedResult<OrderDto>>> GetFailedOrders([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        {
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+
+            var res = await _ordersService.GetByUserIdAsync(userId.Value, page, pageSize, "failed-orders");
             return Ok(res);
         }
 

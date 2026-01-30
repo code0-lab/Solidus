@@ -24,6 +24,7 @@ export interface CheckoutPayload {
 }
 
 export interface OrderItemResponse {
+  id: number;
   productId: number;
   productName?: string;
   variantProductId?: number;
@@ -41,10 +42,19 @@ export interface OrderResponse {
   userId?: number;
   fleetingUserId?: number;
   cargoTrackingId?: number;
+  cargoTrackingNumber?: string;
   status: string;
   createdAt: string;
   paymentCode?: string;
   orderItems: OrderItemResponse[];
+}
+
+export interface PaginatedResult<T> {
+  items: T[];
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -63,8 +73,12 @@ export class OrdersService {
     return this.http.post<OrderResponse>(`${this.apiUrl}/orders/${id}/mark-paid`, {});
   }
 
-  getMyOrders(): Observable<OrderResponse[]> {
-    return this.http.get<OrderResponse[]>(`${this.apiUrl}/orders/my-orders`);
+  getSuccessfulOrders(page: number = 1, pageSize: number = 10): Observable<PaginatedResult<OrderResponse>> {
+    return this.http.get<PaginatedResult<OrderResponse>>(`${this.apiUrl}/orders/my-orders?page=${page}&pageSize=${pageSize}`);
+  }
+
+  getFailedOrders(page: number = 1, pageSize: number = 10): Observable<PaginatedResult<OrderResponse>> {
+    return this.http.get<PaginatedResult<OrderResponse>>(`${this.apiUrl}/orders/my-orders/failed?page=${page}&pageSize=${pageSize}`);
   }
 
   getOrderById(id: number): Observable<OrderResponse> {
