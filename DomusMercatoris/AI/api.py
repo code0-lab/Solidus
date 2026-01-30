@@ -10,7 +10,7 @@ from PIL import Image
 import os
 from datetime import datetime
 import asyncio
-from rembg import remove
+# from rembg import remove
 
 ENABLE_DEBUG_LOGGING = False
 
@@ -107,27 +107,32 @@ def preprocess_image_task(contents: bytes, filename: str) -> torch.Tensor:
         input_image = Image.open(io.BytesIO(contents))
         
         # 1. Apply Background Removal (rembg)
-        try:
-            print(f"Applying rembg to {filename}...")
-            input_image = remove(input_image)
-        except Exception as rembg_err:
-            print(f"Rembg failed for {filename}: {rembg_err}")
+        # SKIPPED: Frontend already sends white-padded 224x224 images.
+        # Rembg is redundant and risky for AI images or full-frame inputs.
+        # try:
+        #     print(f"Applying rembg to {filename}...")
+        #     input_image = remove(input_image)
+        # except Exception as rembg_err:
+        #     print(f"Rembg failed for {filename}: {rembg_err}")
 
-        # 2. Smart Preprocessing
-        input_image = preprocess_image_smart(input_image)
-
-        if ENABLE_DEBUG_LOGGING:
-            try:
-                log_dir = os.path.join(os.path.dirname(__file__), "AiLogs")
-                os.makedirs(log_dir, exist_ok=True)
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-                img_log_path = os.path.join(log_dir, f"{timestamp}_{filename or 'unknown'}.jpg")
-                input_image.save(img_log_path, "JPEG")
-            except Exception:
-                pass
+        # 2. Main.py Compatible Preprocessing (Resize(256) -> CenterCrop(224))
+        # Note: We must match the DB indexing pipeline exactly.
+        # main.py does: Resize(256), CenterCrop(224), ToTensor, Normalize
         
-        # 3. Transform to Tensor
-        return tensor_transform(input_image)
+        # Standardize strictly to RGB (drops alpha to black if transparent, matching main.py behavior)
+        if input_image.mode != 'RGB':
+             input_image = input_image.convert('RGB')
+
+        # Define the exact transform from main.py
+        preprocess_pipeline = transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ])
+        
+        # 3. Transform
+        return preprocess_pipeline(input_image)
 
     except Exception as e:
         print(f"Error processing image {filename}: {e}")
@@ -152,7 +157,7 @@ def run_batch_inference(tensors: List[torch.Tensor]) -> np.ndarray:
 @app.post("/extract")
 async def extract_features(files: List[UploadFile] = File(...)):
     loop = asyncio.get_event_loop()
-    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB limit
+    MAX_FILE_SIZE = 20 * 1024 * 1024  # 20 MB limit (aligned with Frontend/Dotnet 17MB)
     
     valid_tensors = []
 
@@ -179,7 +184,13 @@ async def extract_features(files: List[UploadFile] = File(...)):
 
     # 2. Batch Inference (Offloaded to thread pool to avoid blocking)
     # Even though inference is fast, for large batches it can block.
-    vectors = await loop.run_in_executor(None, run_batch_inference, valid_tensors)
+    try:
+        vectors = await loop.run_in_executor(None, run_batch_inference, valid_tensors)
+    except Exception as e:
+        print(f"Inference failed: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Inference failed: {str(e)}")
 
     if vectors.size == 0:
         raise HTTPException(status_code=500, detail="Inference failed")

@@ -7,5 +7,3 @@ numpy
 pillow
 scikit-learn
 pillow-heif
-rembg
-onnxruntime

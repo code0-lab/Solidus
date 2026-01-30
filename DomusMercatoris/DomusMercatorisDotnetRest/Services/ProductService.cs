@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using AutoMapper;
 using DomusMercatoris.Core.Entities;
 using DomusMercatoris.Data;
@@ -52,23 +53,15 @@ namespace DomusMercatorisDotnetRest.Services
 
             if (prioritizedIds != null && prioritizedIds.Any())
             {
-                // Prioritize specified IDs (Top 3)
-                var pIds = prioritizedIds.Take(3).ToList();
+                // Limit prioritized IDs to avoid expression tree depth issues
+                var safeIds = prioritizedIds.Take(50).ToList();
                 
-                // Start ordering
-                // Note: We cast to IOrderedQueryable to chain ThenByDescending
-                if (pIds.Count > 0)
-                {
-                    query = query.OrderByDescending(p => p.Id == pIds[0]);
-                    
-                    if (pIds.Count > 1)
-                        query = ((IOrderedQueryable<Product>)query).ThenByDescending(p => p.Id == pIds[1]);
-                    
-                    if (pIds.Count > 2)
-                        query = ((IOrderedQueryable<Product>)query).ThenByDescending(p => p.Id == pIds[2]);
-
-                    query = ((IOrderedQueryable<Product>)query).ThenByDescending(p => p.Id);
-                }
+                // Sort by similarity (index in the list)
+                // p => p.Id == id[0] ? 0 : p.Id == id[1] ? 1 ... : int.MaxValue
+                query = ApplySimilarityOrder(query, safeIds);
+                
+                // For non-prioritized items (rank = int.MaxValue), sort by ID descending
+                query = ((IOrderedQueryable<Product>)query).ThenByDescending(p => p.Id);
             }
             else
             {
@@ -76,6 +69,29 @@ namespace DomusMercatorisDotnetRest.Services
             }
 
             return await ProductQueryHelper.PaginateAndMapAsync(query, pageNumber, pageSize, _mapper);
+        }
+
+        private IQueryable<Product> ApplySimilarityOrder(IQueryable<Product> query, List<long> ids)
+        {
+            if (ids == null || !ids.Any()) return query;
+
+            var parameter = Expression.Parameter(typeof(Product), "p");
+            var property = Expression.Property(parameter, "Id");
+            
+            Expression expr = Expression.Constant(int.MaxValue);
+            
+            // Build from last to first
+            for (int i = ids.Count - 1; i >= 0; i--)
+            {
+                var idVal = Expression.Constant(ids[i]);
+                var check = Expression.Equal(property, idVal);
+                var rank = Expression.Constant(i);
+                expr = Expression.Condition(check, rank, expr);
+            }
+            
+            var lambda = Expression.Lambda<Func<Product, int>>(expr, parameter);
+            
+            return query.OrderBy(lambda);
         }
 
         public async Task<PaginatedResult<ProductDto>> SearchAsync(string queryText, int pageNumber, int pageSize, int? companyId, int? brandId = null)

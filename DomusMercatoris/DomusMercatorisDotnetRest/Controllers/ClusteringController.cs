@@ -112,7 +112,17 @@ namespace DomusMercatorisDotnetRest.Controllers
             var imageContent = new ByteArrayContent(finalBytes);
             content.Add(imageContent, "files", file.FileName.Replace(ext ?? "", ".jpg")); // Ensure extension is jpg if we converted? Or just keep original name.
 
-            var response = await client.PostAsync($"{pythonApiUrl}/extract", content);
+            HttpResponseMessage response;
+            try
+            {
+                response = await client.PostAsync($"{pythonApiUrl}/extract", content);
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"[ClusteringController] Python API requires attention: {ex.Message}");
+                throw new InvalidOperationException("AI Service is unavailable. Please check backend logs.");
+            }
+
             if (!response.IsSuccessStatusCode) throw new InvalidOperationException($"Python API error: {response.StatusCode}");
 
             var payload = await response.Content.ReadAsStringAsync();
@@ -148,6 +158,7 @@ namespace DomusMercatorisDotnetRest.Controllers
                     bestCluster = c;
                 }
             }
+            Console.WriteLine($"[ClusteringController] Best Cluster: {bestCluster?.Name}, Min Distance: {minDistance}");
 
             if (bestCluster == null) throw new NotFoundException("No matching cluster.");
 
