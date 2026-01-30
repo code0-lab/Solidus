@@ -29,7 +29,6 @@ namespace DomusMercatorisDotnetMVC.Pages
             public List<CategoryNode> Children { get; set; } = new List<CategoryNode>();
         }
         public List<CategoryNode> TreeRoots { get; set; } = new();
-        public string TreeHtml { get; set; } = string.Empty;
         public Dictionary<int, List<Product>> ProductsByCategory { get; set; } = new();
         public bool IsEditing { get; set; } = false;
         public int? EditId { get; set; } = null;
@@ -46,10 +45,27 @@ namespace DomusMercatorisDotnetMVC.Pages
         [BindProperty]
         public CreateInput Input { get; set; } = new();
 
-        public async Task<IActionResult> OnGetAsync()
+        private async Task<int> GetCompanyIdAsync()
         {
             var comp = User.FindFirst("CompanyId")?.Value;
-            if (string.IsNullOrEmpty(comp) || !int.TryParse(comp, out var companyId))
+            if (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var cid))
+            {
+                return cid;
+            }
+            
+            var idClaim = User.FindFirst("UserId")?.Value;
+            if (!string.IsNullOrEmpty(idClaim) && long.TryParse(idClaim, out var userId))
+            {
+                var user = await _db.Users.AsNoTracking().SingleOrDefaultAsync(u => u.Id == userId);
+                if (user != null) return user.CompanyId ?? 0;
+            }
+            return 0;
+        }
+
+        public async Task<IActionResult> OnGetAsync()
+        {
+            var companyId = await GetCompanyIdAsync();
+            if (companyId == 0)
             {
                 return RedirectToPage("/Dashboard");
             }
@@ -75,21 +91,7 @@ namespace DomusMercatorisDotnetMVC.Pages
 
         public async Task<IActionResult> OnPostAsync()
         {
-            var comp = User.FindFirst("CompanyId")?.Value;
-            int companyId = 0;
-            if (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var cid))
-            {
-                companyId = cid;
-            }
-            else
-            {
-                var idClaim = User.FindFirst("UserId")?.Value;
-                if (!string.IsNullOrEmpty(idClaim) && long.TryParse(idClaim, out var userId))
-                {
-                    var user = await _db.Users.SingleOrDefaultAsync(u => u.Id == userId);
-                    if (user != null) companyId = user.CompanyId ?? 0;
-                }
-            }
+            var companyId = await GetCompanyIdAsync();
             if (companyId == 0)
             {
                 ModelState.AddModelError(string.Empty, "Authorization error.");
@@ -117,25 +119,16 @@ namespace DomusMercatorisDotnetMVC.Pages
                 ParentId = parentId
             };
 
-            try
-            {
-                _db.Categories.Add(entity);
-                await _db.SaveChangesAsync();
-            }
-            catch
-            {
-                ModelState.AddModelError(string.Empty, "Save failed.");
-                await BuildTreeAsync(companyId);
-                return Page();
-            }
+            _db.Categories.Add(entity);
+            await _db.SaveChangesAsync();
+
             TempData["Message"] = "Category created.";
             return RedirectToPage("/Categories");
         }
 
         public async Task<IActionResult> OnPostUpdateAsync()
         {
-            var comp = User.FindFirst("CompanyId")?.Value;
-            int companyId = (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var cid)) ? cid : 0;
+            var companyId = await GetCompanyIdAsync();
             var editStr = Request.Form["EditId"].ToString();
             if (companyId == 0 || string.IsNullOrEmpty(editStr) || !int.TryParse(editStr, out var eid))
             {
@@ -178,8 +171,7 @@ namespace DomusMercatorisDotnetMVC.Pages
 
         public async Task<IActionResult> OnPostDeleteAsync()
         {
-            var comp = User.FindFirst("CompanyId")?.Value;
-            int companyId = (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var cid)) ? cid : 0;
+            var companyId = await GetCompanyIdAsync();
             var editStr = Request.Form["EditId"].ToString();
             if (companyId == 0 || string.IsNullOrEmpty(editStr) || !int.TryParse(editStr, out var eid))
             {
@@ -230,15 +222,16 @@ namespace DomusMercatorisDotnetMVC.Pages
             }
             TreeRoots = dict.Values.Where(n => !n.Item.ParentId.HasValue).OrderBy(n => n.Item.Name).ToList();
             ProductsByCategory = new Dictionary<int, List<Product>>();
-            try
-            {
-                var products = await _db.Products
-                    .Where(p => p.CompanyId == companyId)
-                    .Include(p => p.Categories)
-                    .AsNoTracking()
-                    .ToListAsync();
+            
+            var products = await _db.Products
+                .Where(p => p.CompanyId == companyId)
+                .Include(p => p.Categories)
+                .AsNoTracking()
+                .ToListAsync();
 
-                foreach (var p in products)
+            foreach (var p in products)
+            {
+                if (p.Categories != null && p.Categories.Any(c => c.CompanyId == companyId))
                 {
                     foreach (var cat in p.Categories.Where(cat => cat.CompanyId == companyId))
                     {
@@ -250,17 +243,9 @@ namespace DomusMercatorisDotnetMVC.Pages
                         list.Add(p);
                     }
                 }
-            }
-            catch
-            {
-                // Fallback logic if needed, but async
-                var products = await _db.Products
-                    .Where(p => p.CompanyId == companyId)
-                    .AsNoTracking()
-                    .ToListAsync();
-                
-                foreach (var p in products)
+                else
                 {
+                    // Fallback to legacy CategoryId/SubCategoryId if no Many-to-Many relation found
                     if (p.CategoryId.HasValue)
                     {
                         var cid = p.CategoryId.Value;
@@ -283,50 +268,6 @@ namespace DomusMercatorisDotnetMVC.Pages
                     }
                 }
             }
-            TreeHtml = BuildTreeHtml(TreeRoots);
-        }
-
-        private string BuildTreeHtml(List<CategoryNode> roots)
-        {
-            var sb = new StringBuilder();
-            sb.Append("<ul class=\"tree-root\">\n");
-            foreach (var r in roots)
-            {
-                AppendNode(sb, r);
-            }
-            sb.Append("</ul>");
-            return sb.ToString();
-        }
-
-        private void AppendNode(StringBuilder sb, CategoryNode node)
-        {
-            var name = WebUtility.HtmlEncode(node.Item.Name ?? string.Empty);
-            sb.Append($"<li class=\"tree-li\" data-node-id=\"{node.Item.Id}\" data-parent-id=\"{(node.Item.ParentId.HasValue ? node.Item.ParentId.Value.ToString() : "0")}\">");
-            sb.Append($"<div class=\"tree-node\" data-target=\"children-{node.Item.Id}\" data-has-children=\"{(node.Children.Count > 0 ? "true" : "false")}\">");
-            sb.Append("<span class=\"node-text\">");
-            sb.Append(name);
-            var count = ProductsByCategory.TryGetValue(node.Item.Id, out var items) ? items.Count : 0;
-            if (count > 0)
-            {
-                sb.Append($" <span class=\"badge bg-light text-dark\">{count}</span>");
-            }
-            sb.Append("</span>");
-            sb.Append("<span class=\"node-actions\">");
-            sb.Append($"<a class=\"btn btn-outline-secondary btn-sm\" href=\"/Category/{node.Item.Id}/Products\" title=\"View\"><i class=\"bi bi-eye\"></i></a>");
-            sb.Append($"<a class=\"btn btn-dark rounded-0 border-2 btn-sm\" href=\"/Categories?editId={node.Item.Id}\" title=\"Edit\"><i class=\"bi bi-pencil\"></i></a>");
-            sb.Append($"<button type=\"button\" class=\"btn btn-dark rounded-0 border-2 btn-sm btn-cat-delete\" data-id=\"{node.Item.Id}\" title=\"Delete\"><i class=\"bi bi-trash\"></i></button>");
-            sb.Append("</span>");
-            sb.Append("</div>");
-            if (node.Children.Count > 0)
-            {
-                sb.Append($"<ul id=\"children-{node.Item.Id}\" class=\"tree-children\" hidden>");
-                foreach (var ch in node.Children.OrderBy(n => n.Item.Name))
-                {
-                    AppendNode(sb, ch);
-                }
-                sb.Append("</ul>");
-            }
-            sb.Append("</li>");
         }
     }
 }

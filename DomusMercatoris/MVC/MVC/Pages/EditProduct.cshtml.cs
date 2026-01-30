@@ -122,66 +122,38 @@ namespace DomusMercatorisDotnetMVC.Pages
                 ModelState.AddModelError(string.Empty, "Maximum 4 images allowed. Please delete at least one before adding new images.");
                 return Page();
             }
-            try
+            var updated = await _productService.UpdateAsync(id, Product);
+            if (updated == null)
             {
-                var updated = await _productService.UpdateAsync(id, Product);
-                if (updated == null)
-                {
-                    return RedirectToPage("/Products");
-                }
-                TempData["Message"] = "Product updated.";
-                return RedirectToPage("/ProductDetail", new { id });
+                return RedirectToPage("/Products");
             }
-            catch (InvalidOperationException ex)
-            {
-                ModelState.AddModelError(string.Empty, ex.Message);
-                Existing = await _productService.GetByIdInCompanyAsync(id, companyId);
-                Product.Name = Existing?.Name ?? Product.Name;
-                Product.Sku = Existing?.Sku ?? Product.Sku;
-                Product.Description = Existing?.Description ?? Product.Description;
-                Product.CategoryId = Existing?.CategoryId;
-                Product.SubCategoryId = Existing?.SubCategoryId;
-                Product.Price = Existing?.Price ?? Product.Price;
-                ModelState.Remove("Product.Price");
-                foreach (var kv in ModelState.Where(k => k.Key.StartsWith("Product.ImageFiles")).Select(k => k.Key).ToList())
-                {
-                    ModelState.Remove(kv);
-                }
-                return Page();
-            }
+            TempData["Message"] = "Product updated.";
+            return RedirectToPage("/ProductDetail", new { id });
         }
         public async Task<IActionResult> OnPostGenerateDescriptionAsync()
         {
-            try
+            var files = Request.Form.Files.ToList();
+            if (files.Count == 0)
             {
-                var files = Request.Form.Files.ToList();
-                if (files.Count == 0)
-                {
-                    return new JsonResult(new { success = false, message = "No images uploaded." });
-                }
-
-                // Check API key
-                var apiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY");
-                if (string.IsNullOrEmpty(apiKey))
-                {
-                    // Fallback to configuration if env var not set directly (optional, depends on setup)
-                    // For now, assuming it's in environment or you can inject IConfiguration
-                    return new JsonResult(new { success = false, message = "Gemini API Key is not configured." });
-                }
-
-                var description = await _geminiService.GenerateProductDescription(apiKey, files);
-                if (string.IsNullOrEmpty(description))
-                {
-                    return new JsonResult(new { success = false, message = "Failed to generate description." });
-                }
-
-                return new JsonResult(new { success = true, data = description });
+                return new JsonResult(new { success = false, message = "No images uploaded." });
             }
-            catch (Exception ex)
+
+            // Check API key
+            var apiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY");
+            if (string.IsNullOrEmpty(apiKey))
             {
-                // Log error
-                return new JsonResult(new { success = false, message = ex.Message });
+                // Fallback to configuration if env var not set directly (optional, depends on setup)
+                // For now, assuming it's in environment or you can inject IConfiguration
+                return new JsonResult(new { success = false, message = "Gemini API Key is not configured." });
             }
+
+            var description = await _geminiService.GenerateProductDescription(apiKey, files);
+            if (string.IsNullOrEmpty(description))
+            {
+                return new JsonResult(new { success = false, message = "Failed to generate description." });
+            }
+
+            return new JsonResult(new { success = true, data = description });
         }
     }
 }

@@ -100,7 +100,7 @@ builder.Services.AddAuthorization(options =>
 
 var app = builder.Build();
 
-app.UseMiddleware<ExceptionLoggingMiddleware>();
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
 app.UseExceptionHandler("/Error");
 app.UseStatusCodePagesWithReExecute("/Error", "?code={0}");

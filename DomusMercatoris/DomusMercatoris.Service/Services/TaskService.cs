@@ -5,24 +5,29 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using DomusMercatoris.Core.Entities;
 using DomusMercatoris.Core.Models;
+using DomusMercatoris.Core.Enums;
 using DomusMercatoris.Data;
+using DomusMercatoris.Service.Interfaces;
 
 namespace DomusMercatoris.Service.Services
 {
     public class TaskService
     {
         private readonly DomusDbContext _db;
+        private readonly ICurrentUserService _currentUserService;
 
-        public TaskService(DomusDbContext db)
+        public TaskService(DomusDbContext db, ICurrentUserService currentUserService)
         {
             _db = db;
+            _currentUserService = currentUserService;
         }
 
-        public async Task<WorkTask> CreateTaskAsync(string title, string? description, long? orderId, long assignedToUserId, long createdByUserId, int companyId, long? parentId = null)
+        public async Task<WorkTask> CreateTaskAsync(string title, string? description, long? orderId, long assignedToUserId, long createdByUserId, int companyId, long? parentId = null, TaskType type = TaskType.General)
         {
             var task = new WorkTask
             {
                 Title = title,
+                Type = type,
                 Description = description,
                 OrderId = orderId,
                 AssignedToUserId = assignedToUserId,
@@ -37,10 +42,16 @@ namespace DomusMercatoris.Service.Services
             return task;
         }
 
-        public async Task<bool> UpdateTaskStatusAsync(long taskId, bool isCompleted, long currentUserId, bool isManager, bool hasPermission)
+        public async Task<bool> UpdateTaskStatusAsync(long taskId, bool isCompleted)
         {
             var task = await _db.WorkTasks.Include(t => t.Order).FirstOrDefaultAsync(t => t.Id == taskId);
             if (task == null) return false;
+
+            var currentUserId = _currentUserService.UserId;
+            if (currentUserId == null) return false;
+
+            var isManager = _currentUserService.IsManager;
+            var hasPermission = await _currentUserService.HasPermissionAsync("Tasks");
 
             // Permission check
             if (task.AssignedToUserId == currentUserId || isManager || hasPermission)
@@ -48,15 +59,10 @@ namespace DomusMercatoris.Service.Services
                 task.IsCompleted = isCompleted;
                 task.CompletedAt = isCompleted ? DateTime.UtcNow : null;
 
-                // Order Workflow Logic
-                if (task.Order != null && isCompleted)
+                // Handle Side Effects / Workflow
+                if (isCompleted)
                 {
-                    // Handle Packaging -> Preparing
-                    if (task.Title == "Packaging" || task.Title == "Paketleme")
-                    {
-                        task.Order.Status = OrderStatus.Preparing; // 4
-                        _db.Entry(task.Order).State = EntityState.Modified;
-                    }
+                    await ProcessTaskCompletionWorkflowAsync(task);
                 }
 
                 await _db.SaveChangesAsync();
@@ -66,13 +72,17 @@ namespace DomusMercatoris.Service.Services
             return false;
         }
 
-        public async Task<bool> CompleteShippingTaskAsync(long taskId, string trackingNumber, long currentUserId, bool isManager)
+        public async Task<bool> CompleteShippingTaskAsync(long taskId, string trackingNumber)
         {
             var task = await _db.WorkTasks
                 .Include(t => t.Order)
                 .FirstOrDefaultAsync(t => t.Id == taskId);
 
             if (task == null) return false;
+
+            var currentUserId = _currentUserService.UserId;
+            if (currentUserId == null) return false;
+            var isManager = _currentUserService.IsManager;
 
             // Permission Check
             if (!isManager && task.AssignedToUserId != currentUserId)
@@ -108,6 +118,20 @@ namespace DomusMercatoris.Service.Services
             await _db.SaveChangesAsync();
             return true;
         }
+
+        private Task ProcessTaskCompletionWorkflowAsync(WorkTask task)
+        {
+            if (task.Order == null) return Task.CompletedTask;
+
+            // Handle Packaging -> Preparing
+            if (task.Type == TaskType.Packaging)
+            {
+                task.Order.Status = OrderStatus.Preparing; // 4
+                _db.Entry(task.Order).State = EntityState.Modified;
+            }
+            return Task.CompletedTask;
+        }
+
 
         public async Task<List<WorkTask>> GetPendingTasksForUserAsync(long userId)
         {

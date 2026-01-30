@@ -143,36 +143,28 @@ namespace DomusMercatorisDotnetMVC.Services
 
             var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key={apiKey}";
 
-            try
+            var response = await SendRequestWithRetryAsync(url, content);
+            if (!response.IsSuccessStatusCode)
             {
-                var response = await SendRequestWithRetryAsync(url, content);
-                if (!response.IsSuccessStatusCode)
-                {
-                    var error = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"Gemini API Error: {error}");
-                    return null;
-                }
-
-                var resultJson = await response.Content.ReadAsStringAsync();
-                dynamic? result = JsonConvert.DeserializeObject(resultJson);
-                
-                if (result == null || result!.candidates == null || result!.candidates.Count == 0)
-                {
-                    return null;
-                }
-
-                string text = result!.candidates[0].content.parts[0].text;
-                
-                // JSON bloğunu temizle (```json ... ``` gibi markdown işaretlerini kaldır)
-                text = text.Replace("```json", "").Replace("```", "").Trim();
-                
-                return text;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Gemini Exception: {ex.Message}");
+                var error = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Gemini API Error: {error}");
                 return null;
             }
+
+            var resultJson = await response.Content.ReadAsStringAsync();
+            dynamic? result = JsonConvert.DeserializeObject(resultJson);
+            
+            if (result == null || result!.candidates == null || result!.candidates.Count == 0)
+            {
+                return null;
+            }
+
+            string text = result!.candidates[0].content.parts[0].text;
+            
+            // JSON bloğunu temizle (```json ... ``` gibi markdown işaretlerini kaldır)
+            text = text.Replace("```json", "").Replace("```", "").Trim();
+            
+            return text;
         }
 
         public static string WrapInRetroTemplate(string jsonContent)

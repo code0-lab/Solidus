@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using DomusMercatoris.Core.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using DomusMercatoris.Core.Entities;
 using DomusMercatoris.Data;
@@ -77,7 +78,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
                 .ThenInclude(m => m.Product)
                 .FirstOrDefaultAsync(c => c.Id == clusterId);
 
-            if (cluster == null) return NotFound();
+            if (cluster == null) throw new NotFoundException($"Cluster {clusterId} not found.");
 
             return Partial("_ClusterMembers", cluster.Members);
         }
@@ -140,7 +141,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
             var member = await memberQuery.FirstOrDefaultAsync();
             if (member == null)
             {
-                return NotFound(new { success = false, message = "Member not found." });
+                throw new NotFoundException("Member not found.");
             }
 
             ProductCluster? targetCluster = null;
@@ -173,13 +174,13 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
                 targetCluster = await _context.ProductClusters.FindAsync(toClusterId.Value);
                 if (targetCluster == null)
                 {
-                    return NotFound(new { success = false, message = "Target cluster not found." });
+                    throw new NotFoundException("Target cluster not found.");
                 }
             }
 
             if (targetCluster == null)
             {
-                return BadRequest(new { success = false, message = "Invalid target cluster." });
+                throw new BadRequestException("Invalid target cluster.");
             }
 
             member.ProductClusterId = targetCluster.Id;

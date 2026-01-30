@@ -35,20 +35,8 @@ namespace DomusMercatorisDotnetRest.Controllers
             dto.UserId = userId;
             dto.FleetingUser = null; // Ensure no fleeting user is created if logged in
 
-            try
-            {
-                var result = await _ordersService.CheckoutAsync(dto);
-                return Ok(result);
-            }
-            catch (StockInsufficientException ex)
-            {
-                return Conflict(new { Message = ex.Message, Code = "STOCK_ADJUSTED", Adjustments = ex.Adjustments });
-            }
-            catch (InvalidOperationException ex)
-            {
-                // Fallback for other errors
-                return BadRequest(new { Message = ex.Message });
-            }
+            var result = await _ordersService.CheckoutAsync(dto);
+            return Ok(result);
         }
 
         [HttpPost("{id:long}/mark-paid")]
@@ -57,7 +45,6 @@ namespace DomusMercatorisDotnetRest.Controllers
         public async Task<ActionResult<OrderDto>> MarkPaid(long id)
         {
             var res = await _ordersService.MarkPaidAsync(id);
-            if (res == null) return NotFound();
             return Ok(res);
         }
 
@@ -67,7 +54,6 @@ namespace DomusMercatorisDotnetRest.Controllers
         public async Task<ActionResult<OrderDto>> Get(long id)
         {
             var res = await _ordersService.GetAsync(id);
-            if (res == null) return NotFound();
             return Ok(res);
         }
 
@@ -107,7 +93,6 @@ namespace DomusMercatorisDotnetRest.Controllers
         public async Task<ActionResult<CargoTracking>> GetTracking(long id)
         {
             var tr = await _ordersService.GetTrackingAsync(id);
-            if (tr == null) return NotFound();
             return Ok(tr);
         }
 

@@ -30,21 +30,15 @@ namespace DomusMercatoris.MockBank.Pages
             var orders = await _context.Orders
                 .Where(s => s.Status == OrderStatus.PaymentPending)
                 .OrderByDescending(s => s.CreatedAt)
+                .AsNoTracking()
                 .ToListAsync();
 
-            bool anyUpdated = false;
             foreach (var order in orders)
             {
                 if (string.IsNullOrEmpty(order.PaymentCode))
                 {
-                    order.PaymentCode = new Random().Next(100000, 999999).ToString();
-                    anyUpdated = true;
+                    order.PaymentCode = Random.Shared.Next(100000, 999999).ToString();
                 }
-            }
-
-            if (anyUpdated)
-            {
-                await _context.SaveChangesAsync();
             }
 
             PendingOrders = orders;
@@ -67,8 +61,14 @@ namespace DomusMercatoris.MockBank.Pages
             var payload = new { OrderId = id, Approved = approved };
             var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
-            // Use configured API URL or default to localhost:5280
-            var apiUrl = _configuration["ApiUrl"] ?? "http://localhost:5280";
+            // Use configured API URL
+            var apiUrl = _configuration["ApiUrl"];
+            if (string.IsNullOrEmpty(apiUrl))
+            {
+                TempData["Error"] = "ApiUrl is not configured in appsettings.json";
+                return RedirectToPage();
+            }
+
             try 
             {
                 var response = await client.PostAsync($"{apiUrl}/api/Payment/process", content);

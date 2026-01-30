@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.PixelFormats;
+using DomusMercatoris.Core.Exceptions;
 
 namespace DomusMercatorisDotnetRest.Controllers
 {
@@ -40,13 +41,13 @@ namespace DomusMercatorisDotnetRest.Controllers
         public async Task<ActionResult<ClassificationResultDto>> Classify([FromForm] FileUploadDto form)
         {
             var file = form.File;
-            if (file == null || file.Length == 0) return BadRequest("File is required.");
+            if (file == null || file.Length == 0) throw new BadRequestException("File is required.");
             var isImageMime = file.ContentType != null && file.ContentType.StartsWith("image/");
             var ext = System.IO.Path.GetExtension(file.FileName)?.ToLowerInvariant();
             var isHeicExt = ext == ".heic" || ext == ".heif";
-            if (!isImageMime && !isHeicExt) return BadRequest("Only image files (including HEIC/HEIF) are allowed.");
+            if (!isImageMime && !isHeicExt) throw new BadRequestException("Only image files (including HEIC/HEIF) are allowed.");
             var maxBytes = 17 * 1024 * 1024;
-            if (file.Length > maxBytes) return BadRequest("File size exceeds 17MB.");
+            if (file.Length > maxBytes) throw new BadRequestException("File size exceeds 17MB.");
 
             var pythonApiUrl = _configuration.GetValue<string>("PythonApiUrl") ?? "http://localhost:5001";
             using var client = new HttpClient();
@@ -112,18 +113,18 @@ namespace DomusMercatorisDotnetRest.Controllers
             content.Add(imageContent, "files", file.FileName.Replace(ext ?? "", ".jpg")); // Ensure extension is jpg if we converted? Or just keep original name.
 
             var response = await client.PostAsync($"{pythonApiUrl}/extract", content);
-            if (!response.IsSuccessStatusCode) return StatusCode((int)response.StatusCode, "Python API error.");
+            if (!response.IsSuccessStatusCode) throw new InvalidOperationException($"Python API error: {response.StatusCode}");
 
             var payload = await response.Content.ReadAsStringAsync();
             var doc = JsonDocument.Parse(payload);
-            if (!doc.RootElement.TryGetProperty("vector", out var vecElement)) return BadRequest("Invalid response.");
+            if (!doc.RootElement.TryGetProperty("vector", out var vecElement)) throw new BadRequestException("Invalid response.");
             var vector = vecElement.EnumerateArray().Select(v => v.GetSingle()).ToList();
 
             var maxVersion = await _db.ProductClusters.MaxAsync(c => (int?)c.Version);
-            if (!maxVersion.HasValue) return NotFound("No clusters available.");
+            if (!maxVersion.HasValue) throw new NotFoundException("No clusters available.");
 
             var clusters = await _db.ProductClusters.Where(c => c.Version == maxVersion.Value).ToListAsync();
-            if (clusters.Count == 0) return NotFound("No clusters available.");
+            if (clusters.Count == 0) throw new NotFoundException("No clusters available.");
 
             double minDistance = double.MaxValue;
             DomusMercatoris.Core.Entities.ProductCluster? bestCluster = null;
@@ -148,7 +149,7 @@ namespace DomusMercatorisDotnetRest.Controllers
                 }
             }
 
-            if (bestCluster == null) return NotFound("No matching cluster.");
+            if (bestCluster == null) throw new NotFoundException("No matching cluster.");
 
             // Find similar products within the cluster
             var similarProductIds = new List<long>();

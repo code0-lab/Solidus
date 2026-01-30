@@ -9,6 +9,8 @@ using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
+using DomusMercatoris.Core.Exceptions;
+
 namespace DomusMercatorisDotnetMVC.Pages.Moderator
 {
     [Authorize(Roles = "Moderator,Rex")]
@@ -81,64 +83,52 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
                 return Page();
             }
 
-            try
+            if (editId.HasValue)
             {
-                if (editId.HasValue)
+                // Update
+                var item = await _db.AutoCategories
+                    .Include(ac => ac.ProductClusters)
+                    .FirstOrDefaultAsync(ac => ac.Id == editId.Value);
+
+                if (item == null) throw new NotFoundException($"AutoCategory {editId} not found.");
+
+                // Prevent circular reference
+                if (Input.ParentId.HasValue && Input.ParentId.Value == item.Id)
                 {
-                    // Update
-                    var item = await _db.AutoCategories
-                        .Include(ac => ac.ProductClusters)
-                        .FirstOrDefaultAsync(ac => ac.Id == editId.Value);
-
-                    if (item == null) return NotFound();
-
-                    // Prevent circular reference
-                    if (Input.ParentId.HasValue && Input.ParentId.Value == item.Id)
-                    {
-                         ModelState.AddModelError("Input.ParentId", "A category cannot be its own parent.");
-                         await LoadDataAsync();
-                         IsEditing = true;
-                         EditId = editId;
-                         return Page();
-                    }
-
-                    item.Name = Input.Name;
-                    item.Description = Input.Description;
-                    item.ParentId = Input.ParentId;
-                    item.UpdatedAt = DateTime.UtcNow;
-
-                    // Update clusters
-                    await UpdateProductClustersAsync(item, Input.ProductClusterIds);
-
-                    _db.AutoCategories.Update(item);
-                }
-                else
-                {
-                    // Create
-                    var newItem = new AutoCategory
-                    {
-                        Name = Input.Name,
-                        Description = Input.Description,
-                        ParentId = Input.ParentId,
-                        CreatedAt = DateTime.UtcNow
-                    };
-
-                    await UpdateProductClustersAsync(newItem, Input.ProductClusterIds);
-
-                    _db.AutoCategories.Add(newItem);
+                        ModelState.AddModelError("Input.ParentId", "A category cannot be its own parent.");
+                        await LoadDataAsync();
+                        IsEditing = true;
+                        EditId = editId;
+                        return Page();
                 }
 
-                await _db.SaveChangesAsync();
+                item.Name = Input.Name;
+                item.Description = Input.Description;
+                item.ParentId = Input.ParentId;
+                item.UpdatedAt = DateTime.UtcNow;
+
+                // Update clusters
+                await UpdateProductClustersAsync(item, Input.ProductClusterIds);
+
+                _db.AutoCategories.Update(item);
             }
-            catch (DbUpdateException)
+            else
             {
-                // Log error (if logger available)
-                ModelState.AddModelError("", "An error occurred while saving changes. Please try again.");
-                await LoadDataAsync();
-                IsEditing = editId.HasValue;
-                EditId = editId;
-                return Page();
+                // Create
+                var newItem = new AutoCategory
+                {
+                    Name = Input.Name,
+                    Description = Input.Description,
+                    ParentId = Input.ParentId,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                await UpdateProductClustersAsync(newItem, Input.ProductClusterIds);
+
+                _db.AutoCategories.Add(newItem);
             }
+
+            await _db.SaveChangesAsync();
 
             return RedirectToPage();
         }
@@ -191,17 +181,8 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
             var item = await _db.AutoCategories.FindAsync(id);
             if (item != null)
             {
-                try 
-                {
-                    _db.AutoCategories.Remove(item);
-                    await _db.SaveChangesAsync();
-                }
-                catch (DbUpdateException)
-                {
-                    // Handle potential foreign key constraints
-                    // For now, just redirect, or we could return with an error message in TempData
-                    TempData["ErrorMessage"] = "Cannot delete category because it is in use.";
-                }
+                _db.AutoCategories.Remove(item);
+                await _db.SaveChangesAsync();
             }
             return RedirectToPage();
         }

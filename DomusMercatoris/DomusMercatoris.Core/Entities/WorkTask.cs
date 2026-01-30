@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using DomusMercatoris.Core.Enums;
 
 namespace DomusMercatoris.Core.Entities
 {
@@ -13,6 +14,8 @@ namespace DomusMercatoris.Core.Entities
 
         [Required]
         public string Title { get; set; } = string.Empty;
+
+        public TaskType Type { get; set; } = TaskType.General;
         
         public string? Description { get; set; }
 

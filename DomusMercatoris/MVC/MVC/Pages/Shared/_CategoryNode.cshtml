@@ -1,0 +1,31 @@
+@model DomusMercatorisDotnetMVC.Pages.CategoriesModel.CategoryNode
+@{
+    var productsMap = ViewData["ProductsByCategory"] as Dictionary<int, List<Product>>;
+    var count = (productsMap != null && productsMap.TryGetValue(Model.Item.Id, out var list)) ? list.Count : 0;
+}
+
+<li class="tree-li" data-node-id="@Model.Item.Id" data-parent-id="@(Model.Item.ParentId.HasValue ? Model.Item.ParentId.Value.ToString() : "0")">
+    <div class="tree-node" data-target="children-@Model.Item.Id" data-has-children="@(Model.Children.Count > 0 ? "true" : "false")">
+        <span class="node-text">
+            @Model.Item.Name
+            @if (count > 0)
+            {
+                <span class="badge bg-light text-dark">@count</span>
+            }
+        </span>
+        <span class="node-actions">
+            <a class="btn btn-outline-secondary btn-sm" href="/Category/@Model.Item.Id/Products" title="View"><i class="bi bi-eye"></i></a>
+            <a class="btn btn-dark rounded-0 border-2 btn-sm" href="/Categories?editId=@Model.Item.Id" title="Edit"><i class="bi bi-pencil"></i></a>
+            <button type="button" class="btn btn-dark rounded-0 border-2 btn-sm btn-cat-delete" data-id="@Model.Item.Id" title="Delete"><i class="bi bi-trash"></i></button>
+        </span>
+    </div>
+    @if (Model.Children.Count > 0)
+    {
+        <ul id="children-@Model.Item.Id" class="tree-children" hidden>
+            @foreach (var child in Model.Children.OrderBy(n => n.Item.Name))
+            {
+                <partial name="_CategoryNode" model="child" view-data="ViewData" />
+            }
+        </ul>
+    }
+</li>

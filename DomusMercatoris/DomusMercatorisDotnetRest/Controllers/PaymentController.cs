@@ -16,42 +16,13 @@ namespace DomusMercatorisDotnetRest.Controllers
     {
         private readonly IGenericRepository<Order> _orderRepository;
         private readonly IHubContext<PaymentHub> _hubContext;
-        private readonly DomusDbContext _db;
+        private readonly DomusMercatorisDotnetRest.Services.OrdersService _ordersService;
 
-        public PaymentController(IGenericRepository<Order> orderRepository, IHubContext<PaymentHub> hubContext, DomusDbContext db)
+        public PaymentController(IGenericRepository<Order> orderRepository, IHubContext<PaymentHub> hubContext, DomusMercatorisDotnetRest.Services.OrdersService ordersService)
         {
             _orderRepository = orderRepository;
             _hubContext = hubContext;
-            _db = db;
-        }
-
-        private async Task ApproveOrderAsync(Order order)
-        {
-            order.Status = OrderStatus.PaymentApproved;
-            order.IsPaid = true;
-            order.PaidAt = DateTime.UtcNow;
-            
-            // Stock is already deducted at checkout.
-            // Just ensure EF tracks the changes to Order.
-            _db.Entry(order).State = EntityState.Modified;
-        }
-
-        private async Task RestoreStockAsync(Order order)
-        {
-            // Only restore if not already restored/failed
-            if (order.Status == OrderStatus.PaymentFailed) return;
-
-            if (order.OrderItems != null)
-            {
-                foreach (var item in order.OrderItems)
-                {
-                    if (item.Product != null)
-                    {
-                        item.Product.Quantity += item.Quantity;
-                        _db.Entry(item.Product).State = EntityState.Modified;
-                    }
-                }
-            }
+            _ordersService = ordersService;
         }
 
         [HttpGet("pending")]
@@ -83,32 +54,7 @@ namespace DomusMercatorisDotnetRest.Controllers
         [HttpPost("process")]
         public async Task<IActionResult> ProcessPayment([FromBody] ProcessPaymentRequest request)
         {
-            var order = await _db.Orders
-                .Include(o => o.OrderItems)
-                .ThenInclude(oi => oi.Product)
-                .FirstOrDefaultAsync(o => o.Id == request.OrderId);
-
-            if (order == null) return NotFound();
-
-            if (order.Status != OrderStatus.PaymentPending)
-            {
-                if (request.Approved && order.Status == OrderStatus.PaymentApproved) return Ok(new { Message = "Already Approved" });
-                if (!request.Approved && order.Status == OrderStatus.PaymentFailed) return Ok(new { Message = "Already Failed" });
-                return BadRequest(new { Message = $"Order status is {order.Status}, cannot process payment." });
-            }
-
-            if (request.Approved)
-            {
-                await ApproveOrderAsync(order);
-            }
-            else
-            {
-                await RestoreStockAsync(order);
-                order.Status = OrderStatus.PaymentFailed;
-            }
-
-            _db.Orders.Update(order);
-            await _db.SaveChangesAsync();
+            var order = await _ordersService.ProcessPaymentAsync(request.OrderId, request.Approved);
 
             // Notify client (user)
             await _hubContext.Clients.Group(order.Id.ToString()).SendAsync("PaymentStatusChanged", new 
@@ -136,28 +82,7 @@ namespace DomusMercatorisDotnetRest.Controllers
         [HttpPost("verify-code")]
         public async Task<IActionResult> VerifyCode([FromBody] VerifyCodeRequest request)
         {
-            var order = await _db.Orders
-                .Include(o => o.OrderItems)
-                .ThenInclude(oi => oi.Product)
-                .FirstOrDefaultAsync(o => o.Id == request.OrderId);
-
-            if (order == null) return NotFound();
-
-            if (order.Status != OrderStatus.PaymentPending)
-            {
-                return BadRequest("Order is not pending payment.");
-            }
-
-            if (order.PaymentCode != request.Code)
-            {
-                return BadRequest("Invalid payment code.");
-            }
-
-            // Code valid, approve payment
-            await ApproveOrderAsync(order);
-
-            _db.Orders.Update(order);
-            await _db.SaveChangesAsync();
+            var order = await _ordersService.VerifyPaymentCodeAsync(request.OrderId, request.Code);
 
             // Notify client (user)
             await _hubContext.Clients.Group(order.Id.ToString()).SendAsync("PaymentStatusChanged", new 
@@ -182,25 +107,7 @@ namespace DomusMercatorisDotnetRest.Controllers
         [HttpPost("reject/{orderId}")]
         public async Task<IActionResult> RejectPayment(long orderId)
         {
-            var order = await _db.Orders
-                .Include(o => o.OrderItems)
-                .ThenInclude(oi => oi.Product)
-                .FirstOrDefaultAsync(o => o.Id == orderId);
-
-            if (order == null) return NotFound();
-
-            // Allow rejecting even if not strictly pending, but logically only pending makes sense.
-            // But user might want to cancel if they changed mind.
-            // If already approved, we shouldn't allow simple reject? 
-            // For now, assume pending check.
-            if (order.Status != OrderStatus.PaymentPending)
-                return BadRequest("Order is not pending.");
-
-            await RestoreStockAsync(order);
-            order.Status = OrderStatus.PaymentFailed;
-            
-            _db.Orders.Update(order);
-            await _db.SaveChangesAsync();
+            var order = await _ordersService.RejectPaymentAsync(orderId);
 
             // Notify client (user)
             await _hubContext.Clients.Group(order.Id.ToString()).SendAsync("PaymentStatusChanged", new 
@@ -223,6 +130,6 @@ namespace DomusMercatorisDotnetRest.Controllers
     public class VerifyCodeRequest
     {
         public long OrderId { get; set; }
-        public string Code { get; set; }
+        public required string Code { get; set; }
     }
 }

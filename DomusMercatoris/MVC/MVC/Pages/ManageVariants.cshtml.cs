@@ -78,23 +78,14 @@ namespace DomusMercatorisDotnetMVC.Pages
                  return Page();
             }
 
-            try
-            {
-                NewVariant.ProductId = productId;
+            NewVariant.ProductId = productId;
 
-                if (!NewVariant.IsCustomizable)
-                {
-                    NewVariant.Price = Product.Price;
-                }
-
-                await _variantService.CreateVariantAsync(NewVariant);
-            }
-            catch (Exception ex)
+            if (!NewVariant.IsCustomizable)
             {
-                ModelState.AddModelError("", ex.Message);
-                Variants = await _variantService.GetVariantsByProductIdAsync(productId);
-                return Page();
+                NewVariant.Price = Product.Price;
             }
+
+            await _variantService.CreateVariantAsync(NewVariant);
 
             return RedirectToPage(new { productId });
         }

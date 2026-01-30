@@ -3,6 +3,7 @@ using DomusMercatoris.Core.Entities;
 using DomusMercatoris.Core.Models;
 using DomusMercatoris.Data;
 using DomusMercatoris.Service.DTOs;
+using DomusMercatoris.Core.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -39,13 +40,14 @@ namespace DomusMercatoris.Service.Services
             return _mapper.Map<CargoTrackingDto>(entity);
         }
 
-        public async Task<CargoTrackingDto?> GetByTrackingNumberAsync(string trackingNumber)
+        public async Task<CargoTrackingDto> GetByTrackingNumberAsync(string trackingNumber)
         {
             var entity = await _context.CargoTrackings
                 .Include(c => c.User)
                 .FirstOrDefaultAsync(c => c.TrackingNumber == trackingNumber);
 
-            return entity == null ? null : _mapper.Map<CargoTrackingDto>(entity);
+            if (entity == null) throw new NotFoundException($"Cargo {trackingNumber} not found.");
+            return _mapper.Map<CargoTrackingDto>(entity);
         }
 
         public async Task<List<CargoTrackingDto>> GetUserCargosAsync(long userId)
@@ -59,12 +61,12 @@ namespace DomusMercatoris.Service.Services
             return _mapper.Map<List<CargoTrackingDto>>(list);
         }
 
-        public async Task<bool> UpdateStatusAsync(UpdateCargoStatusDto dto)
+        public async Task UpdateStatusAsync(UpdateCargoStatusDto dto)
         {
             var entity = await _context.CargoTrackings
                 .FirstOrDefaultAsync(c => c.TrackingNumber == dto.TrackingNumber);
 
-            if (entity == null) return false;
+            if (entity == null) throw new NotFoundException($"Cargo {dto.TrackingNumber} not found.");
 
             entity.Status = dto.NewStatus;
             
@@ -83,7 +85,6 @@ namespace DomusMercatoris.Service.Services
             }
 
             await _context.SaveChangesAsync();
-            return true;
         }
 
         public async Task<List<CargoTrackingDto>> GetAllCargosAsync()

@@ -29,10 +29,6 @@ namespace DomusMercatorisDotnetRest.Controllers
         public async Task<IActionResult> GetByTrackingNumber(string trackingNumber)
         {
             var cargo = await _cargoService.GetByTrackingNumberAsync(trackingNumber);
-            if (cargo == null)
-            {
-                return NotFound("Cargo not found.");
-            }
             return Ok(cargo);
         }
 
@@ -76,11 +72,7 @@ namespace DomusMercatorisDotnetRest.Controllers
         [Authorize(Roles = "Manager,Admin")]
         public async Task<IActionResult> UpdateStatus([FromBody] UpdateCargoStatusDto dto)
         {
-            var result = await _cargoService.UpdateStatusAsync(dto);
-            if (!result)
-            {
-                return NotFound("Cargo not found.");
-            }
+            await _cargoService.UpdateStatusAsync(dto);
             return Ok("Status updated successfully.");
         }
     }

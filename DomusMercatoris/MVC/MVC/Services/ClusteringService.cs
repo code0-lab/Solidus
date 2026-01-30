@@ -59,24 +59,22 @@ namespace DomusMercatorisDotnetMVC.Services
         {
             if (imagePaths == null || !imagePaths.Any()) return;
 
-            try
+            using var content = new MultipartFormDataContent();
+            
+            foreach (var p in imagePaths)
             {
-                using var content = new MultipartFormDataContent();
+                var cleanPath = p.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+                var fullPath = Path.Combine(_env.WebRootPath, cleanPath);
                 
-                foreach (var p in imagePaths)
+                if (File.Exists(fullPath))
                 {
-                    var cleanPath = p.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
-                    var fullPath = Path.Combine(_env.WebRootPath, cleanPath);
-                    
-                    if (File.Exists(fullPath))
-                    {
-                        var fileBytes = await File.ReadAllBytesAsync(fullPath);
-                        var imageContent = new ByteArrayContent(fileBytes);
-                        content.Add(imageContent, "files", Path.GetFileName(fullPath));
-                    }
+                    var fileBytes = await File.ReadAllBytesAsync(fullPath);
+                    var imageContent = new ByteArrayContent(fileBytes);
+                    content.Add(imageContent, "files", Path.GetFileName(fullPath));
                 }
+            }
 
-                if (!content.Any()) return;
+            if (!content.Any()) return;
 
                 var response = await _httpClient.PostAsync($"{_pythonApiUrl}/extract", content);
                 
@@ -95,11 +93,6 @@ namespace DomusMercatorisDotnetMVC.Services
                     // Log error
                     Console.WriteLine($"Python API Error: {response.StatusCode}");
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error calling Python API: {ex.Message}");
-            }
         }
 
         public async Task<List<float>?> ExtractFeaturesFromFilesAsync(List<Microsoft.AspNetCore.Http.IFormFile> files)

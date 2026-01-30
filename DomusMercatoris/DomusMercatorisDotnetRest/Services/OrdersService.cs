@@ -103,7 +103,7 @@ namespace DomusMercatorisDotnetRest.Services
                     FleetingUserId = fleetingUserId,
                     CreatedAt = DateTime.UtcNow,
                     Status = OrderStatus.PaymentPending,
-                    PaymentCode = new Random().Next(100000, 999999).ToString()
+                    PaymentCode = Random.Shared.Next(100000, 999999).ToString()
                 };
                 _db.Orders.Add(order);
                 await _db.SaveChangesAsync();
@@ -155,10 +155,10 @@ namespace DomusMercatorisDotnetRest.Services
             }
         }
 
-        public async Task<OrderDto?> MarkPaidAsync(long id)
+        public async Task<OrderDto> MarkPaidAsync(long id)
         {
             var order = await _db.Orders.Include(s => s.OrderItems).SingleOrDefaultAsync(s => s.Id == id);
-            if (order == null) return null;
+            if (order == null) throw new NotFoundException($"Order {id} not found.");
             order.IsPaid = true;
             order.Status = OrderStatus.PaymentApproved;
             order.PaidAt = DateTime.UtcNow;
@@ -180,7 +180,7 @@ namespace DomusMercatorisDotnetRest.Services
             return MapToDto(order);
         }
 
-        public async Task<OrderDto?> GetAsync(long id)
+        public async Task<OrderDto> GetAsync(long id)
         {
             var order = await _db.Orders
                 .Include(o => o.OrderItems)
@@ -189,17 +189,19 @@ namespace DomusMercatorisDotnetRest.Services
                     .ThenInclude(i => i.VariantProduct)
                 .FirstOrDefaultAsync(o => o.Id == id);
 
-            if (order == null) return null;
+            if (order == null) throw new NotFoundException($"Order {id} not found.");
 
             return MapToDto(order);
         }
 
-        public async Task<CargoTracking?> GetTrackingAsync(long orderId)
+        public async Task<CargoTracking> GetTrackingAsync(long orderId)
         {
             var order = await _db.Orders.FindAsync(orderId);
-            if (order == null || order.CargoTrackingId == null) return null;
+            if (order == null || order.CargoTrackingId == null) throw new NotFoundException($"Tracking for order {orderId} not found.");
 
-            return await _db.CargoTrackings.FindAsync(order.CargoTrackingId);
+            var tracking = await _db.CargoTrackings.FindAsync(order.CargoTrackingId);
+            if (tracking == null) throw new NotFoundException($"Tracking entry {order.CargoTrackingId} not found.");
+            return tracking;
         }
 
         public async Task<PaginatedResult<OrderDto>> GetByUserIdAsync(long userId, int pageNumber = 1, int pageSize = 10, string? tab = null)
@@ -237,6 +239,109 @@ namespace DomusMercatorisDotnetRest.Services
                 PageSize = pageSize,
                 TotalCount = totalCount
             };
+        }
+
+        public async Task<Order> ProcessPaymentAsync(long orderId, bool approved)
+        {
+            var order = await _db.Orders
+                .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Product)
+                .FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (order == null) throw new NotFoundException($"Order {orderId} not found.");
+
+            if (order.Status != OrderStatus.PaymentPending)
+            {
+                if (approved && order.Status == OrderStatus.PaymentApproved) return order; // Idempotent success
+                if (!approved && order.Status == OrderStatus.PaymentFailed) return order; // Idempotent success
+                
+                throw new InvalidOperationException($"Order status is {order.Status}, cannot process payment.");
+            }
+
+            if (approved)
+            {
+                await ApproveOrderAsync(order);
+            }
+            else
+            {
+                await RestoreStockAsync(order);
+                order.Status = OrderStatus.PaymentFailed;
+            }
+
+            _db.Orders.Update(order);
+            await _db.SaveChangesAsync();
+            return order;
+        }
+
+        public async Task<Order> VerifyPaymentCodeAsync(long orderId, string code)
+        {
+             var order = await _db.Orders
+                .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Product)
+                .FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (order == null) throw new NotFoundException($"Order {orderId} not found.");
+
+            if (order.Status != OrderStatus.PaymentPending)
+            {
+                 if (order.Status == OrderStatus.PaymentApproved && order.PaymentCode == code) return order;
+                 throw new InvalidOperationException("Order is not pending payment.");
+            }
+
+            if (order.PaymentCode != code)
+            {
+                throw new BadRequestException("Invalid payment code.");
+            }
+
+            await ApproveOrderAsync(order);
+            _db.Orders.Update(order);
+            await _db.SaveChangesAsync();
+            return order;
+        }
+
+        public async Task<Order> RejectPaymentAsync(long orderId)
+        {
+            var order = await _db.Orders
+                .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Product)
+                .FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (order == null) throw new NotFoundException($"Order {orderId} not found.");
+
+            if (order.Status != OrderStatus.PaymentPending)
+                throw new InvalidOperationException("Order is not pending.");
+
+            await RestoreStockAsync(order);
+            order.Status = OrderStatus.PaymentFailed;
+            
+            _db.Orders.Update(order);
+            await _db.SaveChangesAsync();
+            return order;
+        }
+
+        private async Task ApproveOrderAsync(Order order)
+        {
+            order.Status = OrderStatus.PaymentApproved;
+            order.IsPaid = true;
+            order.PaidAt = DateTime.UtcNow;
+            _db.Entry(order).State = EntityState.Modified;
+        }
+
+        private async Task RestoreStockAsync(Order order)
+        {
+            if (order.Status == OrderStatus.PaymentFailed) return;
+
+            if (order.OrderItems != null)
+            {
+                foreach (var item in order.OrderItems)
+                {
+                    if (item.Product != null)
+                    {
+                        item.Product.Quantity += item.Quantity;
+                        _db.Entry(item.Product).State = EntityState.Modified;
+                    }
+                }
+            }
         }
 
         private OrderDto MapToDto(Order order)

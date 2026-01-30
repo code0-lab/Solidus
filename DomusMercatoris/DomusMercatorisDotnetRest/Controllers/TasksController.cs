@@ -105,10 +105,7 @@ namespace DomusMercatorisDotnetRest.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> CompleteTask(long id)
         {
-            var userId = GetUserId();
-            var isManager = User.IsInRole("Manager");
-            
-            var success = await _taskService.UpdateTaskStatusAsync(id, true, userId, isManager, false);
+            var success = await _taskService.UpdateTaskStatusAsync(id, true);
             
             if (!success) return BadRequest("Could not complete task. Check permissions or task status.");
             
@@ -126,12 +123,9 @@ namespace DomusMercatorisDotnetRest.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> CompleteTracking(long id, [FromBody] TrackingRequest request)
         {
-            var userId = GetUserId();
-            var isManager = User.IsInRole("Manager");
-
             if (string.IsNullOrEmpty(request.TrackingNumber)) return BadRequest("Tracking number is required.");
 
-            var success = await _taskService.CompleteShippingTaskAsync(id, request.TrackingNumber, userId, isManager);
+            var success = await _taskService.CompleteShippingTaskAsync(id, request.TrackingNumber);
 
             if (!success) return BadRequest("Could not complete shipping task.");
             

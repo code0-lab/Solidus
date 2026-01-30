@@ -12,6 +12,7 @@ using DomusMercatoris.Core.Repositories;
 using DomusMercatoris.Data.Repositories;
 using DomusMercatoris.Service.Services;
 using DomusMercatoris.Service.Mappings;
+using DomusMercatoris.Service.Interfaces;
 using DomusMercatorisDotnetRest.Infrastructure;
 using DomusMercatorisDotnetRest.Services;
 using DomusMercatorisDotnetRest.Hubs;
@@ -33,6 +34,8 @@ builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepositor
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 
 // Services
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<BrandService>();
 builder.Services.AddScoped<VariantProductService>();

@@ -52,47 +52,39 @@ namespace DomusMercatorisDotnetMVC.Pages.Account
 
         public async Task<IActionResult> OnPostUpdateAiSettingsAsync()
         {
-            try
+            var user = await GetCurrentUserAsync();
+            if (user == null)
             {
-                var user = await GetCurrentUserAsync();
-                if (user == null)
-                {
-                    return RedirectToPage("/Index");
-                }
-
-                // Security check: Only Managers can update AI settings
-                if (user.Roles == null || !user.Roles.Any(r => r.Trim().Equals("Manager", StringComparison.OrdinalIgnoreCase)))
-                {
-                    return Forbid();
-                }
-
-                // Save settings using service directly
-                var aiSettingsDto = new AiSettingsDto
-                {
-                    GeminiApiKey = AiPanel.GeminiApiKey,
-                    CommentModerationPrompt = AiPanel.CommentModerationPrompt,
-                    IsAiModerationEnabled = AiPanel.IsAiModerationEnabled
-                };
-
-                bool success = await _geminiService.UpdateAiSettingsAsync(user.CompanyId.GetValueOrDefault(), aiSettingsDto);
-
-                if (success)
-                {
-                    TempData["SuccessMessage"] = "AI settings updated successfully.";
-                }
-                else
-                {
-                    TempData["ErrorMessage"] = "Failed to update AI settings.";
-                }
-
-                await LoadPageDataAsync(user);
-                return Page();
+                return RedirectToPage("/Index");
             }
-            catch (Exception ex)
+
+            // Security check: Only Managers can update AI settings
+            if (user.Roles == null || !user.Roles.Any(r => r.Trim().Equals("Manager", StringComparison.OrdinalIgnoreCase)))
             {
-                TempData["ErrorMessage"] = $"An error occurred: {ex.Message}";
-                return RedirectToPage();
+                return Forbid();
             }
+
+            // Save settings using service directly
+            var aiSettingsDto = new AiSettingsDto
+            {
+                GeminiApiKey = AiPanel.GeminiApiKey,
+                CommentModerationPrompt = AiPanel.CommentModerationPrompt,
+                IsAiModerationEnabled = AiPanel.IsAiModerationEnabled
+            };
+
+            bool success = await _geminiService.UpdateAiSettingsAsync(user.CompanyId.GetValueOrDefault(), aiSettingsDto);
+
+            if (success)
+            {
+                TempData["SuccessMessage"] = "AI settings updated successfully.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Failed to update AI settings.";
+            }
+
+            await LoadPageDataAsync(user);
+            return Page();
         }
 
         public async Task<IActionResult> OnPostUpdateContactAsync()

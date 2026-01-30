@@ -113,7 +113,15 @@
                             <div class="card-body">
                                 <div class="fw-semibold mb-2">Category Tree</div>
                                 <div id="treeViewer" class="tree-container text-muted">Select a category to view its tree.</div>
-                                <div id="treeSource" hidden>@Html.Raw(Model.TreeHtml)</div>
+                                <div id="treeSource" hidden>
+                                    <ul class="tree-root">
+                                        @{ ViewData["ProductsByCategory"] = Model.ProductsByCategory; }
+                                        @foreach (var root in Model.TreeRoots)
+                                        {
+                                            <partial name="_CategoryNode" model="root" view-data="ViewData" />
+                                        }
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                     }

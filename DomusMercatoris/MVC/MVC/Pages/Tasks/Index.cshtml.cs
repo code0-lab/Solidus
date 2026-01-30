@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using DomusMercatoris.Data;
+using DomusMercatoris.Core.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using DomusMercatoris.Core.Models;
 
@@ -33,7 +34,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Tasks
         public async Task<IActionResult> OnGetAsync()
         {
             var companyId = await _userService.GetCompanyIdFromUserAsync(User);
-            if (companyId == 0) return Forbid();
+            if (companyId == 0) throw new ForbiddenException("Access denied.");
             CompanyId = companyId;
 
             long currentUserId = 0;
@@ -85,7 +86,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Tasks
         public async Task<IActionResult> OnPostAssignAsync()
         {
             var companyId = await _userService.GetCompanyIdFromUserAsync(User);
-            if (companyId == 0) return Forbid();
+            if (companyId == 0) throw new ForbiddenException("Access denied.");
 
             long currentUserId = 0;
             var idClaim = User.FindFirst("UserId")?.Value;
@@ -115,7 +116,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Tasks
             }
 
             var task = await _db.WorkTasks.Include(t => t.Order).FirstOrDefaultAsync(t => t.Id == taskId);
-            if (task == null) return new JsonResult(new { success = false });
+            if (task == null) throw new NotFoundException($"Task {taskId} not found.");
 
             // Permission check
             if (task.AssignedToUserId == currentUserId || isManager || hasPermission)
@@ -126,7 +127,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Tasks
                 // Order Workflow Logic
                 if (task.Order != null && isCompleted)
                 {
-                    if (task.Title == "Paketleme")
+                    if (task.Title == "Packaging")
                     {
                         task.Order.Status = OrderStatus.Preparing; // 4
                         _db.Entry(task.Order).State = EntityState.Modified;
@@ -138,13 +139,13 @@ namespace DomusMercatorisDotnetMVC.Pages.Tasks
                 return new JsonResult(new { success = true });
             }
 
-            return new JsonResult(new { success = false });
+            throw new ForbiddenException("Access denied.");
         }
 
         public async Task<IActionResult> OnPostCompleteTrackingAsync(long taskId, string trackingNumber)
         {
             var companyId = await _userService.GetCompanyIdFromUserAsync(User);
-            if (companyId == 0) return Forbid();
+            if (companyId == 0) throw new ForbiddenException("Access denied.");
 
             long currentUserId = 0;
             var idClaim = User.FindFirst("UserId")?.Value;
@@ -155,22 +156,22 @@ namespace DomusMercatorisDotnetMVC.Pages.Tasks
                 .Include(t => t.Order)
                 .FirstOrDefaultAsync(t => t.Id == taskId && t.CompanyId == companyId);
 
-            if (task == null) return NotFound();
+            if (task == null) throw new NotFoundException($"Task {taskId} not found.");
 
             // Permission Check
             bool isManager = User.IsInRole("Manager");
             if (!isManager && task.AssignedToUserId != currentUserId)
             {
-                return Forbid();
+                throw new ForbiddenException("Access denied.");
             }
 
-            if (string.IsNullOrEmpty(trackingNumber)) return BadRequest("Tracking number is required.");
+            if (string.IsNullOrEmpty(trackingNumber)) throw new BadRequestException("Tracking number is required.");
 
             // 1. Create CargoTracking
             var cargo = new CargoTracking
             {
                 TrackingNumber = trackingNumber,
-                CarrierName = "Kargo", // Default, as user only provides tracking no
+                CarrierName = "Cargo", // Default, as user only provides tracking no
                 Status = DomusMercatoris.Core.Models.CargoStatus.InTransit,
                 CreatedAt = DateTime.UtcNow,
                 ShippedDate = DateTime.UtcNow,

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using DomusMercatoris.Core.Exceptions;
 
 namespace DomusMercatorisDotnetRest.Infrastructure
 {
@@ -29,12 +30,36 @@ namespace DomusMercatorisDotnetRest.Infrastructure
             switch (exception)
             {
                 case KeyNotFoundException:
+                case NotFoundException:
                     problemDetails.Status = StatusCodes.Status404NotFound;
                     problemDetails.Title = "Not Found";
                     break;
                 case UnauthorizedAccessException:
+                case ForbiddenException:
                     problemDetails.Status = StatusCodes.Status403Forbidden;
                     problemDetails.Title = "Forbidden";
+                    break;
+                case UnauthorizedException:
+                    problemDetails.Status = StatusCodes.Status401Unauthorized;
+                    problemDetails.Title = "Unauthorized";
+                    break;
+                case BadRequestException:
+                case ArgumentException:
+                    problemDetails.Status = StatusCodes.Status400BadRequest;
+                    problemDetails.Title = "Bad Request";
+                    break;
+                case StockInsufficientException:
+                    problemDetails.Status = StatusCodes.Status409Conflict;
+                    problemDetails.Title = "Stock Insufficient";
+                    problemDetails.Extensions["Code"] = "STOCK_ADJUSTED";
+                    if (exception is StockInsufficientException stockEx)
+                    {
+                        problemDetails.Extensions["Adjustments"] = stockEx.Adjustments;
+                    }
+                    break;
+                case InvalidOperationException:
+                    problemDetails.Status = StatusCodes.Status409Conflict;
+                    problemDetails.Title = "Conflict";
                     break;
                 default:
                     problemDetails.Status = StatusCodes.Status500InternalServerError;

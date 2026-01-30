@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Text;
 using System.Text.Json;
 
+//Bu servis bir ödeme sisteminin gerçekçiliğini canlandırmak için kasten Kendi API'ına HTTP isteği atmak için tasarlandı.
 namespace DomusMercatoris.MockBank.Services
 {
     public class TimeoutService : BackgroundService
@@ -53,7 +54,7 @@ namespace DomusMercatoris.MockBank.Services
             if (!timedOutOrders.Any()) return;
 
             var client = _httpClientFactory.CreateClient();
-            var apiUrl = _configuration["ApiUrl"] ?? "http://localhost:5280";
+            var apiUrl = _configuration["ApiUrl"];
 
             foreach (var order in timedOutOrders)
             {

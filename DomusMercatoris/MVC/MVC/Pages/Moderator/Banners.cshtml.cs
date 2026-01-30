@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using DomusMercatorisDotnetMVC.Services;
 using DomusMercatoris.Service.Services;
 using DomusMercatoris.Service.DTOs;
+using DomusMercatoris.Core.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using DomusMercatoris.Core.Entities;
@@ -225,10 +226,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
         {
             var banners = await _bannerService.GetAllAsync(companyId);
             var banner = banners.FirstOrDefault(b => b.Id == id);
-            if (banner == null)
-            {
-                return NotFound();
-            }
+            if (banner == null) throw new NotFoundException($"Banner {id} not found.");
 
             var html = banner.HtmlContent ?? string.Empty;
             return Content(html, "text/html");
