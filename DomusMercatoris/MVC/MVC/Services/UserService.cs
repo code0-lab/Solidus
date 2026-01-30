@@ -43,7 +43,7 @@ namespace DomusMercatorisDotnetMVC.Services
             if (!string.IsNullOrEmpty(idClaim) && long.TryParse(idClaim, out var userId))
             {
                 var userEntity = await _dbContext.Users.AsNoTracking().SingleOrDefaultAsync(u => u.Id == userId);
-                if (userEntity != null) return userEntity.CompanyId;
+                if (userEntity != null) return userEntity.CompanyId ?? 0;
             }
             return 0;
         }

@@ -40,7 +40,7 @@ namespace DomusMercatorisDotnetMVC.Pages
             {
                 return RedirectToPage("/Index");
             }
-            var customersMe = await _userService.GetByCompanyAsync(me.CompanyId);
+            var customersMe = await _userService.GetByCompanyAsync(me.CompanyId ?? 0);
             Customers = customersMe
                 .Where(u => (u.Roles ?? new List<string>()).Any(r => string.Equals(r, "Customer", System.StringComparison.OrdinalIgnoreCase)))
                 .ToList();

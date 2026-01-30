@@ -46,7 +46,7 @@ namespace DomusMercatorisDotnetMVC.Pages
                 if (!string.IsNullOrEmpty(idClaim) && long.TryParse(idClaim, out var userId))
                 {
                     var me = await _db.Users.SingleOrDefaultAsync(u => u.Id == userId);
-                    if (me != null) companyId = me.CompanyId;
+                    if (me != null) companyId = me.CompanyId ?? 0;
                 }
             }
 

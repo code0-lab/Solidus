@@ -93,14 +93,14 @@ namespace DomusMercatorisDotnetMVC.Pages
             {
                 return RedirectToPage("/Index");
             }
-            var workersMe = await _userService.GetByCompanyAsync(me.CompanyId);
+            var workersMe = await _userService.GetByCompanyAsync(me.CompanyId ?? 0);
             Workers = workersMe
                 .Where(u => !(u.Roles ?? new List<string>()).Any(r => 
                     string.Equals(r, "Customer", StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(r, "Rex", StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(r, "Moderator", StringComparison.OrdinalIgnoreCase)))
                 .ToList();
-            await LoadPageAccessAsync(me.CompanyId);
+            await LoadPageAccessAsync(me.CompanyId ?? 0);
             return Page();
         }
 
@@ -139,7 +139,7 @@ namespace DomusMercatorisDotnetMVC.Pages
                 ModelState.AddModelError(string.Empty, "Unauthorized");
                 return await OnGetAsync();
             }
-            var ok = await _userService.UpdateUserInCompanyAsync(Edit.Id, me.CompanyId, Edit.FirstName, Edit.LastName, Edit.Email);
+            var ok = await _userService.UpdateUserInCompanyAsync(Edit.Id, me.CompanyId ?? 0, Edit.FirstName, Edit.LastName, Edit.Email);
             if (!ok)
             {
                 ModelState.AddModelError(string.Empty, "Update failed");
@@ -186,7 +186,7 @@ namespace DomusMercatorisDotnetMVC.Pages
                 ModelState.AddModelError(string.Empty, "Unauthorized");
                 return await OnGetAsync();
             }
-            var ok = await _userService.DeleteUserInCompanyAsync(DeleteId, me.CompanyId, userId);
+            var ok = await _userService.DeleteUserInCompanyAsync(DeleteId, me.CompanyId ?? 0, userId);
             if (!ok)
             {
                 ModelState.AddModelError(string.Empty, "Delete failed");
@@ -204,7 +204,7 @@ namespace DomusMercatorisDotnetMVC.Pages
                  
                  var me = await _userService.GetByIdAsync(uId);
                  if (me == null) return new JsonResult(new { count = 0 });
-                 companyId = me.CompanyId;
+                 companyId = me.CompanyId ?? 0;
             }
 
             // Check only assigned tasks as requested
@@ -242,7 +242,7 @@ namespace DomusMercatorisDotnetMVC.Pages
                 if (!string.IsNullOrEmpty(idClaim) && long.TryParse(idClaim, out var currentUserId))
                 {
                     var me = await _userService.GetByIdAsync(currentUserId);
-                    if (me != null) companyId = me.CompanyId;
+                    if (me != null) companyId = me.CompanyId ?? 0;
                 }
             }
 

@@ -373,7 +373,9 @@
 
                         <input name="UserRegisterDto.Email" value="@Model.UserRegisterDto.Email" type="email" class="brutalist-input" placeholder="Email Address">
                         
-                        <input name="UserRegisterDto.CompanyName" value="@Model.UserRegisterDto.CompanyName" class="brutalist-input" placeholder="Company Name">
+                        <div>
+                            <input name="UserRegisterDto.CompanyName" value="@Model.UserRegisterDto.CompanyName" class="brutalist-input" placeholder="Company Name">
+                        </div>
 
                         <div class="mb-4">
                             <div class="form-check">
@@ -406,6 +408,7 @@
                                 passField.style.display = 'block';
                             }
                         }
+
                         // Initialize on load
                         document.addEventListener("DOMContentLoaded", function() {
                             togglePasswordFields();

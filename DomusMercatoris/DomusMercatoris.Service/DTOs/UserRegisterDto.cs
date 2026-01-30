@@ -21,7 +21,6 @@ namespace DomusMercatoris.Service.DTOs
         [StringLength(200)]
         public string Password { get; set; } = string.Empty;
 
-        [Required]
-        public int CompanyId { get; set; }
+        public int? CompanyId { get; set; }
     }
 }

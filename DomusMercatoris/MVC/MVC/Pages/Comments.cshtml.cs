@@ -88,7 +88,7 @@ namespace DomusMercatorisDotnetMVC.Pages
                     var me = await _userService.GetByIdAsync(userId);
                     if (me != null)
                     {
-                        CompanyId = me.CompanyId;
+                        CompanyId = me.CompanyId ?? 0;
                     }
                 }
             }

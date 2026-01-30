@@ -54,7 +54,7 @@ namespace DomusMercatorisDotnetMVC.Pages
                     ModelState.AddModelError(string.Empty, "Manager not found.");
                     return Page();
                 }
-                companyId = manager.CompanyId;
+                companyId = manager.CompanyId ?? 0;
             }
             var user = await _userService.RegisterWorkerAsync(UserRegisterDto, companyId);
             if (user != null)

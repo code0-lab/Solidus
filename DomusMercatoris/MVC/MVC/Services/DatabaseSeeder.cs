@@ -35,7 +35,7 @@ namespace DomusMercatorisDotnetMVC.Services
                     FirstName = "Rex",
                     LastName = "User",
                     Password = rexPasswordHash,
-                    CompanyId = defaultCompanyId,
+                    CompanyId = null,
                     Roles = new List<string> { "Rex" },
                     CreatedAt = DateTime.Now,
                     Address = "Rex HQ",
@@ -47,12 +47,47 @@ namespace DomusMercatorisDotnetMVC.Services
             else
             {
                 rexUser.Password = rexPasswordHash;
+                rexUser.CompanyId = null; // Ensure Rex has no company
 
                 if (!rexUser.Roles.Contains("Rex"))
                 {
                     rexUser.Roles.Add("Rex");
                 }
 
+                db.SaveChanges();
+            }
+
+            var moderatorEmail = "moderator@domus.com";
+            var moderatorUser = db.Users.FirstOrDefault(u => u.Email == moderatorEmail);
+            var moderatorPasswordHash = BCrypt.Net.BCrypt.HashPassword("moderator123");
+            
+            if (moderatorUser == null)
+            {
+                moderatorUser = new User
+                {
+                    Email = moderatorEmail,
+                    FirstName = "Moderator",
+                    LastName = "User",
+                    Password = moderatorPasswordHash,
+                    CompanyId = null,
+                    Roles = new List<string> { "Moderator" },
+                    CreatedAt = DateTime.Now,
+                    Address = "Moderator HQ",
+                    Phone = "555-MOD"
+                };
+                db.Users.Add(moderatorUser);
+                db.SaveChanges();
+            }
+            else
+            {
+                moderatorUser.Password = moderatorPasswordHash;
+                moderatorUser.CompanyId = null; // Ensure Moderator has no company
+                
+                if (!moderatorUser.Roles.Contains("Moderator"))
+                {
+                    moderatorUser.Roles.Add("Moderator");
+                }
+                
                 db.SaveChanges();
             }
 

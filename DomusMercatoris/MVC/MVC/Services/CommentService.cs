@@ -38,7 +38,7 @@ namespace DomusMercatorisDotnetMVC.Services
                 }
 
                 // Perform AI moderation
-                bool isApproved = await _geminiCommentService.ModerateCommentAsync(comment.Text, user.CompanyId);
+                bool isApproved = await _geminiCommentService.ModerateCommentAsync(comment.Text, user.CompanyId ?? 0);
                 comment.IsApproved = isApproved;
                 comment.ModerationStatus = isApproved ? 1 : 2;
 

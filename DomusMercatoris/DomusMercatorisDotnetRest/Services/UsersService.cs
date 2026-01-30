@@ -57,7 +57,7 @@ namespace DomusMercatorisDotnetRest.Services
                 Email = dto.Email,
                 Password = HashSha256(dto.Password),
                 CompanyId = dto.CompanyId,
-                Roles = new List<string> { "customer" },
+                Roles = new List<string> { "Customer", "User" },
                 CreatedAt = DateTime.UtcNow
             };
             _db.Users.Add(user);
@@ -157,9 +157,14 @@ namespace DomusMercatorisDotnetRest.Services
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim("CompanyId", user.CompanyId.ToString())
+                new Claim(ClaimTypes.Email, user.Email)
             };
+
+            if (user.CompanyId.HasValue)
+            {
+                claims.Add(new Claim("CompanyId", user.CompanyId.Value.ToString()));
+            }
+
             foreach (var role in user.Roles) claims.Add(new Claim(ClaimTypes.Role, role));
             var tokenDescriptor = new SecurityTokenDescriptor
             {

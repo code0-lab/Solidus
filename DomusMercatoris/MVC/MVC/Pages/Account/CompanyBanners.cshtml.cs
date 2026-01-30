@@ -61,7 +61,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Account
             var user = await GetCurrentUserAsync();
             if (user == null) return RedirectToPage("/Index");
 
-            CurrentCompanyId = user.CompanyId;
+            CurrentCompanyId = user.CompanyId ?? 0;
             CompanyName = user.Company?.Name ?? "Unknown Company";
 
             await LoadBannersAsync(CurrentCompanyId);
@@ -73,7 +73,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Account
         {
             var user = await GetCurrentUserAsync();
             if (user == null) return RedirectToPage("/Index");
-            CurrentCompanyId = user.CompanyId;
+            CurrentCompanyId = user.CompanyId ?? 0;
             CompanyName = user.Company?.Name ?? "Unknown Company";
 
             if (!ModelState.IsValid)
@@ -123,7 +123,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Account
         {
             var user = await GetCurrentUserAsync();
             if (user == null) return RedirectToPage("/Index");
-            CurrentCompanyId = user.CompanyId;
+            CurrentCompanyId = user.CompanyId ?? 0;
             CompanyName = user.Company?.Name ?? "Unknown Company";
 
             if (string.IsNullOrWhiteSpace(Input.HtmlContent))
@@ -158,7 +158,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Account
         {
             var user = await GetCurrentUserAsync();
             if (user == null) return RedirectToPage("/Index");
-            CurrentCompanyId = user.CompanyId;
+            CurrentCompanyId = user.CompanyId ?? 0;
 
             var dto = new UpdateBannerStatusDto
             {
@@ -176,7 +176,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Account
         {
             var user = await GetCurrentUserAsync();
             if (user == null) return RedirectToPage("/Index");
-            CurrentCompanyId = user.CompanyId;
+            CurrentCompanyId = user.CompanyId ?? 0;
 
             await _bannerService.DeleteAsync(id, CurrentCompanyId);
             await LoadBannersAsync(CurrentCompanyId);
@@ -187,7 +187,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Account
         {
             var user = await GetCurrentUserAsync();
             if (user == null) return RedirectToPage("/Index");
-            CurrentCompanyId = user.CompanyId;
+            CurrentCompanyId = user.CompanyId ?? 0;
 
             var rawContent = Edit.HtmlContent ?? string.Empty;
             string finalHtml;
@@ -287,7 +287,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Account
         {
             var user = await GetCurrentUserAsync();
             if (user == null) return Unauthorized();
-            CurrentCompanyId = user.CompanyId;
+            CurrentCompanyId = user.CompanyId ?? 0;
 
             // Efficiently fetch only the requested banner
             var banner = await _bannerService.GetByIdAsync(id, CurrentCompanyId);

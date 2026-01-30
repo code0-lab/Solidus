@@ -65,7 +65,10 @@ namespace DomusMercatorisDotnetMVC.Pages
                     HttpContext.Session.SetString("Role", string.Join(",", roles));
                 }
 
-                claims.Add(new Claim("CompanyId", user.CompanyId.ToString()));
+                if (user.CompanyId.HasValue)
+                {
+                    claims.Add(new Claim("CompanyId", user.CompanyId.Value.ToString()));
+                }
 
                 var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                 var principal = new ClaimsPrincipal(identity);

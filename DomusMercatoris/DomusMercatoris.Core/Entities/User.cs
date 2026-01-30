@@ -17,7 +17,7 @@ namespace DomusMercatoris.Core.Entities
         public string LastName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
-        public int CompanyId { get; set; }
+        public int? CompanyId { get; set; }
         public Company? Company { get; set; }
         public List<string> Roles { get; set; } = new List<string>();
         public ICollection<Comment> Comments { get; set; } = new List<Comment>();
