@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using DomusMercatorisDotnetMVC.Services;
+using DomusMercatoris.Core.Constants;
 
 namespace DomusMercatorisDotnetMVC.Pages.Moderator
 {
@@ -28,7 +29,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
             if (User.Identity != null && User.Identity.IsAuthenticated)
             {
                  // If already logged in as moderator or rex, redirect to index
-                 if (User.IsInRole("Moderator") || User.IsInRole("Rex"))
+                 if (User.IsInRole(AppConstants.Roles.Moderator) || User.IsInRole(AppConstants.Roles.Rex))
                  {
                      Response.Redirect("/Moderator/Index");
                  }
@@ -41,7 +42,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
             if (user != null)
             {
                 // Check for Moderator or Rex role
-                if (user.Roles == null || (!user.Roles.Any(r => r.Trim().Equals("Moderator", StringComparison.OrdinalIgnoreCase)) && !user.Roles.Any(r => r.Trim().Equals("Rex", StringComparison.OrdinalIgnoreCase))))
+                if (user.Roles == null || (!user.Roles.Any(r => r.Trim().Equals(AppConstants.Roles.Moderator, StringComparison.OrdinalIgnoreCase)) && !user.Roles.Any(r => r.Trim().Equals(AppConstants.Roles.Rex, StringComparison.OrdinalIgnoreCase))))
                 {
                     ModelState.AddModelError(string.Empty, "Access Denied: You do not have Moderator privileges.");
                     return Page();
@@ -51,7 +52,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
                 var fullName = $"{user.FirstName} {user.LastName}";
                 var claims = new List<Claim>
                 {
-                    new Claim("UserId", user.Id.ToString()),
+                    new Claim(AppConstants.CustomClaimTypes.UserId, user.Id.ToString()),
                     new Claim(ClaimTypes.Email, user.Email),
                     new Claim(ClaimTypes.Name, fullName)
                 };
@@ -61,8 +62,8 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
                 // If user is banned, ONLY assign "Baned" role
                 if (user.Ban != null && user.Ban.IsBanned)
                 {
-                    claims.Add(new Claim(ClaimTypes.Role, "Baned"));
-                    HttpContext.Session.SetString("Role", "Baned");
+                    claims.Add(new Claim(ClaimTypes.Role, AppConstants.Roles.Banned));
+                    HttpContext.Session.SetString(AppConstants.SessionKeys.Role, AppConstants.Roles.Banned);
                 }
                 else
                 {
@@ -70,19 +71,19 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
                     {
                         claims.Add(new Claim(ClaimTypes.Role, r));
                     }
-                    HttpContext.Session.SetString("Role", string.Join(",", roles));
+                    HttpContext.Session.SetString(AppConstants.SessionKeys.Role, string.Join(",", roles));
                 }
 
                 if (user.CompanyId.HasValue)
                 {
-                    claims.Add(new Claim("CompanyId", user.CompanyId.Value.ToString()));
+                    claims.Add(new Claim(AppConstants.CustomClaimTypes.CompanyId, user.CompanyId.Value.ToString()));
                 }
 
                 var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                 var principal = new ClaimsPrincipal(identity);
                 await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
                 
-                HttpContext.Session.SetString("Email", user.Email);
+                HttpContext.Session.SetString(AppConstants.SessionKeys.Email, user.Email);
 
                 // Ban check (even though moderators probably shouldn't be banned, good to keep consistent or maybe moderators are immune? 
                 // The user requirement says "Baned users... redirected to Baned page". 

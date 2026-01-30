@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using DomusMercatorisDotnetMVC.Services;
 using DomusMercatoris.Core.Entities;
+using DomusMercatoris.Core.Constants;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
@@ -70,20 +71,20 @@ namespace DomusMercatorisDotnetMVC.Pages
 
         public async Task<IActionResult> OnGetAsync()
         {
-            var comp = User.FindFirst("CompanyId")?.Value;
+            var comp = User.FindFirst(AppConstants.CustomClaimTypes.CompanyId)?.Value;
             if (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var companyId))
             {
                 var workers = await _userService.GetByCompanyAsync(companyId);
                 Workers = workers
                     .Where(u => !(u.Roles ?? new List<string>()).Any(r => 
-                        string.Equals(r, "Customer", StringComparison.OrdinalIgnoreCase) ||
-                        string.Equals(r, "Rex", StringComparison.OrdinalIgnoreCase) ||
-                        string.Equals(r, "Moderator", StringComparison.OrdinalIgnoreCase)))
+                        string.Equals(r, AppConstants.Roles.Customer, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(r, AppConstants.Roles.Rex, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(r, AppConstants.Roles.Moderator, StringComparison.OrdinalIgnoreCase)))
                     .ToList();
                 await LoadPageAccessAsync(companyId);
                 return Page();
             }
-            var idClaim = User.FindFirst("UserId")?.Value;
+            var idClaim = User.FindFirst(AppConstants.CustomClaimTypes.UserId)?.Value;
             if (string.IsNullOrEmpty(idClaim) || !long.TryParse(idClaim, out var userId))
             {
                 return RedirectToPage("/Index");
@@ -96,9 +97,9 @@ namespace DomusMercatorisDotnetMVC.Pages
             var workersMe = await _userService.GetByCompanyAsync(me.CompanyId ?? 0);
             Workers = workersMe
                 .Where(u => !(u.Roles ?? new List<string>()).Any(r => 
-                    string.Equals(r, "Customer", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(r, "Rex", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(r, "Moderator", StringComparison.OrdinalIgnoreCase)))
+                    string.Equals(r, AppConstants.Roles.Customer, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(r, AppConstants.Roles.Rex, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(r, AppConstants.Roles.Moderator, StringComparison.OrdinalIgnoreCase)))
                 .ToList();
             await LoadPageAccessAsync(me.CompanyId ?? 0);
             return Page();

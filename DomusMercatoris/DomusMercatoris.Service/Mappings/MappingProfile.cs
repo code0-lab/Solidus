@@ -51,6 +51,14 @@ namespace DomusMercatoris.Service.Mappings
 
             CreateMap<Banner, BannerDto>();
             CreateMap<Banner, BannerSummaryDto>();
+
+            // Fleeting User Mapping
+            CreateMap<FleetingUser, FleetingUserDto>();
+
+            // Order Mapping
+            CreateMap<Order, OrderDto>()
+                .ForMember(dest => dest.User, opt => opt.MapFrom(src => src.User))
+                .ForMember(dest => dest.FleetingUser, opt => opt.MapFrom(src => src.FleetingUser));
         }
     }
 }

@@ -13,6 +13,8 @@ namespace DomusMercatoris.Service.DTOs
         public decimal Price { get; set; }
         public int CompanyId { get; set; }
         public int Quantity { get; set; }
+        public int LowStockThreshold { get; set; }
+        public string? ShelfNumber { get; set; }
         public List<string> Images { get; set; } = new List<string>();
         public int? BrandId { get; set; }
         public string? BrandName { get; set; }

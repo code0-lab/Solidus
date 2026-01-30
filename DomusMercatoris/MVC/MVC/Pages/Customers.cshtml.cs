@@ -5,6 +5,8 @@ using DomusMercatorisDotnetMVC.Services;
 using DomusMercatoris.Core.Entities;
 using System.Collections.Generic;
 using System.Linq;
+using AutoMapper;
+using DomusMercatoris.Service.DTOs;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
@@ -12,38 +14,25 @@ namespace DomusMercatorisDotnetMVC.Pages
     public class CustomersModel : PageModel
     {
         private readonly UserService _userService;
-        public CustomersModel(UserService userService)
+        private readonly IMapper _mapper;
+
+        public CustomersModel(UserService userService, IMapper mapper)
         {
             _userService = userService;
+            _mapper = mapper;
         }
 
-        public List<User> Customers { get; set; } = new();
+        public List<UserDto> Customers { get; set; } = new();
 
         public async Task<IActionResult> OnGetAsync()
         {
-            var comp = User.FindFirst("CompanyId")?.Value;
-            if (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var companyId))
-            {
-                var customers = await _userService.GetByCompanyAsync(companyId);
-                Customers = customers
-                    .Where(u => (u.Roles ?? new List<string>()).Any(r => string.Equals(r, "Customer", System.StringComparison.OrdinalIgnoreCase)))
-                    .ToList();
-                return Page();
-            }
-            var idClaim = User.FindFirst("UserId")?.Value;
-            if (string.IsNullOrEmpty(idClaim) || !long.TryParse(idClaim, out var userId))
+            var companyId = await _userService.GetCompanyIdFromUserAsync(User);
+            if (companyId <= 0)
             {
                 return RedirectToPage("/Index");
             }
-            var me = await _userService.GetByIdAsync(userId);
-            if (me == null)
-            {
-                return RedirectToPage("/Index");
-            }
-            var customersMe = await _userService.GetByCompanyAsync(me.CompanyId ?? 0);
-            Customers = customersMe
-                .Where(u => (u.Roles ?? new List<string>()).Any(r => string.Equals(r, "Customer", System.StringComparison.OrdinalIgnoreCase)))
-                .ToList();
+
+            Customers = await _userService.GetCustomersByCompanyAsync(companyId);
             return Page();
         }
     }

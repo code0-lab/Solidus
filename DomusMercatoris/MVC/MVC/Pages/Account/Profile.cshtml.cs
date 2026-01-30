@@ -5,6 +5,7 @@ using DomusMercatorisDotnetMVC.Services;
 using DomusMercatoris.Core.Entities;
 using DomusMercatorisDotnetMVC.Dto.UserDto;
 using DomusMercatoris.Service.DTOs;
+using DomusMercatoris.Core.Constants;
 
 namespace DomusMercatorisDotnetMVC.Pages.Account
 {
@@ -59,7 +60,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Account
             }
 
             // Security check: Only Managers can update AI settings
-            if (user.Roles == null || !user.Roles.Any(r => r.Trim().Equals("Manager", StringComparison.OrdinalIgnoreCase)))
+            if (user.Roles == null || !user.Roles.Any(r => r.Trim().Equals(AppConstants.Roles.Manager, StringComparison.OrdinalIgnoreCase)))
             {
                 return Forbid();
             }

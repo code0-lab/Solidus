@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using DomusMercatoris.Service.Services;
+using DomusMercatoris.Core.Constants;
 
 namespace DomusMercatorisDotnetRest.Controllers
 {
@@ -76,7 +77,7 @@ namespace DomusMercatorisDotnetRest.Controllers
             var userId = GetUserId();
             if (userId == null) return Unauthorized();
 
-            var isAdmin = User.IsInRole("Moderator") || User.IsInRole("Rex");
+            var isAdmin = User.IsInRole(AppConstants.Roles.Moderator) || User.IsInRole(AppConstants.Roles.Rex);
             await _commentService.UpdateAsync(id, updateDto, userId.Value, isAdmin);
             
             return NoContent();
@@ -89,7 +90,7 @@ namespace DomusMercatorisDotnetRest.Controllers
             var userId = GetUserId();
             if (userId == null) return Unauthorized();
 
-            var isAdmin = User.IsInRole("Moderator") || User.IsInRole("Rex");
+            var isAdmin = User.IsInRole(AppConstants.Roles.Moderator) || User.IsInRole(AppConstants.Roles.Rex);
             await _commentService.DeleteAsync(id, userId.Value, isAdmin);
 
             return NoContent();

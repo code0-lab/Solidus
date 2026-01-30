@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using DomusMercatorisDotnetMVC.Services;
+using DomusMercatoris.Core.Constants;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
@@ -35,7 +36,7 @@ namespace DomusMercatorisDotnetMVC.Pages
                 var fullName = $"{user.FirstName} {user.LastName}";
                 var claims = new List<Claim>
                 {
-                    new Claim("UserId", user.Id.ToString()),
+                    new Claim(AppConstants.CustomClaimTypes.UserId, user.Id.ToString()),
                     new Claim(ClaimTypes.Email, user.Email),
                     new Claim(ClaimTypes.Name, fullName)
                 };
@@ -51,12 +52,12 @@ namespace DomusMercatorisDotnetMVC.Pages
                 else 
                 {
                     if (roles.Count == 0) {
-                        roles.Add("User");
+                        roles.Add(AppConstants.Roles.User);
                     }
-                    var hasManager = roles.Any(r => string.Equals(r, "Manager", StringComparison.OrdinalIgnoreCase));
-                    var hasUser = roles.Any(r => string.Equals(r, "User", StringComparison.OrdinalIgnoreCase));
+                    var hasManager = roles.Any(r => string.Equals(r, AppConstants.Roles.Manager, StringComparison.OrdinalIgnoreCase));
+                    var hasUser = roles.Any(r => string.Equals(r, AppConstants.Roles.User, StringComparison.OrdinalIgnoreCase));
                     if (hasManager && !hasUser) {
-                        roles.Add("User");
+                        roles.Add(AppConstants.Roles.User);
                     }
                     foreach (var r in roles.Select(r => r.Trim()).Distinct())
                     {
@@ -67,7 +68,7 @@ namespace DomusMercatorisDotnetMVC.Pages
 
                 if (user.CompanyId.HasValue)
                 {
-                    claims.Add(new Claim("CompanyId", user.CompanyId.Value.ToString()));
+                    claims.Add(new Claim(AppConstants.CustomClaimTypes.CompanyId, user.CompanyId.Value.ToString()));
                 }
 
                 var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

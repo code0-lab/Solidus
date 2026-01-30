@@ -7,6 +7,7 @@ using DomusMercatoris.Service.DTOs;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using DomusMercatoris.Core.Constants;
 
 namespace DomusMercatorisDotnetRest.Controllers
 {
@@ -44,7 +45,7 @@ namespace DomusMercatorisDotnetRest.Controllers
         /// Creates a new task (Manager only).
         /// </summary>
         [HttpPost]
-        [Authorize(Roles = "Manager")]
+        [Authorize(Roles = AppConstants.Roles.Manager)]
         [ProducesResponseType(typeof(WorkTask), StatusCodes.Status201Created)]
         public async Task<IActionResult> CreateTask([FromBody] CreateTaskDto dto)
         {
@@ -61,7 +62,7 @@ namespace DomusMercatorisDotnetRest.Controllers
         /// Updates task assignment (Manager only).
         /// </summary>
         [HttpPut("{id}")]
-        [Authorize(Roles = "Manager")]
+        [Authorize(Roles = AppConstants.Roles.Manager)]
         public async Task<IActionResult> UpdateTask(long id, [FromBody] UpdateTaskDto dto)
         {
             var updatedTask = await _taskService.UpdateTaskAssignmentAsync(id, dto.Title, dto.Description, dto.AssignedToUserId, dto.OrderId);
@@ -73,7 +74,7 @@ namespace DomusMercatorisDotnetRest.Controllers
         /// Deletes a task (Manager only).
         /// </summary>
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Manager")]
+        [Authorize(Roles = AppConstants.Roles.Manager)]
         public async Task<IActionResult> DeleteTask(long id)
         {
             var success = await _taskService.DeleteTaskAsync(id);
@@ -85,7 +86,7 @@ namespace DomusMercatorisDotnetRest.Controllers
         /// Gets all tasks for the company (Manager only).
         /// </summary>
         [HttpGet("managed")]
-        [Authorize(Roles = "Manager")]
+        [Authorize(Roles = AppConstants.Roles.Manager)]
         public async Task<IActionResult> GetManagedTasks([FromQuery] int limit = 50)
         {
             var companyId = GetCompanyId();

@@ -42,7 +42,13 @@ namespace DomusMercatoris.Service.Services
 
         public async Task<CargoTrackingDto> GetByTrackingNumberAsync(string trackingNumber)
         {
+            if (string.IsNullOrWhiteSpace(trackingNumber))
+            {
+                throw new BadRequestException("Tracking number cannot be empty.");
+            }
+
             var entity = await _context.CargoTrackings
+                .AsNoTracking()
                 .Include(c => c.User)
                 .FirstOrDefaultAsync(c => c.TrackingNumber == trackingNumber);
 
@@ -53,6 +59,7 @@ namespace DomusMercatoris.Service.Services
         public async Task<List<CargoTrackingDto>> GetUserCargosAsync(long userId)
         {
             var list = await _context.CargoTrackings
+                .AsNoTracking()
                 .Include(c => c.User)
                 .Where(c => c.UserId == userId)
                 .OrderByDescending(c => c.CreatedAt)
@@ -63,6 +70,11 @@ namespace DomusMercatoris.Service.Services
 
         public async Task UpdateStatusAsync(UpdateCargoStatusDto dto)
         {
+            if (string.IsNullOrWhiteSpace(dto.TrackingNumber))
+            {
+                throw new BadRequestException("Tracking number is required.");
+            }
+
             var entity = await _context.CargoTrackings
                 .FirstOrDefaultAsync(c => c.TrackingNumber == dto.TrackingNumber);
 
@@ -87,14 +99,26 @@ namespace DomusMercatoris.Service.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task<List<CargoTrackingDto>> GetAllCargosAsync()
+        public async Task<PaginatedResult<CargoTrackingDto>> GetAllCargosAsync(int pageNumber = 1, int pageSize = 10)
         {
-            var list = await _context.CargoTrackings
+            var query = _context.CargoTrackings
+                .AsNoTracking()
                 .Include(c => c.User)
-                .OrderByDescending(c => c.CreatedAt)
+                .OrderByDescending(c => c.CreatedAt);
+
+            var totalCount = await query.CountAsync();
+            var items = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
-            return _mapper.Map<List<CargoTrackingDto>>(list);
+            return new PaginatedResult<CargoTrackingDto>
+            {
+                Items = _mapper.Map<List<CargoTrackingDto>>(items),
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = totalCount
+            };
         }
     }
 }

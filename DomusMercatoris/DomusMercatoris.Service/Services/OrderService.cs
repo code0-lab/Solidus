@@ -18,11 +18,50 @@ namespace DomusMercatoris.Service.Services
             _mapper = mapper;
         }
 
-        public async Task<(List<Order> Items, int TotalCount)> GetPagedByCompanyIdAsync(int companyId, int pageNumber, int pageSize)
+        public async Task<(int ActiveCount, int CompletedCount, int RefundedCount)> GetOrderCountsByCompanyIdAsync(int companyId)
+        {
+            var activeCount = await _db.Orders
+                .AsNoTracking()
+                .Where(o => o.CompanyId == companyId && o.IsPaid && !o.IsRefunded && o.Status != OrderStatus.Shipped && o.Status != OrderStatus.Delivered)
+                .CountAsync();
+
+            var completedCount = await _db.Orders
+                .AsNoTracking()
+                .Where(o => o.CompanyId == companyId && o.IsPaid && !o.IsRefunded && (o.Status == OrderStatus.Shipped || o.Status == OrderStatus.Delivered))
+                .CountAsync();
+
+            var refundedCount = await _db.Orders
+                .AsNoTracking()
+                .Where(o => o.CompanyId == companyId && o.IsRefunded)
+                .CountAsync();
+
+            return (activeCount, completedCount, refundedCount);
+        }
+
+        public async Task<(List<Order> Items, int TotalCount)> GetPagedByCompanyIdAsync(int companyId, int pageNumber, int pageSize, string tab)
         {
             var query = _db.Orders
                 .AsNoTracking()
-                .Where(o => o.CompanyId == companyId && o.IsPaid);
+                .Where(o => o.CompanyId == companyId);
+
+            if (tab == "refunded")
+            {
+                query = query.Where(o => o.IsRefunded);
+            }
+            else
+            {
+                // Ensure we only show paid orders in active/completed tabs, and exclude refunded ones
+                query = query.Where(o => o.IsPaid && !o.IsRefunded);
+
+                if (tab == "completed")
+                {
+                    query = query.Where(o => o.Status == OrderStatus.Shipped || o.Status == OrderStatus.Delivered);
+                }
+                else // "recent" or default
+                {
+                    query = query.Where(o => o.Status != OrderStatus.Shipped && o.Status != OrderStatus.Delivered);
+                }
+            }
 
             var totalCount = await query.CountAsync();
 
@@ -54,6 +93,25 @@ namespace DomusMercatoris.Service.Services
                     .ThenInclude(i => i.VariantProduct)
                 .Include(o => o.CargoTracking)
                 .SingleOrDefaultAsync(o => o.Id == id);
+        }
+
+        public async Task<Order?> GetOrderDetailsForUserAsync(long orderId, long userId, int? companyId)
+        {
+            // Security Check inside the Query (WHERE clause) to prevent Over-Fetching
+            var query = _db.Orders
+                .AsNoTracking()
+                .Where(o => o.Id == orderId)
+                .Where(o => (o.UserId == userId && userId > 0) || (companyId.HasValue && companyId.Value > 0 && o.CompanyId == companyId.Value));
+
+            return await query
+                .Include(o => o.User)
+                .Include(o => o.FleetingUser)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(i => i.Product)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(i => i.VariantProduct)
+                .Include(o => o.CargoTracking)
+                .SingleOrDefaultAsync();
         }
 
         public async Task<List<Order>> GetPendingOrdersAsync()

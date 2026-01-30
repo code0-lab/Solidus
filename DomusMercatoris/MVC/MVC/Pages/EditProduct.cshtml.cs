@@ -9,6 +9,7 @@ using System.Linq;
 using DomusMercatoris.Service.Services;
 using DomusMercatoris.Service.DTOs;
 using Microsoft.EntityFrameworkCore;
+using DomusMercatoris.Core.Constants;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
@@ -41,7 +42,7 @@ namespace DomusMercatorisDotnetMVC.Pages
 
         public async Task<IActionResult> OnGet(long id)
         {
-            var comp = User.FindFirst("CompanyId")?.Value;
+            var comp = User.FindFirst(AppConstants.CustomClaimTypes.CompanyId)?.Value;
             if (string.IsNullOrEmpty(comp) || !int.TryParse(comp, out var companyId))
             {
                 return RedirectToPage("/Products");
@@ -82,7 +83,7 @@ namespace DomusMercatorisDotnetMVC.Pages
 
         public async Task<IActionResult> OnPost(long id)
         {
-            var comp = User.FindFirst("CompanyId")?.Value;
+            var comp = User.FindFirst(AppConstants.CustomClaimTypes.CompanyId)?.Value;
             var companyId = (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var c)) ? c : 0;
             Existing = await _productService.GetByIdInCompanyAsync(id, companyId);
             Categories = await _productService.GetCategoriesByCompanyAsync(companyId);

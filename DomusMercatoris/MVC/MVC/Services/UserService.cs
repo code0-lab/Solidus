@@ -8,6 +8,7 @@ using DomusMercatorisDotnetMVC.Dto.UserDto;
 using DomusMercatoris.Core.Entities;
 using DomusMercatoris.Data;
 using DomusMercatoris.Service.Services;
+using DomusMercatoris.Core.Constants;
 
 namespace DomusMercatorisDotnetMVC.Services
 {
@@ -33,13 +34,13 @@ namespace DomusMercatorisDotnetMVC.Services
 
         public async Task<int> GetCompanyIdFromUserAsync(ClaimsPrincipal user)
         {
-            var compClaim = user.FindFirst("CompanyId")?.Value;
+            var compClaim = user.FindFirst(AppConstants.CustomClaimTypes.CompanyId)?.Value;
             if (!string.IsNullOrEmpty(compClaim) && int.TryParse(compClaim, out var cid))
             {
                 return cid;
             }
             
-            var idClaim = user.FindFirst("UserId")?.Value;
+            var idClaim = user.FindFirst(AppConstants.CustomClaimTypes.UserId)?.Value;
             if (!string.IsNullOrEmpty(idClaim) && long.TryParse(idClaim, out var userId))
             {
                 var userEntity = await _dbContext.Users.AsNoTracking().SingleOrDefaultAsync(u => u.Id == userId);
@@ -100,7 +101,7 @@ namespace DomusMercatorisDotnetMVC.Services
         {
             var userEntity = _mapper.Map<User>(userRegisterDto);
             userEntity.Password = BCrypt.Net.BCrypt.HashPassword(userRegisterDto.Password);
-            userEntity.Roles = new List<string> { "Manager", "User", "Customer" };
+            userEntity.Roles = new List<string> { AppConstants.Roles.Manager, AppConstants.Roles.User, AppConstants.Roles.Customer };
 
             var companyName = (userRegisterDto.CompanyName ?? string.Empty).Trim();
             var company = new Company { Name = companyName };
@@ -117,7 +118,7 @@ namespace DomusMercatorisDotnetMVC.Services
         {
             var userEntity = _mapper.Map<User>(userRegisterDto);
             userEntity.Password = BCrypt.Net.BCrypt.HashPassword(userRegisterDto.Password);
-            userEntity.Roles = new List<string> { "User" };
+            userEntity.Roles = new List<string> { AppConstants.Roles.User };
             userEntity.CompanyId = companyId;
             _dbContext.Users.Add(userEntity);
             await _dbContext.SaveChangesAsync();
@@ -139,6 +140,32 @@ namespace DomusMercatorisDotnetMVC.Services
         public async Task<List<User>> GetByCompanyAsync(int companyId)
         {
             return await _dbContext.Users.Where(u => u.CompanyId == companyId).OrderBy(u => u.FirstName).ThenBy(u => u.LastName).ToListAsync();
+        }
+
+        public async Task<List<DomusMercatoris.Service.DTOs.UserDto>> GetCustomersByCompanyAsync(int companyId)
+        {
+            // Filter by CompanyId and Role "Customer" at database level to prevent over-fetching.
+            // Roles are stored as JSON string (e.g. ["Customer", "User"]), so we use LIKE to find the role.
+            var term = $"%\"{AppConstants.Roles.Customer}\"%";
+            return await _dbContext.Users
+                .FromSqlInterpolated($"SELECT * FROM Users WHERE CompanyId = {companyId} AND Roles LIKE {term}")
+                .AsNoTracking()
+                .OrderBy(u => u.FirstName)
+                .ThenBy(u => u.LastName)
+                .Select(u => new DomusMercatoris.Service.DTOs.UserDto
+                {
+                    Id = u.Id,
+                    FirstName = u.FirstName,
+                    LastName = u.LastName,
+                    Email = u.Email,
+                    Phone = u.Phone,
+                    Address = u.Address,
+                    ProfilePictureUrl = u.ProfilePictureUrl,
+                    CompanyId = u.CompanyId,
+                    Roles = u.Roles
+                    // Password is intentionally excluded for security.
+                })
+                .ToListAsync();
         }
 
         public async Task<List<User>> SearchByCompanyAsync(int companyId, string query, int limit = 20)
@@ -185,7 +212,7 @@ namespace DomusMercatorisDotnetMVC.Services
             }
 
             // Security Check: Prevent deletion of Rex or Moderator
-            if ((user.Roles ?? new List<string>()).Any(r => r == "Rex" || r == "Moderator") || string.Equals(user.Email, "rex@domus.com", StringComparison.OrdinalIgnoreCase))
+            if ((user.Roles ?? new List<string>()).Any(r => r == AppConstants.Roles.Rex || r == AppConstants.Roles.Moderator) || string.Equals(user.Email, "rex@domus.com", StringComparison.OrdinalIgnoreCase))
             {
                 return false;
             }
@@ -214,6 +241,22 @@ namespace DomusMercatorisDotnetMVC.Services
             _dbContext.Users.Remove(user);
             await _dbContext.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<int> CountByCompanyAndRoleAsync(int companyId, string role)
+        {
+            var term = $"%\"{role}\"%";
+            return await _dbContext.Users
+                .FromSqlInterpolated($"SELECT * FROM Users WHERE CompanyId = {companyId} AND Roles LIKE {term}")
+                .CountAsync();
+        }
+
+        public async Task<int> CountByCompanyAndNotRoleAsync(int companyId, string role)
+        {
+            var term = $"%\"{role}\"%";
+            return await _dbContext.Users
+                .FromSqlInterpolated($"SELECT * FROM Users WHERE CompanyId = {companyId} AND Roles NOT LIKE {term}")
+                .CountAsync();
         }
 
         public async Task<string?> GetCompanyNameAsync(int companyId)

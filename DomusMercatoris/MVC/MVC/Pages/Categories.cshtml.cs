@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Text;
 using System.Net;
 using System.Threading.Tasks;
+using DomusMercatoris.Core.Constants;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
@@ -47,13 +48,13 @@ namespace DomusMercatorisDotnetMVC.Pages
 
         private async Task<int> GetCompanyIdAsync()
         {
-            var comp = User.FindFirst("CompanyId")?.Value;
+            var comp = User.FindFirst(AppConstants.CustomClaimTypes.CompanyId)?.Value;
             if (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var cid))
             {
                 return cid;
             }
             
-            var idClaim = User.FindFirst("UserId")?.Value;
+            var idClaim = User.FindFirst(AppConstants.CustomClaimTypes.UserId)?.Value;
             if (!string.IsNullOrEmpty(idClaim) && long.TryParse(idClaim, out var userId))
             {
                 var user = await _db.Users.AsNoTracking().SingleOrDefaultAsync(u => u.Id == userId);

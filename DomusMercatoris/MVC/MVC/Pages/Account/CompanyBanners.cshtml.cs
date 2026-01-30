@@ -7,6 +7,7 @@ using DomusMercatoris.Service.DTOs;
 using DomusMercatoris.Core.Entities;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
+using DomusMercatoris.Core.Constants;
 
 namespace DomusMercatorisDotnetMVC.Pages.Account
 {
@@ -225,7 +226,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Account
 
         private async Task<User?> GetCurrentUserAsync()
         {
-            var idClaim = User.FindFirst("UserId")?.Value;
+            var idClaim = User.FindFirst(AppConstants.CustomClaimTypes.UserId)?.Value;
             if (string.IsNullOrEmpty(idClaim) || !long.TryParse(idClaim, out var userId))
             {
                 return null;

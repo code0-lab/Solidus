@@ -12,6 +12,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
 using System.IO;
+using DomusMercatoris.Core.Constants;
 
 namespace DomusMercatorisDotnetRest.Services
 {
@@ -57,7 +58,7 @@ namespace DomusMercatorisDotnetRest.Services
                 Email = dto.Email,
                 Password = HashSha256(dto.Password),
                 CompanyId = dto.CompanyId,
-                Roles = new List<string> { "Customer", "User" },
+                Roles = new List<string> { AppConstants.Roles.Customer, AppConstants.Roles.User },
                 CreatedAt = DateTime.UtcNow
             };
             _db.Users.Add(user);
@@ -162,7 +163,7 @@ namespace DomusMercatorisDotnetRest.Services
 
             if (user.CompanyId.HasValue)
             {
-                claims.Add(new Claim("CompanyId", user.CompanyId.Value.ToString()));
+                claims.Add(new Claim(AppConstants.CustomClaimTypes.CompanyId, user.CompanyId.Value.ToString()));
             }
 
             foreach (var role in user.Roles) claims.Add(new Claim(ClaimTypes.Role, role));

@@ -3,11 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using DomusMercatorisDotnetMVC.Services;
 using DomusMercatoris.Core.Entities;
+using DomusMercatoris.Core.Constants;
 using System.Threading.Tasks;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
-    [Authorize(Roles = "User,Manager")]
+    [Authorize(Roles = AppConstants.Roles.User + "," + AppConstants.Roles.Manager)]
     public class SearchModel : PageModel
     {
         private readonly ProductService _productService;
@@ -29,11 +30,11 @@ namespace DomusMercatorisDotnetMVC.Pages
             Context = (Request.Query["ctx"].ToString() ?? string.Empty).Trim().ToLowerInvariant();
             if (string.IsNullOrEmpty(Context)) Context = "global";
 
-            var comp = User.FindFirst("CompanyId")?.Value;
+            var comp = User.FindFirst(AppConstants.CustomClaimTypes.CompanyId)?.Value;
             int companyId = (!string.IsNullOrEmpty(comp) && int.TryParse(comp, out var c)) ? c : 0;
             if (companyId == 0)
             {
-                var idClaim = User.FindFirst("UserId")?.Value;
+                var idClaim = User.FindFirst(AppConstants.CustomClaimTypes.UserId)?.Value;
                 if (!string.IsNullOrEmpty(idClaim) && long.TryParse(idClaim, out var userId))
                 {
                     var me = await _userService.GetByIdAsync(userId);

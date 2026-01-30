@@ -1,5 +1,6 @@
 using System;
 using DomusMercatorisDotnetMVC.Dto.ProductDto;
+using DomusMercatoris.Service.DTOs;
 using DomusMercatoris.Core.Entities;
 using DomusMercatoris.Service.Services;
 using DomusMercatoris.Data;
@@ -89,6 +90,31 @@ namespace DomusMercatorisDotnetMVC.Services
                 .AsNoTracking()
                 .Where(p => p.CompanyId == companyId && p.Quantity <= p.LowStockThreshold)
                 .OrderBy(p => p.Quantity)
+                .ToListAsync();
+        }
+
+        public async Task<int> CountByCompanyAsync(int companyId)
+        {
+            return await _db.Products.CountAsync(p => p.CompanyId == companyId);
+        }
+
+        public async Task<List<ProductDto>> GetLowStockProductDtosAsync(int companyId)
+        {
+            return await _db.Products
+                .AsNoTracking()
+                .Where(p => p.CompanyId == companyId && p.Quantity <= p.LowStockThreshold)
+                .OrderBy(p => p.Quantity)
+                .Select(p => new ProductDto 
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Sku = p.Sku,
+                    Price = p.Price,
+                    Quantity = p.Quantity,
+                    LowStockThreshold = p.LowStockThreshold,
+                    ShelfNumber = p.ShelfNumber,
+                    Images = p.Images
+                })
                 .ToListAsync();
         }
 
@@ -361,11 +387,6 @@ namespace DomusMercatorisDotnetMVC.Services
             }
 
             return entity;
-        }
-
-        public async Task<int> CountByCompanyAsync(int companyId)
-        {
-            return await _db.Products.CountAsync(p => p.CompanyId == companyId);
         }
 
         public async Task<(List<Product> Items, int TotalCount)> GetPagedByCompanyAsync(int companyId, int page, int pageSize)

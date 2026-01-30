@@ -9,6 +9,8 @@ from torchvision import models, transforms
 from PIL import Image
 import os
 from datetime import datetime
+import asyncio
+from rembg import remove
 
 ENABLE_DEBUG_LOGGING = False
 
@@ -96,67 +98,93 @@ class ClusterResponse(BaseModel):
 # --- Endpoints ---
 
 
+def preprocess_image_task(contents: bytes, filename: str) -> torch.Tensor:
+    """
+    CPU-bound preprocessing task.
+    Returns the preprocessed image tensor (3, 224, 224).
+    """
+    try:
+        input_image = Image.open(io.BytesIO(contents))
+        
+        # 1. Apply Background Removal (rembg)
+        try:
+            print(f"Applying rembg to {filename}...")
+            input_image = remove(input_image)
+        except Exception as rembg_err:
+            print(f"Rembg failed for {filename}: {rembg_err}")
+
+        # 2. Smart Preprocessing
+        input_image = preprocess_image_smart(input_image)
+
+        if ENABLE_DEBUG_LOGGING:
+            try:
+                log_dir = os.path.join(os.path.dirname(__file__), "AiLogs")
+                os.makedirs(log_dir, exist_ok=True)
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+                img_log_path = os.path.join(log_dir, f"{timestamp}_{filename or 'unknown'}.jpg")
+                input_image.save(img_log_path, "JPEG")
+            except Exception:
+                pass
+        
+        # 3. Transform to Tensor
+        return tensor_transform(input_image)
+
+    except Exception as e:
+        print(f"Error processing image {filename}: {e}")
+        return None
+
+def run_batch_inference(tensors: List[torch.Tensor]) -> np.ndarray:
+    """
+    Runs model inference on a batch of tensors.
+    """
+    if not tensors:
+        return np.array([])
+    
+    # Stack tensors into a single batch: (N, 3, 224, 224)
+    input_batch = torch.stack(tensors)
+    
+    model = get_model()
+    with torch.no_grad():
+        output = model(input_batch)
+    
+    return output.numpy()
+
 @app.post("/extract")
 async def extract_features(files: List[UploadFile] = File(...)):
-    model = get_model()
-    vectors = []
+    loop = asyncio.get_event_loop()
+    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB limit
     
+    valid_tensors = []
+
+    # 1. Preprocessing (Parallelized I/O + Offloaded CPU tasks)
     for file in files:
         try:
             contents = await file.read()
-            input_image = Image.open(io.BytesIO(contents))
+
+            if len(contents) > MAX_FILE_SIZE:
+                print(f"Skipping {file.filename}: File too large")
+                continue
             
-            # 1. Apply Background Removal (rembg)
-            # This is the "Golden Ratio" - crop in Angular, rembg in Python
-            try:
-                print(f"Applying rembg to {file.filename}...")
-                input_image = remove(input_image)
-            except Exception as rembg_err:
-                print(f"Rembg failed for {file.filename}: {rembg_err}")
-                # Continue with original image if rembg fails
-
-            # 2. Smart Preprocessing (Handles resizing to 224x224 & transparency/white bg)
-            # rembg outputs RGBA, so this will composite it over white background
-            input_image = preprocess_image_smart(input_image)
-
-            if ENABLE_DEBUG_LOGGING:
-                try:
-                    log_dir = os.path.join(os.path.dirname(__file__), "AiLogs")
-                    os.makedirs(log_dir, exist_ok=True)
-                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-                    img_log_path = os.path.join(log_dir, f"{timestamp}_{file.filename or 'unknown'}.jpg")
-                    # Save as JPEG to verify what the model sees (RGB, white bg)
-                    input_image.save(img_log_path, "JPEG")
-                    print(f"Logged input image to {img_log_path}")
-                except Exception as log_err:
-                    print(f"Logging failed: {log_err}")
+            # Offload preprocessing to thread pool
+            tensor = await loop.run_in_executor(None, preprocess_image_task, contents, file.filename)
             
-            input_tensor = tensor_transform(input_image)
-            input_batch = input_tensor.unsqueeze(0)
-
-            with torch.no_grad():
-                output = model(input_batch)
-            
-            vec = output[0].numpy()
-            vectors.append(vec)
-
-            if ENABLE_DEBUG_LOGGING:
-                try:
-                    vec_log_path = os.path.join(log_dir, f"{timestamp}_{file.filename or 'unknown'}_vector.json")
-                    with open(vec_log_path, "w") as f:
-                        json.dump(vec.tolist(), f)
-                except Exception as log_err:
-                    print(f"Vector logging failed: {log_err}")
+            if tensor is not None:
+                valid_tensors.append(tensor)
 
         except Exception as e:
-            print(f"Error processing image: {e}")
-            # Continue or raise? For now, skip failed images.
-            pass
+            print(f"Error reading file {file.filename}: {e}")
 
-    if not vectors:
+    if not valid_tensors:
         raise HTTPException(status_code=400, detail="No valid images processed")
 
-    # Average if multiple images
+    # 2. Batch Inference (Offloaded to thread pool to avoid blocking)
+    # Even though inference is fast, for large batches it can block.
+    vectors = await loop.run_in_executor(None, run_batch_inference, valid_tensors)
+
+    if vectors.size == 0:
+        raise HTTPException(status_code=500, detail="Inference failed")
+
+    # 3. Average vectors
     avg_vector = np.mean(vectors, axis=0)
     return {"vector": avg_vector.tolist()}
 

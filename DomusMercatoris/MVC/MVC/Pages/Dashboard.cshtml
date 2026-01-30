@@ -6,6 +6,17 @@
     Layout = "_LayoutAuth";
 }
 <div class="container py-4">
+    <!-- New Data Alert -->
+    <div id="newDataAlert" class="alert alert-info shadow-sm d-flex align-items-center justify-content-between mb-4 d-none" role="alert">
+        <div>
+            <i class="bi bi-info-circle-fill me-2 fs-5"></i>
+            <span class="fw-bold">New data available!</span> A new order has just arrived.
+        </div>
+        <button onclick="location.reload()" class="btn btn-sm btn-light fw-bold text-primary">
+            <i class="bi bi-arrow-clockwise me-1"></i>Refresh Dashboard
+        </button>
+    </div>
+
     @if (Model.LowStockProducts != null && Model.LowStockProducts.Any())
     {
         <div class="row mb-4">
@@ -156,7 +167,7 @@
                                     <div class="mt-2">
                                         @foreach(var item in o.OrderItems.Take(3))
                                         {
-                                            <span class="badge bg-light text-dark border me-1">@item.Quantity x @item.Product?.Name</span>
+                                            <span class="badge bg-light text-dark border me-1">@item.Quantity x @item.ProductName</span>
                                         }
                                         @if(o.OrderItems.Count > 3) { <span class="small text-muted">+@(o.OrderItems.Count - 3) more</span> }
                                     </div>
@@ -240,6 +251,9 @@
                         <div class="toast-body bg-white">
                             Order #${data.orderId} received.<br>
                             Amount: ${data.totalPrice} ₺
+                            <div class="mt-2 pt-2 border-top">
+                                <button onclick="location.reload()" class="btn btn-sm btn-success w-100">Refresh to View</button>
+                            </div>
                         </div>
                     </div>
                 </div>`;
@@ -253,8 +267,11 @@
                 counter.innerText = current + 1;
             }
 
-            // Reload page after delay
-            setTimeout(() => location.reload(), 3000);
+            // Show top alert
+            const alert = document.getElementById('newDataAlert');
+            if(alert) {
+                alert.classList.remove('d-none');
+            }
         });
 
         async function start() {

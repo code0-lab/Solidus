@@ -2,12 +2,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using DomusMercatoris.Service.DTOs;
 using DomusMercatorisDotnetRest.Services;
+using DomusMercatoris.Core.Constants;
 
 namespace DomusMercatorisDotnetRest.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Moderator")]
+    [Authorize(Roles = AppConstants.Roles.Moderator)]
     public class ModeratorController : ControllerBase
     {
         private readonly ModeratorService _moderatorService;

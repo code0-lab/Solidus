@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using DomusMercatoris.Service.Interfaces;
+using DomusMercatoris.Core.Constants;
 
 namespace DomusMercatorisDotnetRest.Services
 {
@@ -27,7 +28,7 @@ namespace DomusMercatorisDotnetRest.Services
 
         public bool IsAuthenticated => _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
 
-        public bool IsManager => _httpContextAccessor.HttpContext?.User?.IsInRole("Manager") ?? false;
+        public bool IsManager => _httpContextAccessor.HttpContext?.User?.IsInRole(AppConstants.Roles.Manager) ?? false;
 
         public Task<bool> HasPermissionAsync(string permission)
         {

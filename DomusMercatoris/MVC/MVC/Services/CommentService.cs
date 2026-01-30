@@ -5,6 +5,7 @@ using DomusMercatoris.Core.Entities;
 using DomusMercatoris.Data;
 using Microsoft.EntityFrameworkCore;
 using DomusMercatoris.Service.Services;
+using DomusMercatoris.Core.Constants;
 
 namespace DomusMercatorisDotnetMVC.Services
 {
@@ -32,7 +33,7 @@ namespace DomusMercatorisDotnetMVC.Services
             if (user != null)
             {
                 // Validate role
-                if (user.Roles == null || !user.Roles.Contains("Customer"))
+                if (user.Roles == null || !user.Roles.Contains(AppConstants.Roles.Customer))
                 {
                     throw new UnauthorizedAccessException("Only users with Customer role can post comments.");
                 }

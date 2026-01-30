@@ -9,6 +9,7 @@ using DomusMercatoris.Data;
 using DomusMercatoris.Core.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using DomusMercatoris.Core.Models;
+using DomusMercatoris.Core.Constants;
 
 namespace DomusMercatorisDotnetMVC.Pages.Tasks
 {
@@ -38,7 +39,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Tasks
             CompanyId = companyId;
 
             long currentUserId = 0;
-            var idClaim = User.FindFirst("UserId")?.Value;
+            var idClaim = User.FindFirst(AppConstants.CustomClaimTypes.UserId)?.Value;
             if (!string.IsNullOrEmpty(idClaim)) long.TryParse(idClaim, out currentUserId);
 
             if (currentUserId > 0)
@@ -47,7 +48,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Tasks
                 MyTasks = await _taskService.GetPendingTasksForUserAsync(currentUserId);
 
                 // Check Permissions
-                bool isManager = User.IsInRole("Manager");
+                bool isManager = User.IsInRole(AppConstants.Roles.Manager);
                 bool hasTaskPermission = false;
                 if (!isManager)
                 {
@@ -89,7 +90,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Tasks
             if (companyId == 0) throw new ForbiddenException("Access denied.");
 
             long currentUserId = 0;
-            var idClaim = User.FindFirst("UserId")?.Value;
+            var idClaim = User.FindFirst(AppConstants.CustomClaimTypes.UserId)?.Value;
             if (!string.IsNullOrEmpty(idClaim)) long.TryParse(idClaim, out currentUserId);
 
             if (NewTask.AssignedToUserId != 0 && !string.IsNullOrEmpty(NewTask.Title))

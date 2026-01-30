@@ -7,6 +7,7 @@ using DomusMercatoris.Core.Entities;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using DomusMercatorisDotnetMVC.Services;
+using DomusMercatoris.Core.Constants;
 
 namespace DomusMercatorisDotnetMVC.Pages
 {
@@ -40,29 +41,47 @@ namespace DomusMercatorisDotnetMVC.Pages
             public long AssignedToUserId { get; set; }
         }
 
-        [BindProperty(SupportsGet = true)]
+        [BindProperty(SupportsGet = true, Name = "page")]
         public int PageNumber { get; set; } = 1;
 
-        public int PageSize { get; set; } = 9;
+        [BindProperty(SupportsGet = true, Name = "tab")]
+        public string ActiveTab { get; set; } = "recent";
+
+        public int PageSize { get; set; } = 5;
         public int TotalCount { get; set; } = 0;
         public int TotalPages { get; set; } = 1;
+        public int ActiveOrdersCount { get; set; }
+        public int CompletedOrdersCount { get; set; }
+        public int RefundedOrdersCount { get; set; }
         public long CurrentUserId { get; set; } // Added for View access
 
         public async Task OnGetAsync()
         {
             int companyId = await _userService.GetCompanyIdFromUserAsync(User);
+            Console.WriteLine($"[DEBUG] OnGetAsync: PageNumber property = {PageNumber}");
+            Console.WriteLine($"[DEBUG] OnGetAsync: Query['page'] = {Request.Query["page"]}");
 
             if (companyId > 0)
             {
-                var idClaim = User.FindFirst("UserId")?.Value;
+                var idClaim = User.FindFirst(AppConstants.CustomClaimTypes.UserId)?.Value;
                 if (!string.IsNullOrEmpty(idClaim) && long.TryParse(idClaim, out var uid))
                 {
                     CurrentUserId = uid;
                 }
 
+                if (Request.Query.ContainsKey("page") && int.TryParse(Request.Query["page"], out var p))
+                {
+                    PageNumber = p;
+                }
+
                 if (PageNumber < 1) PageNumber = 1;
 
-                var result = await _orderService.GetPagedByCompanyIdAsync(companyId, PageNumber, PageSize);
+                var counts = await _orderService.GetOrderCountsByCompanyIdAsync(companyId);
+                ActiveOrdersCount = counts.ActiveCount;
+                CompletedOrdersCount = counts.CompletedCount;
+                RefundedOrdersCount = counts.RefundedCount;
+
+                var result = await _orderService.GetPagedByCompanyIdAsync(companyId, PageNumber, PageSize, ActiveTab);
                 
                 Orders = result.Items;
                 TotalCount = result.TotalCount;
@@ -80,8 +99,8 @@ namespace DomusMercatorisDotnetMVC.Pages
                 var allUsers = await _userService.GetByCompanyAsync(companyId);
                 Workers = allUsers
                     .Where(u => u.Id == CurrentUserId || !(u.Roles ?? new List<string>()).Any(r => 
-                        string.Equals(r, "Customer", StringComparison.OrdinalIgnoreCase) ||
-                        string.Equals(r, "Rex", StringComparison.OrdinalIgnoreCase)))
+                        string.Equals(r, AppConstants.Roles.Customer, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(r, AppConstants.Roles.Rex, StringComparison.OrdinalIgnoreCase)))
                     .ToList();
             }
         }
@@ -97,7 +116,7 @@ namespace DomusMercatorisDotnetMVC.Pages
             }
 
             long currentUserId = 0;
-            var idClaim = User.FindFirst("UserId")?.Value;
+            var idClaim = User.FindFirst(AppConstants.CustomClaimTypes.UserId)?.Value;
             if (!string.IsNullOrEmpty(idClaim)) long.TryParse(idClaim, out currentUserId);
 
             if (NewTask.Id.HasValue && NewTask.Id.Value > 0)
