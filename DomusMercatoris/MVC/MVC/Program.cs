@@ -52,6 +52,7 @@ builder.Services.AddScoped<DomusMercatoris.Service.Services.OrderService>();
 builder.Services.AddScoped<DomusMercatoris.Service.Services.RefundService>();
 builder.Services.AddScoped<DomusMercatoris.Service.Services.DashboardService>();
 builder.Services.AddScoped<DomusMercatoris.Service.Services.ApiKeyService>();
+builder.Services.AddScoped<BlacklistService>();
 builder.Services.AddHttpClient<GeminiService>();
 builder.Services.AddScoped<GeminiService>();
 builder.Services.AddScoped<BannerService>();

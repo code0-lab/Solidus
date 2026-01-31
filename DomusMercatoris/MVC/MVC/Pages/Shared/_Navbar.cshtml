@@ -57,10 +57,16 @@
                             {
                                 <li><a class="dropdown-item" href="/Workers">Manage the workforce</a></li>
                                 <li><a class="dropdown-item" href="/Customers">Manage Customers</a></li>
-                                <li><a class="dropdown-item" href="/Orders">Order History</a></li>
-                                <li><a class="dropdown-item" href="/Refunds">Refund Requests</a></li>
+                                <li class="dropend">
+                                    <button type="button" class="dropdown-item dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Orders / Refunds
+                                    </button>
+                                    <ul class="dropdown-menu brutalist-dropdown">
+                                        <li><a class="dropdown-item" href="/Orders">Order History</a></li>
+                                        <li><a class="dropdown-item" href="/Refunds">Refund Requests</a></li>
+                                    </ul>
+                                </li>
                                 <li><a class="dropdown-item" href="/Account/CompanyBanners">Manage Banners (AI)</a></li>
-                                <li><a class="dropdown-item" href="/Account/ApiKeys">API Access Keys</a></li>
                                 <li class="dropend">
                                     <button type="button" class="dropdown-item dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                                         Manage the products
@@ -77,8 +83,18 @@
                             {
                                 @if (canWorkers) { <li><a class="dropdown-item" href="/Workers">Manage the workforce</a></li> }
                                 @if (canCustomers) { <li><a class="dropdown-item" href="/Customers">Manage Customers</a></li> }
-                                @if (canOrders) { <li><a class="dropdown-item" href="/Orders">Order History</a></li> }
-                                @if (canRefunds) { <li><a class="dropdown-item" href="/Refunds">Refund Requests</a></li> }
+                                @if (canOrders || canRefunds)
+                                {
+                                    <li class="dropend">
+                                        <button type="button" class="dropdown-item dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                            Orders / Refunds
+                                        </button>
+                                        <ul class="dropdown-menu brutalist-dropdown">
+                                            @if (canOrders) { <li><a class="dropdown-item" href="/Orders">Order History</a></li> }
+                                            @if (canRefunds) { <li><a class="dropdown-item" href="/Refunds">Refund Requests</a></li> }
+                                        </ul>
+                                    </li>
+                                }
                                 @if (canBanners) { <li><a class="dropdown-item" href="/Account/CompanyBanners">Manage Banners (AI)</a></li> }
                                 @if (showProductSubmenu)
                                 {
@@ -134,6 +150,10 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end brutalist-dropdown">
                             <li><a class="dropdown-item" href="/Account/Profile">Profile</a></li>
+                            @if (User.IsInRole("Manager"))
+                            {
+                                <li><a class="dropdown-item" href="/Account/ApiKeys">API Access Keys</a></li>
+                            }
                             <li><a class="dropdown-item" href="/Tasks">My Tasks</a></li>
                             <li><hr class="dropdown-divider border-black"></li>
                             <li><a class="dropdown-item" onclick="return logoutConfirm()" href="/Index?handler=Logout">Logout</a></li>

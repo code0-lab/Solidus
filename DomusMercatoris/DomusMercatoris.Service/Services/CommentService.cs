@@ -154,9 +154,19 @@ namespace DomusMercatoris.Service.Services
                 throw new KeyNotFoundException("Comment not found");
             }
 
-            if (_currentUserService.CompanyId.HasValue && comment.Product.CompanyId != _currentUserService.CompanyId.Value)
+            if (_currentUserService.CompanyId.HasValue)
             {
-                throw new UnauthorizedAccessException("Cannot delete comment for another company.");
+                if (comment.Product == null)
+                {
+                     // If product is missing, we can't verify company ownership.
+                     // Assuming strict security: if we can't verify, we deny if company scope is active.
+                     throw new UnauthorizedAccessException("Cannot verify comment ownership.");
+                }
+                
+                if (comment.Product.CompanyId != _currentUserService.CompanyId.Value)
+                {
+                    throw new UnauthorizedAccessException("Cannot delete comment for another company.");
+                }
             }
 
             if (comment.UserId != userId && !isAdmin)

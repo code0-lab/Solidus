@@ -8,7 +8,7 @@ using DomusMercatoris.Core.Constants;
 
 namespace DomusMercatorisDotnetMVC.Pages.Account
 {
-    [Authorize]
+    [Authorize(Roles = AppConstants.Roles.Manager)]
     public class ApiKeysModel : PageModel
     {
         private readonly ApiKeyService _apiKeyService;

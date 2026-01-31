@@ -45,7 +45,7 @@
         </div> 
     </div>
 
-    @if (User.Identity.IsAuthenticated)
+    @if (User.Identity?.IsAuthenticated == true)
     {
         <partial name="_Navbar" />
     }
@@ -54,7 +54,7 @@
         @RenderBody()
     </div>
 
-    @if (User.Identity.IsAuthenticated)
+    @if (User.Identity?.IsAuthenticated == true)
     {
         <partial name="_Footer" />
     }

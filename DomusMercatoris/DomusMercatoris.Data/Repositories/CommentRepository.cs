@@ -22,7 +22,7 @@ namespace DomusMercatoris.Data.Repositories
 
             if (companyId.HasValue)
             {
-                query = query.Where(c => c.Product.CompanyId == companyId.Value);
+                query = query.Where(c => c.Product!.CompanyId == companyId.Value);
             }
 
             return await query
@@ -39,7 +39,7 @@ namespace DomusMercatoris.Data.Repositories
 
             if (companyId.HasValue)
             {
-                query = query.Where(c => c.Product.CompanyId == companyId.Value);
+                query = query.Where(c => c.Product!.CompanyId == companyId.Value);
             }
 
             return await query

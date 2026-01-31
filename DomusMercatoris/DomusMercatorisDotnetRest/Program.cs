@@ -55,6 +55,7 @@ builder.Services.AddScoped<TaskService>();
 builder.Services.AddScoped<RefundService>();
 builder.Services.AddScoped<MembershipService>();
 builder.Services.AddScoped<ApiKeyService>();
+builder.Services.AddScoped<BlacklistService>();
 
 // Python AI Service
 builder.Services.AddSingleton<MockBankInfo>();
@@ -101,9 +102,21 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c => 
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Default API");
+    });
+    
+    // Separate Swagger UI for API Key
+    app.UseSwaggerUI(c =>
+    {
+        c.RoutePrefix = "apikey-docs";
+        c.SwaggerEndpoint("/swagger/apikey/swagger.json", "API Key Access");
+    });
+
     app.Lifetime.ApplicationStarted.Register(() =>
     {
+        Console.WriteLine("--------------------------------------------------");
         foreach (var url in app.Urls)
         {
             try
@@ -111,12 +124,16 @@ if (app.Environment.IsDevelopment())
                 var uri = new Uri(url);
                 var host = uri.Host == "0.0.0.0" ? "localhost" : uri.Host;
                 var swaggerUrl = $"{uri.Scheme}://{host}:{uri.Port}/swagger";
-                Console.WriteLine($"Swagger: {swaggerUrl}");
+                var apiKeySwaggerUrl = $"{uri.Scheme}://{host}:{uri.Port}/apikey-docs";
+                Console.WriteLine($"Swagger        : {swaggerUrl}");
+                Console.WriteLine($"API Key Swagger: {apiKeySwaggerUrl}");
             }
             catch
             {
-                Console.WriteLine($"Swagger: {url.TrimEnd('/')}/swagger");
+                Console.WriteLine($"Swagger        : {url.TrimEnd('/')}/swagger");
+                Console.WriteLine($"API Key Swagger: {url.TrimEnd('/')}/apikey-docs");
             }
+            Console.WriteLine("--------------------------------------------------");
         }
     });
 }

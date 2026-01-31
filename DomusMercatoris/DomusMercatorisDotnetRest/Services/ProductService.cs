@@ -7,6 +7,8 @@ using DomusMercatoris.Service.Interfaces;
 using DomusMercatorisDotnetRest.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
+using DomusMercatoris.Service.Services; // For BlacklistService
+
 namespace DomusMercatorisDotnetRest.Services
 {
     public class ProductService
@@ -14,12 +16,14 @@ namespace DomusMercatorisDotnetRest.Services
         private readonly DomusDbContext _db;
         private readonly IMapper _mapper;
         private readonly ICurrentUserService _currentUserService;
+        private readonly BlacklistService _blacklistService;
 
-        public ProductService(DomusDbContext db, IMapper mapper, ICurrentUserService currentUserService)
+        public ProductService(DomusDbContext db, IMapper mapper, ICurrentUserService currentUserService, BlacklistService blacklistService)
         {
             _db = db;
             _mapper = mapper;
             _currentUserService = currentUserService;
+            _blacklistService = blacklistService;
         }
 
         private int? GetEffectiveCompanyId(int? requestedCompanyId)
@@ -29,6 +33,21 @@ namespace DomusMercatorisDotnetRest.Services
                 return _currentUserService.CompanyId.Value;
             }
             return requestedCompanyId;
+        }
+        
+        // Helper to apply blacklist filter
+        // If User is logged in (Customer), they shouldn't see products from companies they blocked (Status 1 or 3)
+        private async Task<IQueryable<Product>> ApplyBlacklistFilterAsync(IQueryable<Product> query)
+        {
+            if (_currentUserService.UserId.HasValue)
+            {
+                var blockedCompanyIds = await _blacklistService.GetCompaniesBlockedByCustomerAsync(_currentUserService.UserId.Value);
+                if (blockedCompanyIds.Any())
+                {
+                    query = query.Where(p => !blockedCompanyIds.Contains(p.CompanyId));
+                }
+            }
+            return query;
         }
 
         private IQueryable<Product> BaseProductQuery() => ProductQueryHelper.BaseProductQuery(_db);
@@ -40,6 +59,7 @@ namespace DomusMercatorisDotnetRest.Services
             companyId = GetEffectiveCompanyId(companyId);
             var query = ApplyCompanyFilter(BaseProductQuery(), companyId);
             query = ApplyBrandFilter(query, brandId);
+            query = await ApplyBlacklistFilterAsync(query);
             return await ProductQueryHelper.PaginateAndMapAsync(query, pageNumber, pageSize, _mapper);
         }
 
@@ -56,6 +76,16 @@ namespace DomusMercatorisDotnetRest.Services
                 query = ApplyCompanyFilter(query, companyId);
             }
 
+            // Apply Blacklist Logic:
+            // If user blocked company, they shouldn't see product (returns null or handled by frontend? User said "Product page reachable somehow -> show BLACK LIST button")
+            // BUT: "Müşteri bu şirkete ait ürünleri görmeyecek" implies list view. 
+            // "Bir şekilde müşteri ilgili ürünün sayfasına ulaşır ise sepete ekle butonunda BLACK LİST yazacak" implies GetById SHOULD return the product, 
+            // but we need to know status. 
+            // So GetById should return product, and frontend checks status via BlacklistService/Controller or a new field in ProductDto.
+            // However, "Müşteri bu şirkete ait ürünleri görmeyecek" for Lists. 
+            // So ApplyBlacklistFilterAsync is correct for GetAll, Search, etc.
+            // For GetById, we return it, and let frontend handle UI.
+
             var product = await query.FirstOrDefaultAsync(p => p.Id == id);
             return product is null ? null : _mapper.Map<ProductDto>(product);
         }
@@ -65,6 +95,7 @@ namespace DomusMercatorisDotnetRest.Services
             companyId = GetEffectiveCompanyId(companyId);
             var query = ApplyCompanyFilter(BaseProductQuery().Where(p => p.Categories.Any(c => c.Id == categoryId)), companyId);
             query = ApplyBrandFilter(query, brandId);
+            query = await ApplyBlacklistFilterAsync(query);
             return await ProductQueryHelper.PaginateAndMapAsync(query, pageNumber, pageSize, _mapper);
         }
 
@@ -76,6 +107,7 @@ namespace DomusMercatorisDotnetRest.Services
                 companyId
             );
             query = ApplyBrandFilter(query, brandId);
+            query = await ApplyBlacklistFilterAsync(query);
 
             if (prioritizedIds != null && prioritizedIds.Any())
             {
@@ -138,6 +170,7 @@ namespace DomusMercatorisDotnetRest.Services
             q = q.ToLower();
             var query = ApplyCompanyFilter(BaseProductQuery(), companyId);
             query = ApplyBrandFilter(query, brandId);
+            query = await ApplyBlacklistFilterAsync(query);
             
             // Prioritize name matches (Name contains query) -> then Description
             // Remove SKU from search

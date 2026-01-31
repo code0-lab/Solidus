@@ -1,0 +1,51 @@
+@page
+@model DomusMercatorisDotnetMVC.Pages.BlacklistModel
+@{
+    ViewData["Title"] = "My Blacklist";
+    Layout = "_LayoutAuth";
+}
+
+<div class="container py-4">
+    <h2 class="mb-4">My Blacklist</h2>
+    
+    <div class="card">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Blocked Companies</h5>
+        </div>
+        <div class="card-body">
+            @if (Model.MyBlockedCompanies.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Company</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.MyBlockedCompanies)
+                            {
+                                <tr>
+                                    <td>@item.CompanyName</td>
+                                    <td class="text-end">
+                                        <form method="post" asp-page-handler="Unblock">
+                                            <input type="hidden" name="companyId" value="@item.CompanyId" />
+                                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                Unblock
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p class="text-muted mb-0">You have not blocked any companies.</p>
+            }
+        </div>
+    </div>
+</div>

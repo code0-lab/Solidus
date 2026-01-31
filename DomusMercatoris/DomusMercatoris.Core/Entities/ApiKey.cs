@@ -8,19 +8,19 @@ namespace DomusMercatoris.Core.Entities
         public int Id { get; set; }
 
         public int CompanyId { get; set; }
-        public Company Company { get; set; }
+        public Company? Company { get; set; }
 
         [Required]
         [MaxLength(100)]
-        public string Name { get; set; } // Description/Name for the key
+        public string Name { get; set; } = string.Empty; // Description/Name for the key
 
         [Required]
         [MaxLength(256)]
-        public string KeyHash { get; set; } // Stored as HASH only
+        public string KeyHash { get; set; } = string.Empty; // Stored as HASH only
 
         [Required]
         [MaxLength(10)]
-        public string Prefix { get; set; } // First few chars to show user
+        public string Prefix { get; set; } = string.Empty; // First few chars to show user
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? ExpiresAt { get; set; }

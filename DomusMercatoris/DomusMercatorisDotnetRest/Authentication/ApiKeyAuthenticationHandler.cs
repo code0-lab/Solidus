@@ -16,9 +16,8 @@ namespace DomusMercatorisDotnetRest.Authentication
             IOptionsMonitor<AuthenticationSchemeOptions> options,
             ILoggerFactory logger,
             UrlEncoder encoder,
-            ISystemClock clock,
             ApiKeyService apiKeyService)
-            : base(options, logger, encoder, clock)
+            : base(options, logger, encoder)
         {
             _apiKeyService = apiKeyService;
         }

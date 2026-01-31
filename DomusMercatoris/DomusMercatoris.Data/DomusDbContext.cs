@@ -34,6 +34,7 @@ namespace DomusMercatoris.Data
         public DbSet<RefundRequest> RefundRequests { get; set; } = null!;
         public DbSet<UserCompanyMembership> UserCompanyMemberships { get; set; } = null!;
         public DbSet<ApiKey> ApiKeys { get; set; } = null!;
+        public DbSet<CompanyCustomerBlacklist> CompanyCustomerBlacklists { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -90,6 +91,19 @@ namespace DomusMercatoris.Data
                 entity.HasOne(m => m.Company)
                     .WithMany()
                     .HasForeignKey(m => m.CompanyId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<CompanyCustomerBlacklist>(entity =>
+            {
+                entity.HasIndex(b => new { b.CompanyId, b.CustomerId }).IsUnique();
+                entity.HasOne(b => b.Company)
+                    .WithMany()
+                    .HasForeignKey(b => b.CompanyId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(b => b.Customer)
+                    .WithMany()
+                    .HasForeignKey(b => b.CustomerId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
