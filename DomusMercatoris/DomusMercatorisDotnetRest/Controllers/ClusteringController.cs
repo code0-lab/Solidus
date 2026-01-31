@@ -6,6 +6,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using DomusMercatoris.Core.Exceptions;
+using DomusMercatoris.Service.Interfaces;
 
 namespace DomusMercatorisDotnetRest.Controllers
 {
@@ -15,11 +16,13 @@ namespace DomusMercatorisDotnetRest.Controllers
     {
         private readonly DomusDbContext _db;
         private readonly IConfiguration _configuration;
+        private readonly ICurrentUserService _currentUserService;
 
-        public ClusteringController(DomusDbContext db, IConfiguration configuration)
+        public ClusteringController(DomusDbContext db, IConfiguration configuration, ICurrentUserService currentUserService)
         {
             _db = db;
             _configuration = configuration;
+            _currentUserService = currentUserService;
         }
 
         public class ClassificationResultDto
@@ -166,10 +169,17 @@ namespace DomusMercatorisDotnetRest.Controllers
             var similarProductIds = new List<long>();
             try
             {
-                var productIdsInCluster = await _db.ProductClusterMembers
-                    .Where(m => m.ProductClusterId == bestCluster.Id)
-                    .Select(m => m.ProductId)
-                    .ToListAsync();
+                var query = from m in _db.ProductClusterMembers
+                            join p in _db.Products on m.ProductId equals p.Id
+                            where m.ProductClusterId == bestCluster.Id
+                            select new { m.ProductId, p.CompanyId };
+
+                if (_currentUserService.CompanyId.HasValue)
+                {
+                    query = query.Where(x => x.CompanyId == _currentUserService.CompanyId.Value);
+                }
+
+                var productIdsInCluster = await query.Select(x => x.ProductId).ToListAsync();
 
                 if (productIdsInCluster.Any())
                 {

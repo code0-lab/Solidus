@@ -33,6 +33,7 @@ namespace DomusMercatoris.Data
         public DbSet<WorkTask> WorkTasks { get; set; } = null!;
         public DbSet<RefundRequest> RefundRequests { get; set; } = null!;
         public DbSet<UserCompanyMembership> UserCompanyMemberships { get; set; } = null!;
+        public DbSet<ApiKey> ApiKeys { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

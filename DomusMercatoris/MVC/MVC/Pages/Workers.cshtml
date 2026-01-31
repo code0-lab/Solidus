@@ -141,7 +141,7 @@
     <div class="modal fade" id="editWorkerModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content rounded-0 border-2 border-black">
-                <div class="modal-header border-bottom border-black">
+                <div class="modal-header border-bottom border-black rounded-0">
                     <h5 class="modal-title fw-bold">Edit Worker</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -175,13 +175,14 @@
     <div class="modal fade" id="permModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content rounded-0 border-2 border-black">
-                <div class="modal-header border-bottom border-black bg-dark text-white">
-                    <h5 class="modal-title fw-bold"><i class="bi bi-shield-lock-fill me-2"></i>Manage Permissions</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form method="post" action="/Workers?handler=UpdatePermissions">
+                <form method="post" action="/Workers?handler=UpdatePermissions" class="d-flex flex-column h-100">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="userId" id="permUserId" />
+                    
+                    <div class="modal-header border-bottom border-black bg-dark text-white rounded-0">
+                        <h5 class="modal-title fw-bold"><i class="bi bi-shield-lock-fill me-2"></i>Manage Permissions</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
                     
                     <div class="modal-body bg-light">
                         <p class="mb-3 text-muted">Manage access rights for <span id="permUserName" class="fw-bold text-dark"></span></p>

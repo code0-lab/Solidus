@@ -4,20 +4,28 @@ using DomusMercatoris.Data;
 using DomusMercatoris.Service.DTOs;
 using Microsoft.EntityFrameworkCore;
 using DomusMercatoris.Core.Exceptions;
+using DomusMercatoris.Service.Interfaces;
 
 namespace DomusMercatorisDotnetRest.Services
 {
     public class OrdersService
     {
         private readonly DomusDbContext _db;
+        private readonly ICurrentUserService _currentUserService;
 
-        public OrdersService(DomusDbContext db)
+        public OrdersService(DomusDbContext db, ICurrentUserService currentUserService)
         {
             _db = db;
+            _currentUserService = currentUserService;
         }
 
         public async Task<OrderDto> CheckoutAsync(OrderCreateDto dto)
         {
+            if (_currentUserService.CompanyId.HasValue && dto.CompanyId != _currentUserService.CompanyId.Value)
+            {
+                throw new UnauthorizedAccessException("Cannot create order for another company.");
+            }
+
             if (dto.UserId == null && dto.FleetingUser == null) throw new ArgumentException("Either UserId or FleetingUser must be provided.");
 
             // Check for existing pending orders for logged-in users
@@ -159,6 +167,12 @@ namespace DomusMercatorisDotnetRest.Services
         {
             var order = await _db.Orders.Include(s => s.OrderItems).SingleOrDefaultAsync(s => s.Id == id);
             if (order == null) throw new NotFoundException($"Order {id} not found.");
+
+            if (_currentUserService.CompanyId.HasValue && order.CompanyId != _currentUserService.CompanyId.Value)
+            {
+                throw new NotFoundException($"Order {id} not found.");
+            }
+
             order.IsPaid = true;
             order.Status = OrderStatus.PaymentApproved;
             order.PaidAt = DateTime.UtcNow;
@@ -198,6 +212,11 @@ namespace DomusMercatorisDotnetRest.Services
         {
             var order = await _db.Orders.FindAsync(orderId);
             if (order == null || order.CargoTrackingId == null) throw new NotFoundException($"Tracking for order {orderId} not found.");
+
+            if (_currentUserService.CompanyId.HasValue && order.CompanyId != _currentUserService.CompanyId.Value)
+            {
+                throw new NotFoundException($"Tracking for order {orderId} not found.");
+            }
 
             var tracking = await _db.CargoTrackings.FindAsync(order.CargoTrackingId);
             if (tracking == null) throw new NotFoundException($"Tracking entry {order.CargoTrackingId} not found.");
@@ -282,6 +301,11 @@ namespace DomusMercatorisDotnetRest.Services
 
             if (order == null) throw new NotFoundException($"Order {orderId} not found.");
 
+            if (_currentUserService.CompanyId.HasValue && order.CompanyId != _currentUserService.CompanyId.Value)
+            {
+                throw new NotFoundException($"Order {orderId} not found.");
+            }
+
             if (order.Status != OrderStatus.PaymentPending)
             {
                  if (order.Status == OrderStatus.PaymentApproved && order.PaymentCode == code) return order;
@@ -307,6 +331,11 @@ namespace DomusMercatorisDotnetRest.Services
                 .FirstOrDefaultAsync(o => o.Id == orderId);
 
             if (order == null) throw new NotFoundException($"Order {orderId} not found.");
+
+            if (_currentUserService.CompanyId.HasValue && order.CompanyId != _currentUserService.CompanyId.Value)
+            {
+                throw new NotFoundException($"Order {orderId} not found.");
+            }
 
             if (order.Status != OrderStatus.PaymentPending)
                 throw new InvalidOperationException("Order is not pending.");

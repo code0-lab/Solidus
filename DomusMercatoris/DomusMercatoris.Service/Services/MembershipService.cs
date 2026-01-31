@@ -12,17 +12,26 @@ namespace DomusMercatoris.Service.Services
     public class MembershipService
     {
         private readonly DomusDbContext _context;
+        private readonly DomusMercatoris.Service.Interfaces.ICurrentUserService _currentUserService;
 
-        public MembershipService(DomusDbContext context)
+        public MembershipService(DomusDbContext context, DomusMercatoris.Service.Interfaces.ICurrentUserService currentUserService)
         {
             _context = context;
+            _currentUserService = currentUserService;
         }
 
         public async Task<List<MembershipDto>> GetUserMembershipsAsync(long userId)
         {
-            return await _context.UserCompanyMemberships
+            var query = _context.UserCompanyMemberships
                 .Include(m => m.Company)
-                .Where(m => m.UserId == userId)
+                .Where(m => m.UserId == userId);
+
+            if (_currentUserService.CompanyId.HasValue)
+            {
+                query = query.Where(m => m.CompanyId == _currentUserService.CompanyId.Value);
+            }
+
+            return await query
                 .Select(m => new MembershipDto
                 {
                     Id = m.Id,
@@ -35,6 +44,11 @@ namespace DomusMercatoris.Service.Services
 
         public async Task<bool> JoinCompanyAsync(long userId, int companyId)
         {
+            if (_currentUserService.CompanyId.HasValue && companyId != _currentUserService.CompanyId.Value)
+            {
+                return false;
+            }
+
             var company = await _context.Companies.FindAsync(companyId);
             if (company == null)
                 return false;
@@ -59,6 +73,11 @@ namespace DomusMercatoris.Service.Services
 
         public async Task<bool> LeaveCompanyAsync(long userId, int companyId)
         {
+            if (_currentUserService.CompanyId.HasValue && companyId != _currentUserService.CompanyId.Value)
+            {
+                return false;
+            }
+
             var membership = await _context.UserCompanyMemberships
                 .FirstOrDefaultAsync(m => m.UserId == userId && m.CompanyId == companyId);
 
@@ -75,6 +94,11 @@ namespace DomusMercatoris.Service.Services
             var queryable = _context.Companies
                 .Where(c => c.IsActive && !c.IsBaned)
                 .AsQueryable();
+
+            if (_currentUserService.CompanyId.HasValue)
+            {
+                queryable = queryable.Where(c => c.CompanyId == _currentUserService.CompanyId.Value);
+            }
 
             if (!string.IsNullOrWhiteSpace(query))
             {

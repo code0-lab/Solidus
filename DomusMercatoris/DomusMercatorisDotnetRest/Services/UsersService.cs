@@ -2,6 +2,7 @@ using AutoMapper;
 using DomusMercatoris.Core.Entities;
 using DomusMercatoris.Data;
 using DomusMercatoris.Service.DTOs;
+using DomusMercatoris.Service.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -21,12 +22,14 @@ namespace DomusMercatorisDotnetRest.Services
         private readonly DomusDbContext _db;
         private readonly IConfiguration _configuration;
         private readonly IMapper _mapper;
+        private readonly ICurrentUserService _currentUserService;
 
-        public UsersService(DomusDbContext db, IConfiguration configuration, IMapper mapper)
+        public UsersService(DomusDbContext db, IConfiguration configuration, IMapper mapper, ICurrentUserService currentUserService)
         {
             _db = db;
             _configuration = configuration;
             _mapper = mapper;
+            _currentUserService = currentUserService;
         }
 
         public async Task<LoginResponseDto?> LoginAsync(UserLoginDto dto)
@@ -51,6 +54,12 @@ namespace DomusMercatorisDotnetRest.Services
             }
             var companyExists = await _db.Companies.AnyAsync(c => c.CompanyId == dto.CompanyId);
             if (!companyExists) return null;
+
+            if (_currentUserService.CompanyId.HasValue && dto.CompanyId != _currentUserService.CompanyId.Value)
+            {
+                return null;
+            }
+
             var user = new User
             {
                 FirstName = dto.FirstName,
@@ -69,6 +78,12 @@ namespace DomusMercatorisDotnetRest.Services
         public async Task<UserDto?> GetByIdAsync(long id)
         {
             var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == id);
+            
+            if (user != null && _currentUserService.CompanyId.HasValue && user.CompanyId != _currentUserService.CompanyId.Value)
+            {
+                return null;
+            }
+
             return user is null ? null : _mapper.Map<UserDto>(user);
         }
 

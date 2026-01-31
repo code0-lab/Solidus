@@ -16,7 +16,10 @@ using DomusMercatoris.Service.Interfaces;
 using DomusMercatorisDotnetRest.Infrastructure;
 using DomusMercatorisDotnetRest.Services;
 using DomusMercatorisDotnetRest.Hubs;
+using DomusMercatorisDotnetRest.Authentication;
+using Microsoft.AspNetCore.Authentication;
 using System.Reflection;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,6 +54,7 @@ builder.Services.AddScoped<CartService>();
 builder.Services.AddScoped<TaskService>();
 builder.Services.AddScoped<RefundService>();
 builder.Services.AddScoped<MembershipService>();
+builder.Services.AddScoped<ApiKeyService>();
 
 // Python AI Service
 builder.Services.AddSingleton<MockBankInfo>();
@@ -85,6 +89,8 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddJwtAuth(builder.Configuration);
+builder.Services.AddAuthentication()
+    .AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(ApiKeyAuthenticationHandler.SchemeName, null);
 
 builder.Services.AddSignalR();
 
@@ -146,6 +152,33 @@ else
 }
 
 app.UseAuthentication();
+
+// Custom middleware to support API Key authentication alongside JWT or for public endpoints
+app.Use(async (context, next) =>
+{
+    if (context.Request.Headers.ContainsKey(ApiKeyAuthenticationHandler.HeaderName))
+    {
+        var result = await context.AuthenticateAsync(ApiKeyAuthenticationHandler.SchemeName);
+        if (result.Succeeded && result.Principal != null)
+        {
+            if (context.User.Identity?.IsAuthenticated == true)
+            {
+                // If already authenticated (e.g. JWT), add the API Key identity/claims
+                if (result.Principal.Identity is ClaimsIdentity apiIdentity)
+                {
+                    context.User.AddIdentity(apiIdentity);
+                }
+            }
+            else
+            {
+                // If not authenticated, set the API Key principal
+                context.User = result.Principal;
+            }
+        }
+    }
+    await next();
+});
+
 app.UseAuthorization();
 
 app.MapControllers();

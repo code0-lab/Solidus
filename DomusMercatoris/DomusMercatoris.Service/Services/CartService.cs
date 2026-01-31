@@ -3,21 +3,32 @@ using DomusMercatoris.Core.Entities;
 using DomusMercatoris.Service.DTOs;
 using Microsoft.EntityFrameworkCore;
 
+using DomusMercatoris.Service.Interfaces;
+
 namespace DomusMercatoris.Service.Services
 {
     public class CartService
     {
         private readonly DomusDbContext _db;
+        private readonly ICurrentUserService _currentUserService;
 
-        public CartService(DomusDbContext db)
+        public CartService(DomusDbContext db, ICurrentUserService currentUserService)
         {
             _db = db;
+            _currentUserService = currentUserService;
         }
 
         public async Task<List<CartItemDto>> GetCartAsync(long userId)
         {
-            return await _db.CartItems
-                .Where(c => c.UserId == userId)
+            var query = _db.CartItems
+                .Where(c => c.UserId == userId);
+
+            if (_currentUserService.CompanyId.HasValue)
+            {
+                query = query.Where(c => c.Product.CompanyId == _currentUserService.CompanyId.Value);
+            }
+
+            return await query
                 .AsNoTracking()
                 .Select(c => new CartItemDto
                 {
@@ -97,6 +108,12 @@ namespace DomusMercatoris.Service.Services
             var item = await _db.CartItems
                 .Include(c => c.Product)
                 .FirstOrDefaultAsync(c => c.Id == itemId && c.UserId == userId);
+            
+            if (item != null && _currentUserService.CompanyId.HasValue && item.Product.CompanyId != _currentUserService.CompanyId.Value)
+            {
+                // If item belongs to another company, act as if it's not found or unauthorized
+                throw new UnauthorizedAccessException("Cannot update cart item for another company.");
+            }
             
             if (item != null)
             {

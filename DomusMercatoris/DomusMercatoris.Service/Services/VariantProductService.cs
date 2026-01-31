@@ -4,21 +4,34 @@ using DomusMercatoris.Data;
 using DomusMercatoris.Service.DTOs;
 using Microsoft.EntityFrameworkCore;
 
+using DomusMercatoris.Service.Interfaces;
+
 namespace DomusMercatoris.Service.Services
 {
     public class VariantProductService
     {
         private readonly DomusDbContext _dbContext;
         private readonly IMapper _mapper;
+        private readonly ICurrentUserService _currentUserService;
 
-        public VariantProductService(DomusDbContext dbContext, IMapper mapper)
+        public VariantProductService(DomusDbContext dbContext, IMapper mapper, ICurrentUserService currentUserService)
         {
             _dbContext = dbContext;
             _mapper = mapper;
+            _currentUserService = currentUserService;
         }
 
         public async Task<List<VariantProductDto>> GetVariantsByProductIdAsync(long productId)
         {
+            if (_currentUserService.CompanyId.HasValue)
+            {
+                var product = await _dbContext.Products.FindAsync(productId);
+                if (product == null || product.CompanyId != _currentUserService.CompanyId.Value)
+                {
+                    return new List<VariantProductDto>();
+                }
+            }
+
             var variants = await _dbContext.VariantProducts
                 .Include(v => v.Product)
                 .Where(v => v.ProductId == productId)
@@ -33,6 +46,11 @@ namespace DomusMercatoris.Service.Services
                 .Include(v => v.Product)
                 .FirstOrDefaultAsync(v => v.Id == id);
 
+            if (variant != null && _currentUserService.CompanyId.HasValue && variant.Product.CompanyId != _currentUserService.CompanyId.Value)
+            {
+                return null;
+            }
+
             return _mapper.Map<VariantProductDto>(variant);
         }
 
@@ -45,8 +63,6 @@ namespace DomusMercatoris.Service.Services
                 throw new InvalidOperationException("A product can have at most 5 variants.");
             }
 
-            var variant = _mapper.Map<VariantProduct>(createDto);
-            
             // Validate Product exists
             var product = await _dbContext.Products.FindAsync(createDto.ProductId);
             if (product == null)
@@ -54,7 +70,12 @@ namespace DomusMercatoris.Service.Services
                 throw new ArgumentException("Product not found.");
             }
 
-            _dbContext.VariantProducts.Add(variant);
+            if (_currentUserService.CompanyId.HasValue && product.CompanyId != _currentUserService.CompanyId.Value)
+            {
+                throw new UnauthorizedAccessException("Cannot create variant for another company's product.");
+            }
+
+            var variant = _mapper.Map<VariantProduct>(createDto);
             await _dbContext.SaveChangesAsync();
 
             // Reload to get Product info for mapping
@@ -87,9 +108,17 @@ namespace DomusMercatoris.Service.Services
 
         public async Task DeleteVariantAsync(long id)
         {
-            var variant = await _dbContext.VariantProducts.FindAsync(id);
+            var variant = await _dbContext.VariantProducts
+                .Include(v => v.Product)
+                .FirstOrDefaultAsync(v => v.Id == id);
+
             if (variant != null)
             {
+                if (_currentUserService.CompanyId.HasValue && variant.Product.CompanyId != _currentUserService.CompanyId.Value)
+                {
+                    throw new UnauthorizedAccessException("Cannot delete variant for another company.");
+                }
+
                 _dbContext.VariantProducts.Remove(variant);
                 await _dbContext.SaveChangesAsync();
             }

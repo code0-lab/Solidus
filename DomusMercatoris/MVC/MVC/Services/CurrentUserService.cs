@@ -1,8 +1,8 @@
 using System.Security.Claims;
-using DomusMercatoris.Service.Interfaces;
 using DomusMercatoris.Core.Constants;
+using DomusMercatoris.Service.Interfaces;
 
-namespace DomusMercatorisDotnetRest.Services
+namespace DomusMercatorisDotnetMVC.Services
 {
     public class CurrentUserService : ICurrentUserService
     {
@@ -17,7 +17,9 @@ namespace DomusMercatorisDotnetRest.Services
         {
             get
             {
-                var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier);
+                var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst(AppConstants.CustomClaimTypes.UserId) 
+                               ?? _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier);
+                
                 if (userIdClaim != null && long.TryParse(userIdClaim.Value, out var userId))
                 {
                     return userId;
@@ -30,7 +32,7 @@ namespace DomusMercatorisDotnetRest.Services
         {
             get
             {
-                var companyIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst("CompanyId");
+                var companyIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst(AppConstants.CustomClaimTypes.CompanyId);
                 if (companyIdClaim != null && int.TryParse(companyIdClaim.Value, out var companyId))
                 {
                     return companyId;
@@ -45,8 +47,6 @@ namespace DomusMercatorisDotnetRest.Services
 
         public Task<bool> HasPermissionAsync(string permission)
         {
-            // Simple implementation for now, checking if user has a claim with type "Permission" and value equal to the permission name
-            // Or we could check roles. For now, let's assume specific permissions are claims.
             var hasPermission = _httpContextAccessor.HttpContext?.User?.HasClaim("Permission", permission) ?? false;
             return Task.FromResult(hasPermission);
         }

@@ -10,6 +10,7 @@ using DomusMercatorisDotnetMVC.Dto.Mappings;
 using DomusMercatorisDotnetMVC.Middleware;
 using DomusMercatorisDotnetMVC.Services;
 using DomusMercatoris.Service.Services;
+using DomusMercatoris.Service.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +40,7 @@ builder.Services.AddRazorPages();
 // Add DI
 builder.Services.AddSingleton<EncryptionService>();
 builder.Services.AddSingleton<AsyncLogService>();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<BrandService>();
@@ -49,6 +51,7 @@ builder.Services.AddScoped<DomusMercatorisDotnetMVC.Services.TaskService>();
 builder.Services.AddScoped<DomusMercatoris.Service.Services.OrderService>();
 builder.Services.AddScoped<DomusMercatoris.Service.Services.RefundService>();
 builder.Services.AddScoped<DomusMercatoris.Service.Services.DashboardService>();
+builder.Services.AddScoped<DomusMercatoris.Service.Services.ApiKeyService>();
 builder.Services.AddHttpClient<GeminiService>();
 builder.Services.AddScoped<GeminiService>();
 builder.Services.AddScoped<BannerService>();

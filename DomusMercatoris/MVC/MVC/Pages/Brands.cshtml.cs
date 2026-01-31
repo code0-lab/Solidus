@@ -25,6 +25,9 @@ namespace DomusMercatorisDotnetMVC.Pages
         [BindProperty]
         public CreateBrandDto NewBrand { get; set; } = new CreateBrandDto();
 
+        [BindProperty]
+        public UpdateBrandDto UpdateBrand { get; set; } = new UpdateBrandDto();
+
         public async Task<IActionResult> OnGetAsync()
         {
             var companyId = await _userService.GetCompanyIdFromUserAsync(User);
@@ -47,6 +50,24 @@ namespace DomusMercatorisDotnetMVC.Pages
 
             NewBrand.CompanyId = companyId;
             await _brandService.CreateBrandAsync(NewBrand);
+
+            return RedirectToPage();
+        }
+
+        public async Task<IActionResult> OnPostUpdateAsync()
+        {
+            var companyId = await _userService.GetCompanyIdFromUserAsync(User);
+            if (companyId == 0) return RedirectToPage("/Index");
+            
+            // Simple approach: Check UpdateBrand properties manually or ignore NewBrand errors.
+            ModelState.ClearValidationState(nameof(NewBrand));
+            if (!TryValidateModel(UpdateBrand, nameof(UpdateBrand)))
+            {
+                Brands = await _brandService.GetBrandsByCompanyAsync(companyId);
+                return Page();
+            }
+
+            await _brandService.UpdateBrandAsync(UpdateBrand, companyId);
 
             return RedirectToPage();
         }

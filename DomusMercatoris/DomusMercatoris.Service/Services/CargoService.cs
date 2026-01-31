@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using DomusMercatoris.Service.Interfaces;
 
 namespace DomusMercatoris.Service.Services
 {
@@ -15,11 +16,13 @@ namespace DomusMercatoris.Service.Services
     {
         private readonly DomusDbContext _context;
         private readonly IMapper _mapper;
+        private readonly ICurrentUserService _currentUserService;
 
-        public CargoService(DomusDbContext context, IMapper mapper)
+        public CargoService(DomusDbContext context, IMapper mapper, ICurrentUserService currentUserService)
         {
             _context = context;
             _mapper = mapper;
+            _currentUserService = currentUserService;
         }
 
         public async Task<CargoTrackingDto> CreateTrackingAsync(CreateCargoTrackingDto dto)
@@ -79,6 +82,18 @@ namespace DomusMercatoris.Service.Services
                 .FirstOrDefaultAsync(c => c.TrackingNumber == dto.TrackingNumber);
 
             if (entity == null) throw new NotFoundException($"Cargo {dto.TrackingNumber} not found.");
+
+            if (_currentUserService.CompanyId.HasValue)
+            {
+                var order = await _context.Orders
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(o => o.CargoTrackingId == entity.Id);
+                
+                if (order != null && order.CompanyId != _currentUserService.CompanyId.Value)
+                {
+                    throw new NotFoundException($"Cargo {dto.TrackingNumber} not found.");
+                }
+            }
 
             entity.Status = dto.NewStatus;
             

@@ -7,16 +7,27 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using DomusMercatoris.Service.Interfaces;
 
 namespace DomusMercatoris.Service.Services
 {
     public class RefundService
     {
         private readonly DomusDbContext _context;
+        private readonly ICurrentUserService _currentUserService;
 
-        public RefundService(DomusDbContext context)
+        public RefundService(DomusDbContext context, ICurrentUserService currentUserService)
         {
             _context = context;
+            _currentUserService = currentUserService;
+        }
+
+        private void ValidateCompanyAccess(int companyId)
+        {
+            if (_currentUserService.CompanyId.HasValue && _currentUserService.CompanyId.Value != companyId)
+            {
+                throw new UnauthorizedAccessException("Cannot access refund data for another company.");
+            }
         }
 
         public async Task<bool> CreateRefundRequestAsync(long userId, CreateRefundRequestDto dto)
@@ -27,6 +38,11 @@ namespace DomusMercatoris.Service.Services
 
             if (orderItem == null || orderItem.Order.UserId != userId)
                 return false;
+
+            if (_currentUserService.CompanyId.HasValue && orderItem.Order.CompanyId != _currentUserService.CompanyId.Value)
+            {
+                return false;
+            }
 
             // Cannot refund/cancel if order is currently being shipped
             if (orderItem.Order.Status == OrderStatus.Shipped)
@@ -58,10 +74,17 @@ namespace DomusMercatoris.Service.Services
 
         public async Task<List<RefundRequestDto>> GetUserRefundsAsync(long userId)
         {
-            return await _context.RefundRequests
+            var query = _context.RefundRequests
                 .Include(r => r.OrderItem)
                 .ThenInclude(oi => oi.Product)
-                .Where(r => r.OrderItem.Order.UserId == userId)
+                .Where(r => r.OrderItem.Order.UserId == userId);
+
+            if (_currentUserService.CompanyId.HasValue)
+            {
+                query = query.Where(r => r.OrderItem.Order.CompanyId == _currentUserService.CompanyId.Value);
+            }
+
+            return await query
                 .Select(r => new RefundRequestDto
                 {
                     Id = r.Id,
@@ -80,6 +103,8 @@ namespace DomusMercatoris.Service.Services
 
         public async Task<List<RefundRequestDto>> GetCompanyRefundsAsync(int companyId)
         {
+            ValidateCompanyAccess(companyId);
+
              return await _context.RefundRequests
                 .Include(r => r.OrderItem)
                 .ThenInclude(oi => oi.Product)

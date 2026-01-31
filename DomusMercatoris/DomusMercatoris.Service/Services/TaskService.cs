@@ -24,6 +24,11 @@ namespace DomusMercatoris.Service.Services
 
         public async Task<WorkTask> CreateTaskAsync(string title, string? description, long? orderId, long assignedToUserId, long createdByUserId, int companyId, long? parentId = null, TaskType type = TaskType.General)
         {
+            if (_currentUserService.CompanyId.HasValue && companyId != _currentUserService.CompanyId.Value)
+            {
+                throw new UnauthorizedAccessException("Cannot create task for another company.");
+            }
+
             var task = new WorkTask
             {
                 Title = title,
@@ -46,6 +51,11 @@ namespace DomusMercatoris.Service.Services
         {
             var task = await _db.WorkTasks.Include(t => t.Order).FirstOrDefaultAsync(t => t.Id == taskId);
             if (task == null) return false;
+
+            if (_currentUserService.CompanyId.HasValue && task.CompanyId != _currentUserService.CompanyId.Value)
+            {
+                return false;
+            }
 
             var currentUserId = _currentUserService.UserId;
             if (currentUserId == null) return false;
@@ -79,6 +89,11 @@ namespace DomusMercatoris.Service.Services
                 .FirstOrDefaultAsync(t => t.Id == taskId);
 
             if (task == null) return false;
+
+            if (_currentUserService.CompanyId.HasValue && task.CompanyId != _currentUserService.CompanyId.Value)
+            {
+                return false;
+            }
 
             var currentUserId = _currentUserService.UserId;
             if (currentUserId == null) return false;
@@ -175,6 +190,11 @@ namespace DomusMercatoris.Service.Services
         {
             var task = await _db.WorkTasks.FindAsync(taskId);
             if (task == null) return null;
+
+            if (_currentUserService.CompanyId.HasValue && task.CompanyId != _currentUserService.CompanyId.Value)
+            {
+                return null;
+            }
 
             task.Title = title;
             task.Description = description;

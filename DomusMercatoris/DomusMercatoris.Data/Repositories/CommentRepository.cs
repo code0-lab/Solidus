@@ -13,22 +13,36 @@ namespace DomusMercatoris.Data.Repositories
         {
         }
 
-        public async Task<IEnumerable<Comment>> GetAllWithDetailsAsync()
+        public async Task<IEnumerable<Comment>> GetAllWithDetailsAsync(int? companyId = null)
         {
-            return await _dbSet
+            var query = _dbSet
                 .Include(c => c.User)
                 .Include(c => c.Product)
-                .Where(c => c.IsApproved)
+                .Where(c => c.IsApproved);
+
+            if (companyId.HasValue)
+            {
+                query = query.Where(c => c.Product.CompanyId == companyId.Value);
+            }
+
+            return await query
                 .OrderByDescending(c => c.CreatedAt)
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Comment>> GetPagedWithDetailsAsync(int page, int pageSize)
+        public async Task<IEnumerable<Comment>> GetPagedWithDetailsAsync(int page, int pageSize, int? companyId = null)
         {
-            return await _dbSet
+            var query = _dbSet
                 .Include(c => c.User)
                 .Include(c => c.Product)
-                .Where(c => c.IsApproved)
+                .Where(c => c.IsApproved);
+
+            if (companyId.HasValue)
+            {
+                query = query.Where(c => c.Product.CompanyId == companyId.Value);
+            }
+
+            return await query
                 .OrderByDescending(c => c.CreatedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)

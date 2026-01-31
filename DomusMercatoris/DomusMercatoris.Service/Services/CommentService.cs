@@ -1,3 +1,4 @@
+using DomusMercatoris.Service.Interfaces;
 using AutoMapper;
 using DomusMercatoris.Service.DTOs;
 using DomusMercatoris.Core.Entities;
@@ -15,24 +16,27 @@ namespace DomusMercatoris.Service.Services
         private readonly IGenericRepository<User> _userRepository;
         private readonly IMapper _mapper;
         private readonly IGeminiCommentService _geminiCommentService;
+        private readonly ICurrentUserService _currentUserService;
 
         public CommentService(
             ICommentRepository commentRepository,
             IGenericRepository<Product> productRepository,
             IGenericRepository<User> userRepository,
             IMapper mapper,
-            IGeminiCommentService geminiCommentService)
+            IGeminiCommentService geminiCommentService,
+            ICurrentUserService currentUserService)
         {
             _commentRepository = commentRepository;
             _productRepository = productRepository;
             _userRepository = userRepository;
             _mapper = mapper;
             _geminiCommentService = geminiCommentService;
+            _currentUserService = currentUserService;
         }
 
         public async Task<IEnumerable<CommentDto>> GetAllAsync(int page = 1, int pageSize = 10)
         {
-            var comments = await _commentRepository.GetPagedWithDetailsAsync(page, pageSize);
+            var comments = await _commentRepository.GetPagedWithDetailsAsync(page, pageSize, _currentUserService.CompanyId);
             return _mapper.Map<IEnumerable<CommentDto>>(comments);
         }
 
@@ -44,6 +48,15 @@ namespace DomusMercatoris.Service.Services
 
         public async Task<IEnumerable<CommentDto>> GetByProductIdAsync(long productId, long? userId)
         {
+            if (_currentUserService.CompanyId.HasValue)
+            {
+                var product = await _productRepository.GetByIdAsync(productId);
+                if (product == null || product.CompanyId != _currentUserService.CompanyId.Value)
+                {
+                    return new List<CommentDto>();
+                }
+            }
+
             var comments = await _commentRepository.GetByProductIdWithDetailsAsync(productId, userId);
             return _mapper.Map<IEnumerable<CommentDto>>(comments);
         }
@@ -54,6 +67,11 @@ namespace DomusMercatoris.Service.Services
             if (product == null)
             {
                 throw new KeyNotFoundException("Product not found");
+            }
+
+            if (_currentUserService.CompanyId.HasValue && product.CompanyId != _currentUserService.CompanyId.Value)
+            {
+                throw new UnauthorizedAccessException("Cannot create comment for another company's product.");
             }
 
             var user = await _userRepository.GetByIdAsync(userId);
@@ -130,10 +148,15 @@ namespace DomusMercatoris.Service.Services
 
         public async Task DeleteAsync(int id, long userId, bool isAdmin)
         {
-            var comment = await _commentRepository.GetByIdAsync(id);
+            var comment = await _commentRepository.GetByIdWithDetailsAsync(id);
             if (comment == null)
             {
                 throw new KeyNotFoundException("Comment not found");
+            }
+
+            if (_currentUserService.CompanyId.HasValue && comment.Product.CompanyId != _currentUserService.CompanyId.Value)
+            {
+                throw new UnauthorizedAccessException("Cannot delete comment for another company.");
             }
 
             if (comment.UserId != userId && !isAdmin)

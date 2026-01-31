@@ -1,0 +1,180 @@
+@page
+@model DomusMercatorisDotnetMVC.Pages.Account.ApiKeysModel
+@{
+    ViewData["Title"] = "API Key Management";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">API Key Management</h1>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.CreatedApiKey))
+    {
+        <div class="card shadow mb-4 border-left-success">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-success">New API Key Created</h6>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Important:</strong> Copy this key now. You won't be able to see it again!
+                </div>
+                <div class="d-flex gap-2 mb-3">
+                    <div class="input-group">
+                        <input type="text" class="form-control font-monospace" value="@Model.CreatedApiKey" readonly id="newApiKey">
+                        <button class="btn btn-outline-primary" type="button" onclick="copyApiKey()">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                    </div>
+                    <button class="btn btn-outline-secondary text-nowrap" type="button" onclick="downloadApiKey()">
+                        <i class="bi bi-download"></i> Download
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="row">
+        <!-- Create Key Form -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card shadow h-100 py-2">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">Create New API Key</h5>
+                    <p class="card-text small text-muted">Generate a new API key to access your company's data via REST API.</p>
+                    
+                    <form method="post" asp-page-handler="Create">
+                        <div class="form-group mb-3">
+                            <label asp-for="NewKeyName">Key Name / Description</label>
+                            <input asp-for="NewKeyName" class="form-control" placeholder="e.g. Mobile App, Integration X" />
+                            <span asp-validation-for="NewKeyName" class="text-danger"></span>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-plus fa-sm"></i> Generate Key
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Information Card -->
+        <div class="col-xl-8 col-md-6 mb-4">
+            <div class="card shadow h-100 py-2 border-left-primary">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">How to use</h5>
+                    <p>Include the API Key in the HTTP Header of your requests:</p>
+                    <code class="d-block bg-light p-2 rounded mb-3">
+                        X-API-KEY: dm_sk_...
+                    </code>
+                    <p class="mb-0">
+                        This key grants access to your company's products, orders, and customer data. 
+                        <strong>Keep it secret!</strong> If a key is compromised, revoke it immediately.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Keys List -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Active API Keys</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Prefix</th>
+                            <th>Created</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.ApiKeys != null && Model.ApiKeys.Any())
+                        {
+                            @foreach (var key in Model.ApiKeys)
+                            {
+                                <tr>
+                                    <td>@key.Name</td>
+                                    <td><code>@key.Prefix...</code></td>
+                                    <td>@key.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td>
+                                        @if (key.IsActive)
+                                        {
+                                            <span class="badge bg-success">Active</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">Revoked</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <form method="post" asp-page-handler="Regenerate" asp-route-id="@key.Id" class="d-inline" onsubmit="return confirm('Are you sure you want to REGENERATE this key? The old key will be invalidated immediately and a new one will be created.');">
+                                            <button type="submit" class="btn btn-warning btn-sm" title="Regenerate Key">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-recycle" viewBox="0 0 16 16"> 
+                                                    <path d="M9.302 1.256a1.5 1.5 0 0 0-2.604 0l-1.704 2.98a.5.5 0 0 0 .869.497l1.703-2.981a.5.5 0 0 1 .868 0l2.54 4.444-1.256-.337a.5.5 0 1 0-.26.966l2.415.647a.5.5 0 0 0 .613-.353l.647-2.415a.5.5 0 1 0-.966-.259l-.333 1.242zM2.973 7.773l-1.255.337a.5.5 0 1 1-.26-.966l2.416-.647a.5.5 0 0 1 .612.353l.647 2.415a.5.5 0 0 1-.966.259l-.333-1.242-2.545 4.454a.5.5 0 0 0 .434.748H5a.5.5 0 0 1 0 1H1.723A1.5 1.5 0 0 1 .421 12.24zm10.89 1.463a.5.5 0 1 0-.868.496l1.716 3.004a.5.5 0 0 1-.434.748h-5.57l.647-.646a.5.5 0 1 0-.708-.707l-1.5 1.5a.5.5 0 0 0 0 .707l1.5 1.5a.5.5 0 1 0 .708-.707l-.647-.647h5.57a1.5 1.5 0 0 0 1.302-2.244z"/> 
+                                                </svg>
+                                            </button>
+                                        </form>
+                                        <form method="post" asp-page-handler="Delete" asp-route-id="@key.Id" class="d-inline" onsubmit="return confirm('Are you sure you want to PERMANENTLY delete this key?');">
+                                            <button type="submit" class="btn btn-danger btn-sm" title="Delete">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">No API Keys found.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function copyApiKey() {
+            var copyText = document.getElementById("newApiKey");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999); /* For mobile devices */
+            navigator.clipboard.writeText(copyText.value).then(function() {
+                // Optional: Show a toast or change button text briefly
+            }, function(err) {
+                console.error('Could not copy text: ', err);
+            });
+        }
+
+        function downloadApiKey() {
+            var key = document.getElementById("newApiKey").value;
+            var blob = new Blob([key], { type: "text/plain;charset=utf-8" });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement("a");
+            a.href = url;
+            a.download = "domus-mercatoris-api-key.txt";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+}

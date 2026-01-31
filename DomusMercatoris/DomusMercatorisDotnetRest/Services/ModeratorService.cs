@@ -2,6 +2,7 @@ using AutoMapper;
 using DomusMercatoris.Core.Entities;
 using DomusMercatoris.Data;
 using DomusMercatoris.Service.DTOs;
+using DomusMercatoris.Service.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace DomusMercatorisDotnetRest.Services
@@ -10,16 +11,24 @@ namespace DomusMercatorisDotnetRest.Services
     {
         private readonly DomusDbContext _db;
         private readonly IMapper _mapper;
+        private readonly ICurrentUserService _currentUserService;
 
-        public ModeratorService(DomusDbContext db, IMapper mapper)
+        public ModeratorService(DomusDbContext db, IMapper mapper, ICurrentUserService currentUserService)
         {
             _db = db;
             _mapper = mapper;
+            _currentUserService = currentUserService;
         }
 
         public async Task<List<UserDto>> GetUsersAsync(string? search)
         {
             var query = _db.Users.Include(u => u.Ban).AsQueryable();
+
+            if (_currentUserService.CompanyId.HasValue)
+            {
+                query = query.Where(u => u.CompanyId == _currentUserService.CompanyId.Value);
+            }
+
             if (!string.IsNullOrWhiteSpace(search))
             {
                 var s = search.ToLower().Trim();
@@ -34,7 +43,14 @@ namespace DomusMercatorisDotnetRest.Services
 
         public async Task<bool> BanUserAsync(BanUserRequestDto dto)
         {
-            var user = await _db.Users.Include(u => u.Ban).FirstOrDefaultAsync(u => u.Id == dto.UserId);
+            var query = _db.Users.Include(u => u.Ban).AsQueryable();
+
+            if (_currentUserService.CompanyId.HasValue)
+            {
+                query = query.Where(u => u.CompanyId == _currentUserService.CompanyId.Value);
+            }
+
+            var user = await query.FirstOrDefaultAsync(u => u.Id == dto.UserId);
             if (user == null) return false;
             if (user.Ban == null)
             {
@@ -50,7 +66,14 @@ namespace DomusMercatorisDotnetRest.Services
 
         public async Task<bool> UnbanUserAsync(long userId)
         {
-            var user = await _db.Users.Include(u => u.Ban).FirstOrDefaultAsync(u => u.Id == userId);
+            var query = _db.Users.Include(u => u.Ban).AsQueryable();
+
+            if (_currentUserService.CompanyId.HasValue)
+            {
+                query = query.Where(u => u.CompanyId == _currentUserService.CompanyId.Value);
+            }
+
+            var user = await query.FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null) return false;
             if (user.Ban != null)
             {

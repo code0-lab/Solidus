@@ -2,6 +2,7 @@ using AutoMapper;
 using DomusMercatoris.Core.Entities;
 using DomusMercatoris.Data;
 using DomusMercatoris.Service.DTOs;
+using DomusMercatoris.Service.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace DomusMercatoris.Service.Services
@@ -10,15 +11,22 @@ namespace DomusMercatoris.Service.Services
     {
         private readonly DomusDbContext _context;
         private readonly IMapper _mapper;
+        private readonly ICurrentUserService _currentUserService;
 
-        public BannerService(DomusDbContext context, IMapper mapper)
+        public BannerService(DomusDbContext context, IMapper mapper, ICurrentUserService currentUserService)
         {
             _context = context;
             _mapper = mapper;
+            _currentUserService = currentUserService;
         }
 
         public async Task<BannerDto?> GetActiveBannerAsync(int companyId)
         {
+            if (_currentUserService.CompanyId.HasValue && _currentUserService.CompanyId.Value != companyId)
+            {
+                return null;
+            }
+
             var banner = await _context.Banners
                 .AsNoTracking()
                 .Where(b => b.CompanyId == companyId && b.IsApproved && b.IsActive)
@@ -30,6 +38,11 @@ namespace DomusMercatoris.Service.Services
 
         public async Task<BannerDto?> GetAnyActiveBannerAsync()
         {
+            if (_currentUserService.CompanyId.HasValue)
+            {
+                return await GetActiveBannerAsync(_currentUserService.CompanyId.Value);
+            }
+
             var banner = await _context.Banners
                 .AsNoTracking()
                 .Where(b => b.IsApproved && b.IsActive)
@@ -41,6 +54,11 @@ namespace DomusMercatoris.Service.Services
 
         public async Task<BannerDto?> GetByIdAsync(int id, int companyId)
         {
+            if (_currentUserService.CompanyId.HasValue && _currentUserService.CompanyId.Value != companyId)
+            {
+                return null;
+            }
+
             var banner = await _context.Banners
                 .AsNoTracking()
                 .FirstOrDefaultAsync(b => b.Id == id && b.CompanyId == companyId);
@@ -50,6 +68,11 @@ namespace DomusMercatoris.Service.Services
 
         public async Task<List<BannerDto>> GetAllAsync(int companyId)
         {
+            if (_currentUserService.CompanyId.HasValue && _currentUserService.CompanyId.Value != companyId)
+            {
+                return new List<BannerDto>();
+            }
+
             var list = await _context.Banners
                 .AsNoTracking()
                 .Where(b => b.CompanyId == companyId)
@@ -61,6 +84,11 @@ namespace DomusMercatoris.Service.Services
 
         public async Task<List<BannerSummaryDto>> GetSummariesAsync(int companyId)
         {
+            if (_currentUserService.CompanyId.HasValue && _currentUserService.CompanyId.Value != companyId)
+            {
+                return new List<BannerSummaryDto>();
+            }
+
             return await _context.Banners
                 .AsNoTracking()
                 .Where(b => b.CompanyId == companyId)
@@ -78,6 +106,11 @@ namespace DomusMercatoris.Service.Services
 
         public async Task<BannerDto> CreateAsync(CreateBannerDto dto)
         {
+            if (_currentUserService.CompanyId.HasValue && dto.CompanyId != _currentUserService.CompanyId.Value)
+            {
+                throw new UnauthorizedAccessException("Cannot create banner for another company.");
+            }
+
             var entity = new Banner
             {
                 CompanyId = dto.CompanyId,
@@ -95,6 +128,11 @@ namespace DomusMercatoris.Service.Services
 
         public async Task<BannerDto?> UpdateStatusAsync(int id, int companyId, UpdateBannerStatusDto dto)
         {
+            if (_currentUserService.CompanyId.HasValue && _currentUserService.CompanyId.Value != companyId)
+            {
+                return null;
+            }
+
             var banner = await _context.Banners
                 .FirstOrDefaultAsync(b => b.Id == id && b.CompanyId == companyId);
 
@@ -110,6 +148,11 @@ namespace DomusMercatoris.Service.Services
 
         public async Task<bool> DeleteAsync(int id, int companyId)
         {
+            if (_currentUserService.CompanyId.HasValue && _currentUserService.CompanyId.Value != companyId)
+            {
+                return false;
+            }
+
             var banner = await _context.Banners
                 .FirstOrDefaultAsync(b => b.Id == id && b.CompanyId == companyId);
 

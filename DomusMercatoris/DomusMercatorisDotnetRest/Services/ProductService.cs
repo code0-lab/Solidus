@@ -3,6 +3,7 @@ using AutoMapper;
 using DomusMercatoris.Core.Entities;
 using DomusMercatoris.Data;
 using DomusMercatoris.Service.DTOs;
+using DomusMercatoris.Service.Interfaces;
 using DomusMercatorisDotnetRest.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,11 +13,22 @@ namespace DomusMercatorisDotnetRest.Services
     {
         private readonly DomusDbContext _db;
         private readonly IMapper _mapper;
+        private readonly ICurrentUserService _currentUserService;
 
-        public ProductService(DomusDbContext db, IMapper mapper)
+        public ProductService(DomusDbContext db, IMapper mapper, ICurrentUserService currentUserService)
         {
             _db = db;
             _mapper = mapper;
+            _currentUserService = currentUserService;
+        }
+
+        private int? GetEffectiveCompanyId(int? requestedCompanyId)
+        {
+            if (_currentUserService.CompanyId.HasValue)
+            {
+                return _currentUserService.CompanyId.Value;
+            }
+            return requestedCompanyId;
         }
 
         private IQueryable<Product> BaseProductQuery() => ProductQueryHelper.BaseProductQuery(_db);
@@ -25,6 +37,7 @@ namespace DomusMercatorisDotnetRest.Services
 
         public async Task<PaginatedResult<ProductDto>> GetAllAsync(int pageNumber, int pageSize, int? companyId, int? brandId = null)
         {
+            companyId = GetEffectiveCompanyId(companyId);
             var query = ApplyCompanyFilter(BaseProductQuery(), companyId);
             query = ApplyBrandFilter(query, brandId);
             return await ProductQueryHelper.PaginateAndMapAsync(query, pageNumber, pageSize, _mapper);
@@ -32,12 +45,24 @@ namespace DomusMercatorisDotnetRest.Services
 
         public async Task<ProductDto?> GetByIdAsync(long id)
         {
-            var product = await BaseProductQuery().FirstOrDefaultAsync(p => p.Id == id);
+            var query = BaseProductQuery();
+            
+            // If restricted to a company, ensure we only return products from that company (or global ones if logic allows, but usually company-specific)
+            // Note: BaseProductQuery might return all products. ApplyCompanyFilter logic handles null companyId (returns all) vs specific companyId.
+            // But GetById logic usually just fetches by ID. If we want to secure it, we should apply filter too.
+            var companyId = GetEffectiveCompanyId(null);
+            if (companyId.HasValue)
+            {
+                query = ApplyCompanyFilter(query, companyId);
+            }
+
+            var product = await query.FirstOrDefaultAsync(p => p.Id == id);
             return product is null ? null : _mapper.Map<ProductDto>(product);
         }
 
         public async Task<PaginatedResult<ProductDto>> GetByCategoryAsync(int categoryId, int pageNumber, int pageSize, int? companyId, int? brandId = null)
         {
+            companyId = GetEffectiveCompanyId(companyId);
             var query = ApplyCompanyFilter(BaseProductQuery().Where(p => p.Categories.Any(c => c.Id == categoryId)), companyId);
             query = ApplyBrandFilter(query, brandId);
             return await ProductQueryHelper.PaginateAndMapAsync(query, pageNumber, pageSize, _mapper);
@@ -45,6 +70,7 @@ namespace DomusMercatorisDotnetRest.Services
 
         public async Task<PaginatedResult<ProductDto>> GetByClusterAsync(int clusterId, int pageNumber, int pageSize, int? companyId, int? brandId = null, List<long>? prioritizedIds = null)
         {
+            companyId = GetEffectiveCompanyId(companyId);
             var query = ApplyCompanyFilter(
                 BaseProductQuery().Where(p => _db.ProductClusterMembers.Any(m => m.ProductId == p.Id && m.ProductClusterId == clusterId)),
                 companyId
@@ -96,6 +122,7 @@ namespace DomusMercatorisDotnetRest.Services
 
         public async Task<PaginatedResult<ProductDto>> SearchAsync(string queryText, int pageNumber, int pageSize, int? companyId, int? brandId = null)
         {
+            companyId = GetEffectiveCompanyId(companyId);
             var q = (queryText ?? string.Empty).Trim();
             if (string.IsNullOrEmpty(q))
             {

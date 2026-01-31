@@ -5,20 +5,28 @@ using DomusMercatoris.Core.Models;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using DomusMercatoris.Service.Interfaces;
 
 namespace DomusMercatoris.Service.Services
 {
     public class DashboardService
     {
         private readonly DomusDbContext _context;
+        private readonly ICurrentUserService _currentUserService;
 
-        public DashboardService(DomusDbContext context)
+        public DashboardService(DomusDbContext context, ICurrentUserService currentUserService)
         {
             _context = context;
+            _currentUserService = currentUserService;
         }
 
         public async Task<DashboardDataDto> GetDashboardDataAsync(int companyId)
         {
+            if (_currentUserService.CompanyId.HasValue && _currentUserService.CompanyId.Value != companyId)
+            {
+                throw new UnauthorizedAccessException("Cannot access dashboard data for another company.");
+            }
+
             var result = new DashboardDataDto();
 
             var connection = _context.Database.GetDbConnection();

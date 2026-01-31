@@ -5,21 +5,32 @@ using DomusMercatoris.Data;
 using DomusMercatoris.Service.DTOs;
 using Microsoft.EntityFrameworkCore;
 
+using DomusMercatoris.Service.Interfaces;
+
 namespace DomusMercatoris.Service.Services
 {
     public class OrderService
     {
         private readonly DomusDbContext _db;
         private readonly IMapper _mapper;
+        private readonly ICurrentUserService _currentUserService;
 
-        public OrderService(DomusDbContext db, IMapper mapper)
+        public OrderService(DomusDbContext db, IMapper mapper, ICurrentUserService currentUserService)
         {
             _db = db;
             _mapper = mapper;
+            _currentUserService = currentUserService;
         }
 
         public async Task<(int ActiveCount, int CompletedCount, int RefundedCount)> GetOrderCountsByCompanyIdAsync(int companyId)
         {
+            if (_currentUserService.CompanyId.HasValue && companyId != _currentUserService.CompanyId.Value)
+            {
+                // Force company ID or return zeros/throw
+                // Usually for company dashboards, so enforcing is safer.
+                companyId = _currentUserService.CompanyId.Value;
+            }
+
             var activeCount = await _db.Orders
                 .AsNoTracking()
                 .Where(o => o.CompanyId == companyId && o.IsPaid && !o.IsRefunded && o.Status != OrderStatus.Shipped && o.Status != OrderStatus.Delivered)
@@ -40,6 +51,11 @@ namespace DomusMercatoris.Service.Services
 
         public async Task<(List<Order> Items, int TotalCount)> GetPagedByCompanyIdAsync(int companyId, int pageNumber, int pageSize, string tab)
         {
+            if (_currentUserService.CompanyId.HasValue && companyId != _currentUserService.CompanyId.Value)
+            {
+                companyId = _currentUserService.CompanyId.Value;
+            }
+
             var query = _db.Orders
                 .AsNoTracking()
                 .Where(o => o.CompanyId == companyId);
@@ -97,6 +113,11 @@ namespace DomusMercatoris.Service.Services
 
         public async Task<Order?> GetOrderDetailsForUserAsync(long orderId, long userId, int? companyId)
         {
+            if (_currentUserService.CompanyId.HasValue)
+            {
+                companyId = _currentUserService.CompanyId.Value;
+            }
+
             // Security Check inside the Query (WHERE clause) to prevent Over-Fetching
             var query = _db.Orders
                 .AsNoTracking()

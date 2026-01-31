@@ -2,6 +2,7 @@ using AutoMapper;
 using DomusMercatoris.Core.Entities;
 using DomusMercatoris.Data;
 using DomusMercatoris.Service.DTOs;
+using DomusMercatoris.Service.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace DomusMercatorisDotnetRest.Services
@@ -10,11 +11,13 @@ namespace DomusMercatorisDotnetRest.Services
     {
         private readonly DomusDbContext _db;
         private readonly IMapper _mapper;
+        private readonly ICurrentUserService _currentUserService;
 
-        public CompanyService(DomusDbContext db, IMapper mapper)
+        public CompanyService(DomusDbContext db, IMapper mapper, ICurrentUserService currentUserService)
         {
             _db = db;
             _mapper = mapper;
+            _currentUserService = currentUserService;
         }
 
         public async Task<List<CompanyDto>> GetAllAsync()
@@ -30,7 +33,14 @@ namespace DomusMercatorisDotnetRest.Services
                 await _db.SaveChangesAsync();
             }
 
-            var companies = await _db.Companies.OrderBy(c => c.Name).ToListAsync();
+            var query = _db.Companies.AsQueryable();
+
+            if (_currentUserService.CompanyId.HasValue)
+            {
+                query = query.Where(c => c.CompanyId == _currentUserService.CompanyId.Value);
+            }
+
+            var companies = await query.OrderBy(c => c.Name).ToListAsync();
             return _mapper.Map<List<CompanyDto>>(companies);
         }
     }
