@@ -18,7 +18,7 @@ namespace DomusMercatoris.Core.Exceptions
     {
         public long ProductId { get; set; }
         public long? VariantProductId { get; set; }
-        public string ProductName { get; set; }
+        public required string ProductName { get; set; }
         public int RequestedQuantity { get; set; }
         public int AvailableQuantity { get; set; }
     }

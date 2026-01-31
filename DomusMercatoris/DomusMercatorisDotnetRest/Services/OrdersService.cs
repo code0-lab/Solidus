@@ -260,11 +260,11 @@ namespace DomusMercatorisDotnetRest.Services
 
             if (approved)
             {
-                await ApproveOrderAsync(order);
+                ApproveOrder(order);
             }
             else
             {
-                await RestoreStockAsync(order);
+                RestoreStock(order);
                 order.Status = OrderStatus.PaymentFailed;
             }
 
@@ -293,7 +293,7 @@ namespace DomusMercatorisDotnetRest.Services
                 throw new BadRequestException("Invalid payment code.");
             }
 
-            await ApproveOrderAsync(order);
+            ApproveOrder(order);
             _db.Orders.Update(order);
             await _db.SaveChangesAsync();
             return order;
@@ -311,7 +311,7 @@ namespace DomusMercatorisDotnetRest.Services
             if (order.Status != OrderStatus.PaymentPending)
                 throw new InvalidOperationException("Order is not pending.");
 
-            await RestoreStockAsync(order);
+            RestoreStock(order);
             order.Status = OrderStatus.PaymentFailed;
             
             _db.Orders.Update(order);
@@ -319,7 +319,7 @@ namespace DomusMercatorisDotnetRest.Services
             return order;
         }
 
-        private async Task ApproveOrderAsync(Order order)
+        private void ApproveOrder(Order order)
         {
             order.Status = OrderStatus.PaymentApproved;
             order.IsPaid = true;
@@ -327,7 +327,7 @@ namespace DomusMercatorisDotnetRest.Services
             _db.Entry(order).State = EntityState.Modified;
         }
 
-        private async Task RestoreStockAsync(Order order)
+        private void RestoreStock(Order order)
         {
             if (order.Status == OrderStatus.PaymentFailed) return;
 

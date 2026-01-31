@@ -24,7 +24,7 @@ namespace DomusMercatoris.Service.Services
                     Id = c.Id,
                     ProductId = c.ProductId,
                     ProductName = c.Product.Name,
-                    ProductImage = c.VariantProduct != null ? c.VariantProduct.CoverImage : (c.Product.Images != null && c.Product.Images.Count > 0 ? c.Product.Images[0] : string.Empty),
+                    ProductImage = (c.VariantProduct != null ? c.VariantProduct.CoverImage : (c.Product.Images != null && c.Product.Images.Count > 0 ? c.Product.Images[0] : string.Empty)) ?? string.Empty,
                     Price = c.VariantProduct != null ? c.VariantProduct.Price : c.Product.Price,
                     VariantProductId = c.VariantProductId,
                     VariantColor = c.VariantProduct != null ? c.VariantProduct.Color : null,
