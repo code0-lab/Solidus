@@ -124,7 +124,10 @@
                 Random</button>
             </div>
             @if (passwordForm.get('newPassword')?.errors?.['minlength'] && passwordForm.get('newPassword')?.touched) {
-            <small class="error-msg">Password must be at least 8 characters.</small>
+            <small class="error-msg">Password must be at least {{ validationConstants.password.minLength }} characters.</small>
+            }
+            @if (passwordForm.get('newPassword')?.errors?.['pattern'] && passwordForm.get('newPassword')?.touched) {
+            <small class="error-msg">{{ validationConstants.password.errorMessage }}</small>
             }
           </div>
 

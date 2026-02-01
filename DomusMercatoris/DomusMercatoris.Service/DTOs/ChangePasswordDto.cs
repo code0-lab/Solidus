@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using DomusMercatoris.Core.Constants;
 
 namespace DomusMercatoris.Service.DTOs
 {
@@ -17,8 +18,8 @@ namespace DomusMercatoris.Service.DTOs
         /// New password to set.
         /// </summary>
         [Required]
-        [MinLength(8)]
-        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$", ErrorMessage = "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.")]
+        [MinLength(ValidationConstants.Password.MinLength, ErrorMessage = ValidationConstants.Password.ErrorMessage)]
+        [RegularExpression(ValidationConstants.Password.Regex, ErrorMessage = ValidationConstants.Password.ErrorMessage)]
         public string NewPassword { get; set; } = string.Empty;
 
         /// <summary>

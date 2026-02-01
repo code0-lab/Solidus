@@ -16,10 +16,5 @@
   <button type="button" class="test-menu-btn" (click)="toggleTestMenu()">Test Users ▼</button>
   <div class="test-users-menu" *ngIf="showTestMenu">
     <button type="button" (click)="fillCredentials('test@domus.com', 'TestUserPassword1!')">Test User (Customer)</button>
-    <button type="button" (click)="fillCredentials('manager@domus.com', 'ManagerPassword1!')">Manager</button>
-    <button type="button" (click)="fillCredentials('worker@domus.com', 'WorkerPassword1!')">Worker</button>
-    <button type="button" (click)="fillCredentials('rex@domus.com', 'RexPassword1!')">Super Admin (Rex)</button>
-    <button type="button" (click)="fillCredentials('moderator@domus.com', 'ModeratorPassword1!')">Moderator</button>
-    <button type="button" (click)="fillCredentials('banned@domus.com', 'BannedUserPassword1!')">Banned User</button>
   </div>
 </div>

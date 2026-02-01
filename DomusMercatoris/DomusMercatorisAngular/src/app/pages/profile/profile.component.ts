@@ -11,6 +11,7 @@ import { BlacklistService } from '../../services/blacklist.service';
 import { MyCompanyDto } from '../../models/user.model';
 import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/operators';
 import { Subject, of } from 'rxjs';
+import { ValidationConstants } from '../../constants/validation.constants';
 
 @Component({
   selector: 'app-profile',
@@ -30,6 +31,8 @@ export class ProfileComponent implements OnInit {
   alertService = inject(AlertService);
   userService = inject(UserService);
   blacklistService = inject(BlacklistService);
+
+  readonly validationConstants = ValidationConstants;
 
   profileForm!: FormGroup;
   passwordForm!: FormGroup;
@@ -67,7 +70,7 @@ export class ProfileComponent implements OnInit {
 
     this.passwordForm = this.fb.group({
       currentPassword: ['', Validators.required],
-      newPassword: ['', [Validators.required, Validators.minLength(8), Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/)]],
+      newPassword: ['', [Validators.required, Validators.minLength(ValidationConstants.password.minLength), Validators.pattern(ValidationConstants.password.regex)]],
       confirmNewPassword: ['', Validators.required]
     }, { validators: this.passwordMatchValidator });
   }

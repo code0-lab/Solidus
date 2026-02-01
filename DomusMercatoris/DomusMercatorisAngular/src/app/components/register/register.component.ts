@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
+import { ValidationConstants } from '../../constants/validation.constants';
 
 @Component({
   selector: 'app-register',
@@ -32,9 +33,9 @@ export class RegisterComponent {
       return;
     }
 
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    const passwordRegex = ValidationConstants.password.regex;
     if (!passwordRegex.test(data.password)) {
-      this.toastService.error('Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.');
+      this.toastService.error(ValidationConstants.password.errorMessage);
       return;
     }
 
@@ -53,7 +54,7 @@ export class RegisterComponent {
     const all = lowers + uppers + digits + specials;
 
     let password = "";
-    // Ensure one of each required type
+    // Ensure one of each required type (keeping this for stronger random passwords even if validation is relaxed)
     password += lowers.charAt(Math.floor(Math.random() * lowers.length));
     password += uppers.charAt(Math.floor(Math.random() * uppers.length));
     password += digits.charAt(Math.floor(Math.random() * digits.length));
