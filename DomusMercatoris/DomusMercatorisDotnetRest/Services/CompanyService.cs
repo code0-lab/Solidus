@@ -40,8 +40,15 @@ namespace DomusMercatorisDotnetRest.Services
                 query = query.Where(c => c.CompanyId == _currentUserService.CompanyId.Value);
             }
 
-            var companies = await query.OrderBy(c => c.Name).ToListAsync();
-            return _mapper.Map<List<CompanyDto>>(companies);
+            var companies = await query
+                .OrderBy(c => c.Name)
+                .Select(c => new CompanyDto 
+                {
+                    CompanyId = c.CompanyId,
+                    Name = c.Name
+                })
+                .ToListAsync();
+            return companies;
         }
     }
 }

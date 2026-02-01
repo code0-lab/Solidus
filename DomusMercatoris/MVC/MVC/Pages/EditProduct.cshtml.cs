@@ -9,6 +9,7 @@ using System.Linq;
 using DomusMercatoris.Service.Services;
 using DomusMercatoris.Service.DTOs;
 using Microsoft.EntityFrameworkCore;
+using DomusMercatoris.Service.Interfaces;
 using DomusMercatoris.Core.Constants;
 
 namespace DomusMercatorisDotnetMVC.Pages

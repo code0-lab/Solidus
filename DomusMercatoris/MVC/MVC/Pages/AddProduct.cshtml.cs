@@ -12,6 +12,8 @@ using DomusMercatoris.Service.Services;
 using DomusMercatoris.Service.DTOs;
 using Microsoft.EntityFrameworkCore;
 
+using DomusMercatoris.Service.Interfaces;
+
 namespace DomusMercatorisDotnetMVC.Pages
 {
     [Authorize(Policy = "ProductsAccess")]
@@ -24,12 +26,12 @@ namespace DomusMercatorisDotnetMVC.Pages
         private readonly GeminiService _geminiService;
         private readonly UserService _userService;
         private readonly BrandService _brandService;
-        private readonly DomusMercatorisDotnetMVC.Services.IClusteringService _clusteringService;
+        private readonly IClusteringService _clusteringService;
 
         public List<Category> Categories { get; set; } = new();
         public List<BrandDto> Brands { get; set; } = new();
 
-        public AddProductModel(ProductService productService, GeminiService geminiService, UserService userService, BrandService brandService, DomusMercatorisDotnetMVC.Services.IClusteringService clusteringService)
+        public AddProductModel(ProductService productService, GeminiService geminiService, UserService userService, BrandService brandService, IClusteringService clusteringService)
         {
             _productService = productService;
             _geminiService = geminiService;

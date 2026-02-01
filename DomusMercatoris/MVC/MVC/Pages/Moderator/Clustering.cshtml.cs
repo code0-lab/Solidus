@@ -9,6 +9,7 @@ using DomusMercatoris.Core.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using DomusMercatoris.Core.Entities;
 using DomusMercatoris.Data;
+using DomusMercatoris.Service.Interfaces;
 using DomusMercatorisDotnetMVC.Services;
 
 namespace DomusMercatorisDotnetMVC.Pages.Moderator

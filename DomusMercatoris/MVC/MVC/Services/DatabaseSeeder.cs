@@ -24,7 +24,7 @@ namespace DomusMercatorisDotnetMVC.Services
 
             var rexEmail = "rex@domus.com";
             var rexUser = db.Users.FirstOrDefault(u => u.Email == rexEmail);
-            var rexPasswordHash = HashSha256("Rex123");
+            var rexPasswordHash = HashSha256("RexPassword1!");
 
             if (rexUser == null)
             {
@@ -58,7 +58,7 @@ namespace DomusMercatorisDotnetMVC.Services
 
             var moderatorEmail = "moderator@domus.com";
             var moderatorUser = db.Users.FirstOrDefault(u => u.Email == moderatorEmail);
-            var moderatorPasswordHash = HashSha256("Moderator123");
+            var moderatorPasswordHash = HashSha256("ModeratorPassword1!");
             
             if (moderatorUser == null)
             {
@@ -92,7 +92,7 @@ namespace DomusMercatorisDotnetMVC.Services
 
             var managerEmail = "manager@domus.com";
             var managerUser = db.Users.FirstOrDefault(u => u.Email == managerEmail);
-            var managerPasswordHash = HashSha256("Manager123");
+            var managerPasswordHash = HashSha256("ManagerPassword1!");
             if (managerUser == null)
             {
                 managerUser = new User
@@ -118,7 +118,7 @@ namespace DomusMercatorisDotnetMVC.Services
 
             var workerEmail = "worker@domus.com";
             var workerUser = db.Users.FirstOrDefault(u => u.Email == workerEmail);
-            var workerPasswordHash = HashSha256("Worker123");
+            var workerPasswordHash = HashSha256("WorkerPassword1!");
             if (workerUser == null)
             {
                 workerUser = new User
@@ -156,7 +156,7 @@ namespace DomusMercatorisDotnetMVC.Services
 
             var testManagerEmail = "auto.manager@example.com";
             var testManager = db.Users.FirstOrDefault(u => u.Email == testManagerEmail);
-            var testManagerPasswordHash = HashSha256("Password1A");
+            var testManagerPasswordHash = HashSha256("AutoManagerPassword1!");
             if (testManager == null)
             {
                 testManager = new User
@@ -185,7 +185,7 @@ namespace DomusMercatorisDotnetMVC.Services
 
             var testWorkerEmail = "auto.worker@example.com";
             var testWorker = db.Users.FirstOrDefault(u => u.Email == testWorkerEmail);
-            var testWorkerPasswordHash = HashSha256("Password1A");
+            var testWorkerPasswordHash = HashSha256("AutoWorkerPassword1!");
             if (testWorker == null)
             {
                 testWorker = new User
@@ -211,7 +211,7 @@ namespace DomusMercatorisDotnetMVC.Services
             // Test User Seed
             var testUserEmail = "test@domus.com";
             var testUser = db.Users.FirstOrDefault(u => u.Email == testUserEmail);
-            var testUserPasswordHash = HashSha256("Test1234");
+            var testUserPasswordHash = HashSha256("TestUserPassword1!");
             if (testUser == null)
             {
                 testUser = new User
@@ -238,11 +238,7 @@ namespace DomusMercatorisDotnetMVC.Services
         }
         private static string HashSha256(string input)
         {
-            using var sha256 = System.Security.Cryptography.SHA256.Create();
-            var bytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(input));
-            var builder = new System.Text.StringBuilder();
-            foreach (var b in bytes) builder.Append(b.ToString("x2"));
-            return builder.ToString();
+            return BCrypt.Net.BCrypt.HashPassword(input);
         }
     }
 }

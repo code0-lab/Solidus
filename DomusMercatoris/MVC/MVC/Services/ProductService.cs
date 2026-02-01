@@ -7,6 +7,7 @@ using DomusMercatoris.Data;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using DomusMercatoris.Service.Interfaces;
 
 namespace DomusMercatorisDotnetMVC.Services
 {

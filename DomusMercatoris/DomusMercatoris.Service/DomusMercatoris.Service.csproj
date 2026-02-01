@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="..\DomusMercatoris.Core\DomusMercatoris.Core.csproj" />
     <ProjectReference Include="..\DomusMercatoris.Data\DomusMercatoris.Data.csproj" />
   </ItemGroup>

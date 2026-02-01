@@ -272,6 +272,7 @@ namespace DomusMercatorisDotnetRest.Services
             var companies = await _db.Companies
                 .AsNoTracking()
                 .Where(c => orderCompanyIds.Contains(c.CompanyId))
+                .Select(c => new { c.CompanyId, c.Name }) // Fetch only needed columns
                 .ToListAsync();
 
             var blockedCompanyIds = await _db.CompanyCustomerBlacklists
