@@ -36,7 +36,7 @@ graph TD
     end
     
     subgraph Backend
-        API[ASP.NET Core API (.NET 9)]
+        API["ASP.NET Core API (.NET 9)"]
         DB[(SQL Server)]
     end
     
