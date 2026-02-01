@@ -4,7 +4,7 @@ This is the server-side rendered **ASP.NET Core MVC** application that serves as
 
 ## 🛠 Technology Stack
 
-*   **Framework:** ASP.NET Core MVC 8
+*   **Framework:** ASP.NET Core MVC 9
 *   **Rendering:** Razor Pages / Razor Views
 *   **Styling:** Bootstrap / Custom CSS
 *   **Database:** Entity Framework Core (Shared with REST API)
@@ -31,9 +31,17 @@ This is the server-side rendered **ASP.NET Core MVC** application that serves as
 
 ### Prerequisites
 
-*   .NET 8 SDK
+*   .NET 9 SDK
 *   SQL Server (or configured database)
 *   Python 3.11 (for the AI service to be launched)
+*   **Default Credentials:**
+
+    | Role | Email | Password |
+    | :--- | :--- | :--- |
+    | **Rex** | `rex@domus.com` | `RexPassword1!` |
+    | **Moderator** | `moderator@domus.com` | `ModeratorPassword1!` |
+    | **Manager** | `manager@domus.com` | `ManagerPassword1!` |
+    | **User** | `test@domus.com` | `TestUserPassword1!` |
 
 ### Running the Application
 

@@ -1,10 +1,10 @@
-# Domus Mercatoris - Backend API (.NET 8)
+# Domus Mercatoris - Backend API (.NET 9)
 
-This is the core REST API for the Domus Mercatoris platform, built with **ASP.NET Core 8**. It handles business logic, database interactions, authentication, and orchestrates communication with the Python AI service.
+This is the core REST API for the Domus Mercatoris platform, built with **ASP.NET Core 9**. It handles business logic, database interactions, authentication, and orchestrates communication with the Python AI service.
 
 ## 🛠 Technology Stack
 
-*   **Framework:** .NET 8 (ASP.NET Core Web API)
+*   **Framework:** .NET 9 (ASP.NET Core Web API)
 *   **Database:** Entity Framework Core (SQL Server / PostgreSQL compatible)
 *   **Authentication:** JWT (JSON Web Tokens)
 *   **Documentation:** Swagger / OpenAPI
@@ -24,7 +24,7 @@ This is the core REST API for the Domus Mercatoris platform, built with **ASP.NE
 
 ### Prerequisites
 
-*   .NET 8 SDK
+*   .NET 9 SDK
 *   A running database instance (connection string configured in `appsettings.json`)
 *   The Python AI Service (for visual search features)
 
@@ -57,7 +57,8 @@ Ensure `appsettings.json` is configured correctly:
     ```bash
     dotnet run
     ```
-    The API will start (default: `http://localhost:5200`).
+    ```
+    The API will start (default: `http://localhost:5280`).
 
 ## 🖼 Image Processing Fallback
 
