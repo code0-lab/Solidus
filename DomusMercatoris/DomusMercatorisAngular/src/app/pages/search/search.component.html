@@ -67,21 +67,35 @@
 <div class="standard-search-container">
   <div class="sys-window standard-search-window">
     <div class="sys-window-header">
+      <button class="filter-toggle-btn" (click)="toggleFilter()" [class.active]="isFilterOpen()">
+        <span class="filter-icon">⑆</span> FILTER
+      </button>
       <span class="sys-window-title">{{ productService.products().length > 0 ? 'SEARCH RESULTS' : 'SEARCH DATABASE'
         }}</span>
     </div>
 
-    <div class="standard-search-content">
-      @if (productService.products().length === 0) {
-      <div class="retro-empty-state">
-        <div class="sys-icon-large">?</div>
-        <p>SYSTEM READY</p>
-        <span class="retro-hint">ENTER KEYWORD OR SCAN IMAGE</span>
+    <div class="search-body">
+      <!-- Side Filter Menu -->
+      <app-filter-sidebar [isOpen]="isFilterOpen()" [(minPrice)]="minPrice"
+        [(maxPrice)]="maxPrice"></app-filter-sidebar>
+
+      <div class="standard-search-content">
+        @if (filteredProducts().length === 0 && productService.products().length > 0) {
+        <div class="no-filter-results">
+          <p>No items match your filters.</p>
+          <button class="sys-button-small" (click)="minPrice.set(null); maxPrice.set(null)">Clear Filters</button>
+        </div>
+        } @else if (productService.products().length === 0) {
+        <div class="retro-empty-state">
+          <div class="sys-icon-large">?</div>
+          <p>SYSTEM READY</p>
+          <span class="retro-hint">ENTER KEYWORD OR SCAN IMAGE</span>
+        </div>
+        } @else {
+        <app-product-list [products]="filteredProducts()" (selectProduct)="onSelectProduct($event)">
+        </app-product-list>
+        }
       </div>
-      } @else {
-      <app-product-list [products]="productService.products()" (selectProduct)="onSelectProduct($event)">
-      </app-product-list>
-      }
     </div>
   </div>
 </div>

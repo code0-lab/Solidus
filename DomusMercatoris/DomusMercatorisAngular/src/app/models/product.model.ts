@@ -28,6 +28,15 @@ export interface Category {
     name: string;
 }
 
+export interface AutoCategory {
+    id: number;
+    name: string;
+    description?: string;
+    productClusterId: number;
+    parentId?: number;
+    children?: AutoCategory[];
+}
+
 export interface Brand {
     id: number;
     name: string;

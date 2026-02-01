@@ -1,17 +1,19 @@
-import { Component, signal, inject, ChangeDetectionStrategy, DestroyRef, effect, untracked } from '@angular/core';
+import { Component, signal, inject, ChangeDetectionStrategy, DestroyRef, effect, untracked, computed } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ImageCropperComponent, ImageCroppedEvent, LoadedImage } from 'ngx-image-cropper';
+import { FormsModule } from '@angular/forms';
 import { ProductService } from '../../services/product.service';
 import { SearchService } from '../../services/search.service';
 import { Product } from '../../models/product.model';
 import { ProductListComponent } from '../../components/product-list/product-list.component';
 import { ProductDetailComponent } from '../../components/product-detail/product-detail.component';
+import { FilterSidebarComponent } from '../../components/filter-sidebar/filter-sidebar.component';
 
 @Component({
   selector: 'app-search',
   standalone: true,
-  imports: [CommonModule, ProductListComponent, ProductDetailComponent, ImageCropperComponent],
+  imports: [CommonModule, ProductListComponent, ProductDetailComponent, ImageCropperComponent, FormsModule, FilterSidebarComponent],
   templateUrl: './search.component.html',
   styleUrl: './search.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -26,6 +28,31 @@ export class SearchComponent {
   isClassifying = signal(false);
   classifyError = signal<string | null>(null);
   itemsPerPage = 9;
+
+  // Filter state
+  isFilterOpen = signal(false);
+  minPrice = signal<number | null>(null);
+  maxPrice = signal<number | null>(null);
+
+  // Computed filtered products
+  filteredProducts = computed(() => {
+    const products = this.productService.products();
+    const min = this.minPrice();
+    const max = this.maxPrice();
+
+    if (min === null && max === null) return products;
+
+    return products.filter(p => {
+      let valid = true;
+      if (min !== null) valid = valid && p.price >= min;
+      if (max !== null) valid = valid && p.price <= max;
+      return valid;
+    });
+  });
+
+  toggleFilter() {
+    this.isFilterOpen.update(v => !v);
+  }
 
   // Cropper state
   imageFile: File | undefined = undefined;

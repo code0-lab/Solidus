@@ -19,6 +19,7 @@
                 <tr>
                     <th>Email</th>
                     <th>Name</th>
+                    <th>Roles</th>
                     <th>Status</th>
                     <th>Action</th>
                 </tr>
@@ -30,6 +31,19 @@
                     <tr>
                         <td>@user.Email</td>
                         <td>@user.FirstName @user.LastName</td>
+                        <td>
+                            @if (user.Roles != null && user.Roles.Any())
+                            {
+                                @foreach (var role in user.Roles)
+                                {
+                                    <span class="badge bg-secondary me-1">@role</span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="text-muted small">User</span>
+                            }
+                        </td>
                         <td>
                             @if (isBanned)
                             {

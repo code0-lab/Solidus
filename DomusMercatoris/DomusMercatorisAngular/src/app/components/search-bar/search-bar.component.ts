@@ -33,26 +33,30 @@ export class SearchBarComponent implements OnInit, OnDestroy {
   isDragging = false;
 
   isExpanded = false;
-  isTyping = false;
+  isTyping = false; // Add typing state
 
   onInputFocus() {
     this.isTyping = true;
   }
 
   onInputBlur() {
-    // Small delay to allow click on category icon if needed before resetting
+    // Small delay to allow click events on dropdown if needed
     setTimeout(() => {
-      if (!this.query) {
-        this.isTyping = false;
-      }
+      this.isTyping = false;
     }, 200);
+  }
+
+  openCategories(event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isTyping = false;
   }
   private readonly MAX_SIZE_BYTES = 17 * 1024 * 1024;
   private destroy$ = new Subject<void>();
   private destroyed = false;
 
   ngOnInit() {
-    this.productService.fetchCategories();
+    this.productService.fetchAutoCategories();
   }
 
   ngOnDestroy() {
@@ -79,10 +83,11 @@ export class SearchBarComponent implements OnInit, OnDestroy {
     // Reset filters for global search but keep category if selected
     this.productService.selectedCompany.set(null);
     this.productService.selectedBrand.set(null);
+    this.productService.selectedCategory.set(null);
 
-    const categoryId = this.productService.selectedCategory();
+    const autoCategoryId = this.productService.selectedAutoCategory();
 
-    this.searchService.searchProductsByName(q, 1, this.itemsPerPage, null, null, categoryId);
+    this.searchService.searchProductsByName(q, 1, this.itemsPerPage, null, null, null, autoCategoryId);
     this.router.navigate(['/products/search']);
   }
 

@@ -180,7 +180,7 @@ export class SearchService {
       });
   }
 
-  searchProductsByName(query: string, pageNumber: number = 1, pageSize: number = 9, companyId?: number | null, brandId?: number | null, categoryId?: number | null): void {
+  searchProductsByName(query: string, pageNumber: number = 1, pageSize: number = 9, companyId?: number | null, brandId?: number | null, categoryId?: number | null, autoCategoryId?: number | null): void {
     const url = `${this.apiUrl}/products/search`;
     let params = new HttpParams()
       .set('query', query)
@@ -194,6 +194,9 @@ export class SearchService {
     }
     if (categoryId) {
       params = params.set('categoryId', categoryId);
+    }
+    if (autoCategoryId) {
+      params = params.set('autoCategoryId', autoCategoryId);
     }
     this.productService.queryImageUrl.set(null);
     this.productService.loading.set(true);

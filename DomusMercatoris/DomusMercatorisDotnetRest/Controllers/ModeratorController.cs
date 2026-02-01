@@ -8,7 +8,7 @@ namespace DomusMercatorisDotnetRest.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = AppConstants.Roles.Moderator)]
+    [Authorize(Roles = "Moderator,Rex")]
     public class ModeratorController : ControllerBase
     {
         private readonly ModeratorService _moderatorService;
@@ -28,9 +28,9 @@ namespace DomusMercatorisDotnetRest.Controllers
         [HttpPost("ban")]
         public async Task<ActionResult> BanUser([FromBody] BanUserRequestDto dto)
         {
-            var ok = await _moderatorService.BanUserAsync(dto);
-            if (!ok) return NotFound("User not found");
-            return Ok(new { message = "User banned successfully" });
+            var result = await _moderatorService.BanUserAsync(dto);
+            if (!result.Success) return BadRequest(new { message = result.Message });
+            return Ok(new { message = result.Message });
         }
 
         [HttpPost("unban/{userId:long}")]

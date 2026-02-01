@@ -44,6 +44,16 @@ namespace DomusMercatorisDotnetMVC.Pages.Tasks
 
             if (currentUserId > 0)
             {
+                // Check if user is banned
+                var isBanned = await _db.Bans
+                    .AsNoTracking()
+                    .AnyAsync(b => b.UserId == currentUserId && (b.PermaBan || b.EndDate > DateTime.UtcNow));
+                
+                if (isBanned)
+                {
+                    return RedirectToPage("/Banned");
+                }
+
                 // My Pending Tasks
                 MyTasks = await _taskService.GetPendingTasksForUserAsync(currentUserId);
 
@@ -92,6 +102,16 @@ namespace DomusMercatorisDotnetMVC.Pages.Tasks
             long currentUserId = 0;
             var idClaim = User.FindFirst(AppConstants.CustomClaimTypes.UserId)?.Value;
             if (!string.IsNullOrEmpty(idClaim)) long.TryParse(idClaim, out currentUserId);
+
+            // Check if user is banned
+            if (currentUserId > 0)
+            {
+                var isBanned = await _db.Bans
+                    .AsNoTracking()
+                    .AnyAsync(b => b.UserId == currentUserId && (b.PermaBan || b.EndDate > DateTime.UtcNow));
+                
+                if (isBanned) return RedirectToPage("/Banned");
+            }
 
             if (NewTask.AssignedToUserId != 0 && !string.IsNullOrEmpty(NewTask.Title))
             {

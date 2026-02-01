@@ -180,7 +180,7 @@ namespace DomusMercatorisDotnetRest.Services
             return query.OrderBy(lambda);
         }
 
-        public async Task<PaginatedResult<ProductDto>> SearchAsync(string queryText, int pageNumber, int pageSize, int? companyId, int? brandId = null)
+        public async Task<PaginatedResult<ProductDto>> SearchAsync(string queryText, int pageNumber, int pageSize, int? companyId, int? brandId = null, int? autoCategoryId = null)
         {
             companyId = GetEffectiveCompanyId(companyId);
             var q = (queryText ?? string.Empty).Trim();
@@ -198,6 +198,12 @@ namespace DomusMercatorisDotnetRest.Services
             q = q.ToLower();
             var query = ApplyCompanyFilter(BaseProductQuery(), companyId);
             query = ApplyBrandFilter(query, brandId);
+
+            if (autoCategoryId.HasValue)
+            {
+                query = query.Where(p => p.AutoCategoryId == autoCategoryId.Value);
+            }
+
             query = await ApplyBlacklistFilterAsync(query);
             
             // Prioritize name matches (Name contains query) -> then Description

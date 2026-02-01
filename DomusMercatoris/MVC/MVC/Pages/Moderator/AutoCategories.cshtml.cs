@@ -11,16 +11,22 @@ using System.Threading.Tasks;
 
 using DomusMercatoris.Core.Exceptions;
 
+using System.Net.Http;
+
 namespace DomusMercatorisDotnetMVC.Pages.Moderator
 {
     [Authorize(Roles = "Moderator,Rex")]
     public class AutoCategoriesModel : PageModel
     {
         private readonly DomusDbContext _db;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IConfiguration _configuration;
 
-        public AutoCategoriesModel(DomusDbContext db)
+        public AutoCategoriesModel(DomusDbContext db, IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
             _db = db;
+            _httpClientFactory = httpClientFactory;
+            _configuration = configuration;
         }
 
         public List<AutoCategory> AutoCategories { get; set; } = new();
@@ -92,14 +98,45 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
 
                 if (item == null) throw new NotFoundException($"AutoCategory {editId} not found.");
 
-                // Prevent circular reference
-                if (Input.ParentId.HasValue && Input.ParentId.Value == item.Id)
+                // 1. Validation: Duplicate Name Check
+                if (Input.Name != item.Name)
                 {
-                        ModelState.AddModelError("Input.ParentId", "A category cannot be its own parent.");
+                    var isDuplicate = await _db.AutoCategories
+                        .AnyAsync(ac => ac.Name == Input.Name && ac.Id != item.Id);
+
+                    if (isDuplicate)
+                    {
+                        ModelState.AddModelError("Input.Name", "A category with this name already exists.");
                         await LoadDataAsync();
                         IsEditing = true;
                         EditId = editId;
                         return Page();
+                    }
+                }
+
+                // 2. Validation: Prevent circular reference (Direct & Indirect)
+                if (Input.ParentId != item.ParentId)
+                {
+                    if (Input.ParentId.HasValue)
+                    {
+                        if (Input.ParentId.Value == item.Id)
+                        {
+                            ModelState.AddModelError("Input.ParentId", "A category cannot be its own parent.");
+                            await LoadDataAsync();
+                            IsEditing = true;
+                            EditId = editId;
+                            return Page();
+                        }
+                        
+                        if (await IsCircularReferenceAsync(item.Id, Input.ParentId.Value))
+                        {
+                            ModelState.AddModelError("Input.ParentId", "Circular reference detected. A category cannot be a child of its own descendant.");
+                            await LoadDataAsync();
+                            IsEditing = true;
+                            EditId = editId;
+                            return Page();
+                        }
+                    }
                 }
 
                 item.Name = Input.Name;
@@ -115,6 +152,17 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
             else
             {
                 // Create
+                // 1. Validation: Duplicate Name Check
+                var isDuplicate = await _db.AutoCategories
+                    .AnyAsync(ac => ac.Name == Input.Name);
+
+                if (isDuplicate)
+                {
+                    ModelState.AddModelError("Input.Name", "A category with this name already exists.");
+                    await LoadDataAsync();
+                    return Page();
+                }
+
                 var newItem = new AutoCategory
                 {
                     Name = Input.Name,
@@ -128,9 +176,49 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
                 _db.AutoCategories.Add(newItem);
             }
 
-            await _db.SaveChangesAsync();
+            // Only invalidate cache if data actually changed in DB
+            var changes = await _db.SaveChangesAsync();
+
+            if (changes > 0)
+            {
+                // Invalidate API Cache
+                await InvalidateApiCacheAsync();
+            }
 
             return RedirectToPage();
+        }
+
+        private async Task<bool> IsCircularReferenceAsync(int categoryId, int newParentId)
+        {
+            var currentParentId = newParentId;
+            while (true)
+            {
+                if (currentParentId == categoryId) return true;
+
+                var parent = await _db.AutoCategories
+                    .AsNoTracking()
+                    .Select(ac => new { ac.Id, ac.ParentId })
+                    .FirstOrDefaultAsync(ac => ac.Id == currentParentId);
+
+                if (parent == null || parent.ParentId == null) return false;
+                currentParentId = parent.ParentId.Value;
+            }
+        }
+
+        private async Task InvalidateApiCacheAsync()
+        {
+            try
+            {
+                var apiUrl = _configuration["ApiUrl"] ?? "http://localhost:5000";
+                var client = _httpClientFactory.CreateClient();
+                // Assuming the API is on the same network/host. 
+                // For production, you might need an API Key or specific configuration.
+                await client.PostAsync($"{apiUrl}/api/categories/auto/invalidate", null);
+            }
+            catch (Exception)
+            {
+                // Log error but don't fail the request. Cache will be stale until expiration.
+            }
         }
 
         private async Task UpdateProductClustersAsync(AutoCategory item, List<int> inputClusterIds)

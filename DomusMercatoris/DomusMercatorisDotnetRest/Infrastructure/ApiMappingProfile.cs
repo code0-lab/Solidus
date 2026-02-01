@@ -9,6 +9,7 @@ namespace DomusMercatorisDotnetRest.Infrastructure
         public ApiMappingProfile()
         {
             CreateMap<Company, CompanyDto>();
+            CreateMap<AutoCategory, AutoCategoryDto>();
         }
     }
 }

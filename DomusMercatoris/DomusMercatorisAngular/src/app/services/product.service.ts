@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Product, Category, Brand, Company, PaginatedResult } from '../models/product.model';
+import { Product, Category, Brand, Company, PaginatedResult, AutoCategory } from '../models/product.model';
 import { Observable, tap, finalize } from 'rxjs';
 import { environment } from '../../environments/environment';
 
@@ -18,9 +18,11 @@ export class ProductService {
   loading = signal<boolean>(false);
   totalCount = signal<number>(0);
   categories = signal<Category[]>([]);
+  autoCategories = signal<AutoCategory[]>([]);
   brands = signal<Brand[]>([]);
   companies = signal<Company[]>([]);
   selectedCategory = signal<number | null>(null);
+  selectedAutoCategory = signal<number | null>(null);
   selectedBrand = signal<number | null>(null);
   selectedCompany = signal<number | null>(null);
   queryImageUrl = signal<string | null>(null);
@@ -88,6 +90,11 @@ export class ProductService {
   fetchCategories(): void {
     this.http.get<Category[]>(`${this.apiUrl}/categories`)
       .subscribe((data) => this.categories.set(data));
+  }
+
+  fetchAutoCategories(): void {
+    this.http.get<AutoCategory[]>(`${this.apiUrl}/categories/auto`)
+      .subscribe((data) => this.autoCategories.set(data));
   }
 
   fetchBrands(companyId?: number | null): void {

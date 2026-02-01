@@ -12,7 +12,11 @@
             class="profile-avatar" (error)="handleImageError()">
           } @else {
           <div class="profile-avatar-placeholder">
-            👤
+            <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
           </div>
           }
           <div class="avatar-overlay">
@@ -113,15 +117,20 @@
 
           <div class="field-group">
             <label for="newPass">New Password</label>
-            <input id="newPass" type="password" formControlName="newPassword">
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <input id="newPassword" type="password" formControlName="newPassword" style="flex: 1;">
+              <button type="button" (click)="generateRandomPassword()"
+                style="padding: 0.5rem; background: #333; color: white; border: none; cursor: pointer; font-size: 0.8rem;">Generate
+                Random</button>
+            </div>
             @if (passwordForm.get('newPassword')?.errors?.['minlength'] && passwordForm.get('newPassword')?.touched) {
-            <small class="error-msg">Password must be at least 6 characters.</small>
+            <small class="error-msg">Password must be at least 8 characters.</small>
             }
           </div>
 
           <div class="field-group">
             <label for="confirmPass">Confirm New Password</label>
-            <input id="confirmPass" type="password" formControlName="confirmNewPassword">
+            <input id="confirmNewPassword" type="password" formControlName="confirmNewPassword">
             @if (passwordForm.errors?.['mismatch'] && passwordForm.get('confirmNewPassword')?.touched) {
             <small class="error-msg">Passwords do not match.</small>
             }
@@ -139,27 +148,27 @@
       <div class="tab-content fade-in">
         <h3>My Companies</h3>
         <p class="section-description">
-            Companies you have purchased from. You can block companies to hide their products.
+          Companies you have purchased from. You can block companies to hide their products.
         </p>
 
         @if (myCompanies().length === 0) {
-            <p class="empty-state">You haven't purchased from any companies yet.</p>
+        <p class="empty-state">You haven't purchased from any companies yet.</p>
         } @else {
-            <div class="company-list">
-                @for (company of myCompanies(); track company.id) {
-                    <div class="company-item">
-                        <span class="company-name">{{ company.name }}</span>
-                        <div class="actions">
-                             @if (company.isBlockedByMe) {
-                                <span class="badge blocked">Blocked</span>
-                                <button class="unblock-btn" (click)="toggleBlock(company)">Unblock</button>
-                            } @else {
-                                <button class="block-btn" (click)="toggleBlock(company)">Block</button>
-                            }
-                        </div>
-                    </div>
-                }
+        <div class="company-list">
+          @for (company of myCompanies(); track company.id) {
+          <div class="company-item">
+            <span class="company-name">{{ company.name }}</span>
+            <div class="actions">
+              @if (company.isBlockedByMe) {
+              <span class="badge blocked">Blocked</span>
+              <button class="unblock-btn" (click)="toggleBlock(company)">Unblock</button>
+              } @else {
+              <button class="block-btn" (click)="toggleBlock(company)">Block</button>
+              }
             </div>
+          </div>
+          }
+        </div>
         }
       </div>
       }

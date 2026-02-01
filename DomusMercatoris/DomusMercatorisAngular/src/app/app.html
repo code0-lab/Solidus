@@ -5,6 +5,8 @@
 <app-alert-modal></app-alert-modal>
 <app-auth-modal *ngIf="authService.isLoginOpen()"></app-auth-modal>
 
-<router-outlet></router-outlet>
+<main class="main-content">
+    <router-outlet></router-outlet>
+</main>
 
 <app-footer></app-footer>

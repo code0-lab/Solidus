@@ -33,6 +33,14 @@ namespace DomusMercatorisDotnetMVC.Services
         protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, HybridPageAccessRequirement requirement)
         {
             var roles = context.User.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList();
+            
+            // Allow Rex to access everything
+            if (roles.Contains("Rex", StringComparer.OrdinalIgnoreCase))
+            {
+                context.Succeed(requirement);
+                return;
+            }
+
             if (roles.Any(r => requirement.RequiredRoles.Contains(r, StringComparer.OrdinalIgnoreCase)))
             {
                 context.Succeed(requirement);

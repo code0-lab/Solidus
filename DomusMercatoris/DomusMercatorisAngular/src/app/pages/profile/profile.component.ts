@@ -67,7 +67,7 @@ export class ProfileComponent implements OnInit {
 
     this.passwordForm = this.fb.group({
       currentPassword: ['', Validators.required],
-      newPassword: ['', [Validators.required, Validators.minLength(6)]],
+      newPassword: ['', [Validators.required, Validators.minLength(8), Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/)]],
       confirmNewPassword: ['', Validators.required]
     }, { validators: this.passwordMatchValidator });
   }
@@ -191,7 +191,43 @@ export class ProfileComponent implements OnInit {
         }
       });
   }
+// Bunun güvenlik sorunu yaratabileceği göz ardı edilmemeli
+  generateRandomPassword() {
+    const length = 12;
+    const lowers = "abcdefghijklmnopqrstuvwxyz";
+    const uppers = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const digits = "0123456789";
+    const specials = "@$!%*?&";
+    const all = lowers + uppers + digits + specials;
 
+    let password = "";
+    // Ensure one of each required type
+    password += lowers.charAt(Math.floor(Math.random() * lowers.length));
+    password += uppers.charAt(Math.floor(Math.random() * uppers.length));
+    password += digits.charAt(Math.floor(Math.random() * digits.length));
+    password += specials.charAt(Math.floor(Math.random() * specials.length));
+
+    // Fill rest
+    for (let i = 4; i < length; i++) {
+        password += all.charAt(Math.floor(Math.random() * all.length));
+    }
+
+    // Shuffle
+    password = password.split('').sort(() => 0.5 - Math.random()).join('');
+
+    this.passwordForm.patchValue({
+        newPassword: password,
+        confirmNewPassword: password
+    });
+
+    // Show password to user
+    const input = document.getElementById('newPassword') as HTMLInputElement;
+    const confirmInput = document.getElementById('confirmNewPassword') as HTMLInputElement;
+    if(input) input.type = 'text';
+    if(confirmInput) confirmInput.type = 'text';
+
+    this.toastService.success('Random password generated: ' + password);
+  }
 
 
   logout() {

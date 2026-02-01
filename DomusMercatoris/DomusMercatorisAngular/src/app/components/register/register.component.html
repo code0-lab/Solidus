@@ -14,7 +14,10 @@
 </div>
 <div class="form-group">
   <label>Password</label>
-  <input type="password" [(ngModel)]="registerData.password">
+  <div style="display: flex; gap: 10px; align-items: center;">
+      <input id="registerPassword" type="password" [(ngModel)]="registerData.password" style="flex: 1;">
+      <button type="button" (click)="generateRandomPassword()" style="padding: 0.5rem; background: #333; color: white; border: none; cursor: pointer; font-size: 0.8rem;">Generate Random</button>
+  </div>
 </div>
 <button class="submit-btn" (click)="register()">Sign Up</button>
 

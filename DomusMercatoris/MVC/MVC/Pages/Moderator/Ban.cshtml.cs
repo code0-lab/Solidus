@@ -76,7 +76,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
             var targetRoles = user.Roles ?? new System.Collections.Generic.List<string>();
 
             // Protection 1: No one can ban a Rex (Supreme Admin) via this UI
-            if (targetRoles.Contains("Rex"))
+            if (targetRoles.Contains("Rex", StringComparer.OrdinalIgnoreCase))
             {
                 ModelState.AddModelError(string.Empty, "Security Alert: You cannot ban a Rex user.");
                 return Page();
@@ -84,7 +84,7 @@ namespace DomusMercatorisDotnetMVC.Pages.Moderator
 
             // Protection 2: Moderators cannot ban other Moderators
             // Only Rex can ban Moderators
-            if (targetRoles.Contains("Moderator") && !User.IsInRole("Rex"))
+            if (targetRoles.Contains("Moderator", StringComparer.OrdinalIgnoreCase) && !User.IsInRole("Rex"))
             {
                 ModelState.AddModelError(string.Empty, "Security Alert: You do not have permission to ban a Moderator.");
                 return Page();

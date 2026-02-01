@@ -15,19 +15,21 @@
   <!-- Expanded Content -->
   @if (isExpanded) {
   <div class="search-content">
-    <div class="search-scope" [class.collapsed]="isTyping">
-      <!-- Full Select (Visible when NOT typing or on Desktop) -->
-      <select [hidden]="isTyping" [ngModel]="productService.selectedCategory()"
-        (ngModelChange)="productService.selectedCategory.set($event)">
+    <div class="search-scope" [class.collapsed]="isTyping || isDragging">
+      <!-- Full Select (Visible when NOT typing and NOT dragging) -->
+      @if (!isTyping && !isDragging) {
+      <select [ngModel]="productService.selectedAutoCategory()"
+        (ngModelChange)="productService.selectedAutoCategory.set($event)">
         <option [ngValue]="null">All Categories</option>
-        @for (cat of productService.categories(); track cat.id) {
+        @for (cat of productService.autoCategories(); track cat.id) {
         <option [ngValue]="cat.id">{{ cat.name }}</option>
         }
       </select>
+      }
 
-      <!-- Funnel Icon (Visible ONLY when typing on mobile) -->
-      @if (isTyping) {
-      <div class="scope-icon" (click)="isTyping = false">
+      <!-- Funnel Icon (Visible ONLY when typing or dragging) -->
+      @if (isTyping || isDragging) {
+      <div class="scope-icon" (click)="openCategories($event)">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>

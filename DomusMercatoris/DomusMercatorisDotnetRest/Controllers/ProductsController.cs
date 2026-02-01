@@ -71,6 +71,7 @@ namespace DomusMercatorisDotnetRest.Controllers
         /// <param name="pageSize">Page size (default 9)</param>
         /// <param name="companyId">Optional company filter</param>
         /// <param name="brandId">Optional brand filter</param>
+        /// <param name="autoCategoryId">Optional auto category filter</param>
         [HttpGet("search")]
         [ProducesResponseType(typeof(PaginatedResult<ProductDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<PaginatedResult<ProductDto>>> Search(
@@ -78,7 +79,8 @@ namespace DomusMercatorisDotnetRest.Controllers
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 9,
             [FromQuery] int? companyId = null,
-            [FromQuery] int? brandId = null)
+            [FromQuery] int? brandId = null,
+            [FromQuery] int? autoCategoryId = null)
         {
             var q = (query ?? string.Empty).Trim();
             if (string.IsNullOrEmpty(q))
@@ -94,7 +96,7 @@ namespace DomusMercatorisDotnetRest.Controllers
 
             q = q.ToLower();
 
-            var result = await _productService.SearchAsync(q, pageNumber, pageSize, companyId, brandId);
+            var result = await _productService.SearchAsync(q, pageNumber, pageSize, companyId, brandId, autoCategoryId);
             return Ok(result);
         }
 

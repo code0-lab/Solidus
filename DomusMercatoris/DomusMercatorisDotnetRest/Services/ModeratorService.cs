@@ -41,7 +41,7 @@ namespace DomusMercatorisDotnetRest.Services
             return _mapper.Map<List<UserDto>>(users);
         }
 
-        public async Task<bool> BanUserAsync(BanUserRequestDto dto)
+        public async Task<(bool Success, string Message)> BanUserAsync(BanUserRequestDto dto)
         {
             var query = _db.Users.Include(u => u.Ban).AsQueryable();
 
@@ -51,7 +51,14 @@ namespace DomusMercatorisDotnetRest.Services
             }
 
             var user = await query.FirstOrDefaultAsync(u => u.Id == dto.UserId);
-            if (user == null) return false;
+            if (user == null) return (false, "User not found");
+            
+            // Check if target user is Rex
+            if (user.Roles != null && user.Roles.Contains("Rex", StringComparer.OrdinalIgnoreCase))
+            {
+                return (false, "Security Alert: You cannot ban a Rex user.");
+            }
+
             if (user.Ban == null)
             {
                 user.Ban = new Ban { UserId = user.Id };
@@ -61,7 +68,7 @@ namespace DomusMercatorisDotnetRest.Services
             user.Ban.Reason = dto.Reason;
             user.Ban.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
-            return true;
+            return (true, "User banned successfully");
         }
 
         public async Task<bool> UnbanUserAsync(long userId)

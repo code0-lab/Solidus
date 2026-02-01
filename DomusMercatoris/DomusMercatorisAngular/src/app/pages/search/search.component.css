@@ -11,6 +11,102 @@
   min-height: 400px;
   display: flex;
   flex-direction: column;
+  /* System 1 Window styling implied by class, but ensure border/shadow */
+  border: 1px solid black;
+  box-shadow: 4px 4px 0 black;
+  background: white;
+}
+
+/* System 1 Mneu Bar Header */
+.sys-window-header {
+  display: flex;
+  align-items: center;
+  /* White background for the "menu bar" look */
+  background: white;
+  border-bottom: 1px solid black;
+  padding: 0 10px;
+  /* Reduced padding for menu bar feel */
+  height: 30px;
+  /* Standard menu bar height */
+  position: relative;
+  /* For absolute positioning of title */
+  justify-content: flex-start;
+  /* Filter stays left */
+}
+
+.sys-window-title {
+  font-family: var(--sys-font-family);
+  /* Ensure pixel font */
+  font-weight: bold;
+  font-size: 14px;
+  color: black;
+  /* "SEARCH RESULTS" acts like "File" or Apple menu item, purely static here */
+  padding: 0 8px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  /* Absolute Center */
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  /* Let clicks pass through if overlapping, though rare here */
+}
+
+.search-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  /* Ensure filtered content doesn't break layout */
+}
+
+/* Filter Toggle Button (Menu Item Style) */
+.filter-toggle-btn {
+  background: transparent;
+  border: none;
+  /* No border for menu items */
+  font-family: inherit;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 12px;
+  height: 100%;
+  /* Full height of header */
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: none;
+  /* Instant reaction like retro menus */
+  color: black;
+}
+
+.filter-toggle-btn:hover,
+.filter-toggle-btn.active {
+  background: black;
+  color: white;
+  box-shadow: none;
+}
+
+.filter-icon {
+  /* Hide icon if we want pure text menu look, or keep small */
+  font-size: 14px;
+  display: none;
+  /* Hiding icon to match strict "Menu Item" text look, user can revert */
+}
+
+/* No Filter Results State */
+.no-filter-results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  gap: 10px;
+  font-weight: bold;
+  color: #666;
+  border: 1px dashed #ccc;
+  margin: 20px;
+  background: #f9f9f9;
 }
 
 .standard-search-content {
@@ -32,10 +128,10 @@
   color: #333;
   gap: 16px;
   border: 1px dashed #ccc;
-  background-image: 
-    linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
-    linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
-    linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+  background-image:
+    linear-gradient(45deg, #f0f0f0 25%, transparent 25%),
+    linear-gradient(-45deg, #f0f0f0 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #f0f0f0 75%),
     linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
   background-size: 20px 20px;
   background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
@@ -110,6 +206,7 @@
   border: 1px solid black;
   box-shadow: 1px 1px 0 black;
   width: 20px;
+  /* Reduced for close btn but override for others if needed */
   height: 20px;
   display: flex;
   align-items: center;
@@ -120,6 +217,15 @@
   right: 6px;
   top: 50%;
   transform: translateY(-50%);
+}
+
+/* For clear filters button, we need dynamic width */
+.no-filter-results .sys-button-small {
+  width: auto;
+  padding: 4px 12px;
+  height: auto;
+  position: static;
+  transform: none;
 }
 
 .sys-button-small:active {
@@ -139,7 +245,8 @@
 
 .cropper-content {
   flex: 1;
-  background: #808080; /* Gray desktop background for cropper area */
+  background: #808080;
+  /* Gray desktop background for cropper area */
   position: relative;
   overflow: hidden;
   border-bottom: 1px solid black;
@@ -250,19 +357,22 @@
 
 .sys-progress-fill {
   height: 100%;
-  background: repeating-linear-gradient(
-    45deg,
-    black,
-    black 10px,
-    white 10px,
-    white 20px
-  );
+  background: repeating-linear-gradient(45deg,
+      black,
+      black 10px,
+      white 10px,
+      white 20px);
   animation: progress-anim 1s linear infinite;
 }
 
 @keyframes progress-anim {
-  0% { background-position: 0 0; }
-  100% { background-position: 40px 0; }
+  0% {
+    background-position: 0 0;
+  }
+
+  100% {
+    background-position: 40px 0;
+  }
 }
 
 /* Grid Results */
@@ -346,5 +456,10 @@
     width: auto;
     border: none;
     text-align: right;
+  }
+
+  .filter-sidebar.open {
+    width: 100%;
+    /* Full width filter on mobile */
   }
 }

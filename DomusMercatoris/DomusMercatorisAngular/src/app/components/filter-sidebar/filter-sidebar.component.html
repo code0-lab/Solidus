@@ -1,0 +1,22 @@
+<div class="filter-sidebar" [class.open]="isOpen()">
+    <div class="filter-content">
+        <h3>Filter Results</h3>
+
+        <div class="filter-group">
+            <label>Price Range</label>
+            <div class="price-inputs">
+                <div class="input-wrap">
+                    <span>$</span>
+                    <input type="number" placeholder="Min" [ngModel]="minPrice()"
+                        (ngModelChange)="minPrice.set($event)">
+                </div>
+                <span class="separator">-</span>
+                <div class="input-wrap">
+                    <span>$</span>
+                    <input type="number" placeholder="Max" [ngModel]="maxPrice()"
+                        (ngModelChange)="maxPrice.set($event)">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -113,7 +113,7 @@
                         </ul>
                     </li>
                 }
-                @if (User.IsInRole("Moderator"))
+                @if (User.IsInRole("Moderator") || User.IsInRole("Rex"))
                 {
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle text-uppercase fw-bold" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">

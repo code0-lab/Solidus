@@ -26,6 +26,14 @@ export class LoginComponent {
       return;
     }
 
+    // Regex check for login (MVC compatible: at least one lowercase, one uppercase, one number, min 5 chars)
+    // Note: Angular Register enforces stricter rules (special char, min 8), but we use looser rules here to allow MVC users to login.
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{5,}$/;
+    if (!passwordRegex.test(this.password)) {
+       this.toastService.error('Password format is invalid (must contain uppercase, lowercase, number and be 5+ chars).');
+       return;
+    }
+
     this.authService.login({ email: this.email, password: this.password }).subscribe(() => {
       this.toastService.success('Login successful!');
       this.email = '';
