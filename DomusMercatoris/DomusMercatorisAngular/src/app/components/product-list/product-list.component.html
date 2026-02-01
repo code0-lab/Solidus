@@ -12,7 +12,13 @@
         <h3>{{ product.name }}</h3>
         <div class="price">{{ product.priceText }}</div>
       </div>
-      <button class="add-cart-btn" (click)="addToCart($event, product)">Add to Cart</button>
+      @if (isBlocked(product)) {
+        <button class="add-cart-btn blocked" (click)="$event.stopPropagation()" disabled>
+          <i class="bi bi-ban"></i> Blocked
+        </button>
+      } @else {
+        <button class="add-cart-btn" (click)="addToCart($event, product)">Add to Cart</button>
+      }
     </div>
     }
   </div>

@@ -85,7 +85,8 @@ export class AuthService {
       address: profile.address ?? null,
       companyId: profile.companyId,
       roles: profile.roles || [],
-      profilePictureUrl: profile.profilePictureUrl
+      profilePictureUrl: profile.profilePictureUrl,
+      blockedByCompanyIds: profile.blockedByCompanyIds || []
     };
   }
 

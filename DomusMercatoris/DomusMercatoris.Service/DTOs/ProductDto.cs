@@ -12,7 +12,7 @@ namespace DomusMercatoris.Service.DTOs
         public string Description { get; set; } = string.Empty;
         public decimal Price { get; set; }
         public int CompanyId { get; set; }
-        public int Quantity { get; set; }
+        public int Quantity { get; set; } 
         public int LowStockThreshold { get; set; }
         public string? ShelfNumber { get; set; }
         public List<string> Images { get; set; } = new List<string>();
@@ -20,5 +20,6 @@ namespace DomusMercatoris.Service.DTOs
         public string? BrandName { get; set; }
         public List<CategoryDto> Categories { get; set; } = new List<CategoryDto>();
         public List<VariantProductDto> Variants { get; set; } = new List<VariantProductDto>();
+        public bool IsBlockedByCompany { get; set; }
     }
 }

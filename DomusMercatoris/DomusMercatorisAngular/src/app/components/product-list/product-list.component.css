@@ -153,6 +153,18 @@
   box-shadow: 2px 2px 0 black;
 }
 
+.add-cart-btn.blocked {
+  background: black !important;
+  color: white !important;
+  cursor: not-allowed !important;
+  border-color: black;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
 .card-image img {
   max-height: 140px;
   max-width: 90%;

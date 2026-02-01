@@ -14,6 +14,7 @@ using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
 using System.IO;
 using DomusMercatoris.Core.Constants;
+using DomusMercatoris.Core.Enums;
 
 namespace DomusMercatorisDotnetRest.Services
 {
@@ -39,10 +40,17 @@ namespace DomusMercatorisDotnetRest.Services
             var hashedPassword = HashSha256(dto.Password);
             if (user.Password != hashedPassword) return null;
             var token = GenerateJwtToken(user);
+            var userDto = _mapper.Map<UserDto>(user);
+            userDto.BlockedByCompanyIds = await _db.CompanyCustomerBlacklists
+                .AsNoTracking()
+                .Where(b => b.CustomerId == user.Id && (b.Status & BlacklistStatus.CompanyBlockedCustomer) == BlacklistStatus.CompanyBlockedCustomer)
+                .Select(b => b.CompanyId)
+                .ToListAsync();
+
             return new LoginResponseDto
             {
                 Token = token,
-                User = _mapper.Map<UserDto>(user)
+                User = userDto
             };
         }
 
@@ -52,12 +60,15 @@ namespace DomusMercatorisDotnetRest.Services
             {
                 return null;
             }
-            var companyExists = await _db.Companies.AnyAsync(c => c.CompanyId == dto.CompanyId);
-            if (!companyExists) return null;
-
-            if (_currentUserService.CompanyId.HasValue && dto.CompanyId != _currentUserService.CompanyId.Value)
+            if (dto.CompanyId.HasValue && dto.CompanyId.Value > 0)
             {
-                return null;
+                var companyExists = await _db.Companies.AnyAsync(c => c.CompanyId == dto.CompanyId);
+                if (!companyExists) return null;
+
+                if (_currentUserService.CompanyId.HasValue && dto.CompanyId != _currentUserService.CompanyId.Value)
+                {
+                    return null;
+                }
             }
 
             var user = new User
@@ -66,7 +77,7 @@ namespace DomusMercatorisDotnetRest.Services
                 LastName = dto.LastName,
                 Email = dto.Email,
                 Password = HashSha256(dto.Password),
-                CompanyId = dto.CompanyId,
+                CompanyId = (dto.CompanyId.HasValue && dto.CompanyId.Value > 0) ? dto.CompanyId : null,
                 Roles = new List<string> { AppConstants.Roles.Customer, AppConstants.Roles.User },
                 CreatedAt = DateTime.UtcNow
             };
@@ -84,7 +95,16 @@ namespace DomusMercatorisDotnetRest.Services
                 return null;
             }
 
-            return user is null ? null : _mapper.Map<UserDto>(user);
+            if (user is null) return null;
+
+            var userDto = _mapper.Map<UserDto>(user);
+            userDto.BlockedByCompanyIds = await _db.CompanyCustomerBlacklists
+                .AsNoTracking()
+                .Where(b => b.CustomerId == user.Id && (b.Status & BlacklistStatus.CompanyBlockedCustomer) == BlacklistStatus.CompanyBlockedCustomer)
+                .Select(b => b.CompanyId)
+                .ToListAsync();
+
+            return userDto;
         }
 
         public async Task<UserDto?> UpdateProfileAsync(long id, UpdateUserProfileDto dto)
@@ -165,7 +185,7 @@ namespace DomusMercatorisDotnetRest.Services
             return builder.ToString();
         }
 
-        private string GenerateJwtToken(User user)
+        private string GenerateJwtToken(User user, List<int>? blockedByCompanyIds = null)
         {
             var jwtSettings = _configuration.GetSection("Jwt");
             var key = Encoding.ASCII.GetBytes(jwtSettings["Key"]!);
@@ -179,6 +199,11 @@ namespace DomusMercatorisDotnetRest.Services
             if (user.CompanyId.HasValue)
             {
                 claims.Add(new Claim(AppConstants.CustomClaimTypes.CompanyId, user.CompanyId.Value.ToString()));
+            }
+
+            if (blockedByCompanyIds != null && blockedByCompanyIds.Any())
+            {
+                claims.Add(new Claim("blackList", string.Join(",", blockedByCompanyIds)));
             }
 
             foreach (var role in user.Roles) claims.Add(new Claim(ClaimTypes.Role, role));
@@ -227,6 +252,40 @@ namespace DomusMercatorisDotnetRest.Services
 
             await _db.SaveChangesAsync();
             return _mapper.Map<UserDto>(user);
+        }
+
+        public async Task<List<MyCompanyDto>> GetMyCompaniesAsync(long userId)
+        {
+            // 1. Get company IDs from Orders
+            var orderCompanyIds = await _db.Orders
+                .AsNoTracking()
+                .Where(o => o.UserId == userId)
+                .Select(o => o.CompanyId)
+                .Distinct()
+                .ToListAsync();
+
+            if (!orderCompanyIds.Any())
+            {
+                return new List<MyCompanyDto>();
+            }
+
+            var companies = await _db.Companies
+                .AsNoTracking()
+                .Where(c => orderCompanyIds.Contains(c.CompanyId))
+                .ToListAsync();
+
+            var blockedCompanyIds = await _db.CompanyCustomerBlacklists
+                .AsNoTracking()
+                .Where(b => b.CustomerId == userId && orderCompanyIds.Contains(b.CompanyId) && (b.Status & BlacklistStatus.CustomerBlockedCompany) == BlacklistStatus.CustomerBlockedCompany)
+                .Select(b => b.CompanyId)
+                .ToListAsync();
+
+            return companies.Select(c => new MyCompanyDto
+            {
+                Id = c.CompanyId,
+                Name = c.Name,
+                IsBlockedByMe = blockedCompanyIds.Contains(c.CompanyId)
+            }).ToList();
         }
     }
 }

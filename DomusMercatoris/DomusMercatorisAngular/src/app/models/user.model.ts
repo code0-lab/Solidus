@@ -9,6 +9,7 @@ export interface User {
     companyId?: number;
     roles: string[];
     profilePictureUrl?: string;
+    blockedByCompanyIds?: number[];
 }
 
 export interface LoginRequest {
@@ -21,7 +22,7 @@ export interface RegisterRequest {
     lastName: string;
     email: string;
     password: string;
-    companyId: number;
+    companyId?: number;
 }
 
 export interface Company {
@@ -39,6 +40,7 @@ export interface UserProfileDto {
     address?: string | null;
     roles: string[];
     profilePictureUrl?: string;
+    blockedByCompanyIds?: number[];
 }
 
 export interface UpdateProfileRequest {
@@ -64,4 +66,10 @@ export interface ChangeEmailRequest {
 export interface LoginResponse {
     token: string;
     user: UserProfileDto;
+}
+
+export interface MyCompanyDto {
+    id: number;
+    name: string;
+    isBlockedByMe: boolean;
 }

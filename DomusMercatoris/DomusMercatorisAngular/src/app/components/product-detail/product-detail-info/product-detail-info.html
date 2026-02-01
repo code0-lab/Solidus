@@ -28,5 +28,11 @@
   </button>
 </div>
 <div class="details-footer">
-  <button class="add-to-cart-btn" (click)="onAddToCart()">Add to Cart</button>
+  @if (product.isBlockedByCompany) {
+    <button class="add-to-cart-btn blocked" disabled>
+      Blocked <i class="bi bi-ban"></i>
+    </button>
+  } @else {
+    <button class="add-to-cart-btn" (click)="onAddToCart()">Add to Cart</button>
+  }
 </div>

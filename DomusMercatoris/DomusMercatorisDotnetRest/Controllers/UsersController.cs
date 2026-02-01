@@ -73,6 +73,17 @@ namespace DomusMercatorisDotnetRest.Controllers
             return Ok(user);
         }
 
+        [HttpGet("my-companies")]
+        [Authorize]
+        public async Task<ActionResult<List<MyCompanyDto>>> GetMyCompanies()
+        {
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+
+            var list = await _usersService.GetMyCompaniesAsync(userId.Value);
+            return Ok(list);
+        }
+
         /// <summary>
         /// Updates the current user's profile (Phone, Address).
         /// </summary>
@@ -116,6 +127,8 @@ namespace DomusMercatorisDotnetRest.Controllers
 
             return Ok(updated);
         }
+
+
 
         /// <summary>
         /// Changes the current user's password.

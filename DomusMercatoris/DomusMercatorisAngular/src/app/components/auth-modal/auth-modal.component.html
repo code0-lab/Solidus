@@ -12,7 +12,6 @@
         <app-login (switchToRegister)="switchToRegister()"></app-login>
       } @else {
         <app-register 
-          [companies]="companies" 
           (switchToLogin)="switchToLogin()" 
           (registrationSuccess)="onRegistrationSuccess($event)">
         </app-register>

@@ -6,7 +6,9 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
 import { AlertService } from '../../services/alert.service';
-import { MembershipService, Membership, CompanySummary } from '../../services/membership.service';
+import { UserService } from '../../services/user.service';
+import { BlacklistService } from '../../services/blacklist.service';
+import { MyCompanyDto } from '../../models/user.model';
 import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/operators';
 import { Subject, of } from 'rxjs';
 
@@ -26,7 +28,8 @@ export class ProfileComponent implements OnInit {
   fb = inject(FormBuilder);
   toastService = inject(ToastService);
   alertService = inject(AlertService);
-  membershipService = inject(MembershipService);
+  userService = inject(UserService);
+  blacklistService = inject(BlacklistService);
 
   profileForm!: FormGroup;
   passwordForm!: FormGroup;
@@ -35,9 +38,7 @@ export class ProfileComponent implements OnInit {
   activeTab = signal<'edit' | 'password' | 'companies'>('edit');
   imageLoadFailed = signal(false);
 
-  memberships = signal<Membership[]>([]);
-  searchResults = signal<CompanySummary[]>([]);
-  searchQuery = new Subject<string>();
+  myCompanies = signal<MyCompanyDto[]>([]);
 
   ngOnInit() {
     const user = this.authService.currentUser();
@@ -45,24 +46,6 @@ export class ProfileComponent implements OnInit {
       this.router.navigate(['/']);
       return;
     }
-
-    // Search subscription - Moved up and added error handling
-    this.searchQuery.pipe(
-      takeUntilDestroyed(this.destroyRef),
-      debounceTime(300),
-      distinctUntilChanged(),
-      switchMap(query => 
-        this.membershipService.searchCompanies(query).pipe(
-          catchError(err => {
-            console.error('Search error:', err);
-            this.toastService.error('Failed to search companies');
-            return of([]);
-          })
-        )
-      )
-    ).subscribe(results => {
-      this.searchResults.set(results);
-    });
 
     this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       if (params['tab']) {
@@ -98,51 +81,44 @@ export class ProfileComponent implements OnInit {
     this.activeTab.set(tab);
     if (tab === 'password') this.passwordForm.reset();
     if (tab === 'companies') {
-        this.loadMemberships();
-        // Trigger initial search to show available companies
-        this.searchQuery.next('');
+        this.loadMyCompanies();
     }
   }
 
-  loadMemberships() {
-    this.membershipService.getMyMemberships().subscribe(data => {
-      this.memberships.set(data);
-    });
-  }
-
-  onSearch(event: Event) {
-    const query = (event.target as HTMLInputElement).value;
-    this.searchQuery.next(query);
-  }
-
-  joinCompany(company: CompanySummary) {
-    this.membershipService.joinCompany(company.id).subscribe({
-      next: () => {
-        this.toastService.show('Joined company successfully', 'success');
-        this.loadMemberships();
-        // Update search result status locally
-        this.searchResults.update(results => 
-            results.map(r => r.id === company.id ? {...r, isMember: true} : r)
-        );
+  loadMyCompanies() {
+    this.userService.getMyCompanies().subscribe({
+      next: data => {
+        this.myCompanies.set(data);
       },
-      error: () => this.toastService.show('Failed to join company', 'error')
+      error: () => this.toastService.error('Failed to load companies')
     });
   }
 
-  leaveCompany(companyId: number) {
-    if (confirm('Are you sure you want to leave this company?')) {
-        this.membershipService.leaveCompany(companyId).subscribe({
-        next: () => {
-            this.toastService.show('Left company successfully', 'success');
-            this.loadMemberships();
-            this.searchResults.update(results => 
-                results.map(r => r.id === companyId ? {...r, isMember: false} : r)
-            );
-        },
-        error: () => this.toastService.show('Failed to leave company', 'error')
+  toggleBlock(company: MyCompanyDto) {
+    if (company.isBlockedByMe) {
+        this.blacklistService.unblockCompany(company.id).subscribe({
+            next: () => {
+                this.toastService.show('Company unblocked', 'success');
+                this.loadMyCompanies();
+            },
+            error: () => this.toastService.show('Failed to unblock', 'error')
         });
+    } else {
+        this.alertService.showConfirm(
+            `Are you sure you want to block ${company.name}? You will no longer see products from this company.`,
+            () => {
+                this.blacklistService.blockCompany(company.id).subscribe({
+                    next: () => {
+                        this.toastService.show('Company blocked', 'success');
+                        this.loadMyCompanies();
+                    },
+                    error: () => this.toastService.show('Failed to block', 'error')
+                });
+            }
+        );
     }
   }
+
 
   // Helper to check if form value is different from initial user data
   get hasChanges(): boolean {

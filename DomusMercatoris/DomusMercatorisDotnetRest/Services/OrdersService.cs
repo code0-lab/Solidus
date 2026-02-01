@@ -12,11 +12,13 @@ namespace DomusMercatorisDotnetRest.Services
     {
         private readonly DomusDbContext _db;
         private readonly ICurrentUserService _currentUserService;
+        private readonly DomusMercatoris.Service.Services.BlacklistService _blacklistService;
 
-        public OrdersService(DomusDbContext db, ICurrentUserService currentUserService)
+        public OrdersService(DomusDbContext db, ICurrentUserService currentUserService, DomusMercatoris.Service.Services.BlacklistService blacklistService)
         {
             _db = db;
             _currentUserService = currentUserService;
+            _blacklistService = blacklistService;
         }
 
         public async Task<OrderDto> CheckoutAsync(OrderCreateDto dto)
@@ -27,6 +29,15 @@ namespace DomusMercatorisDotnetRest.Services
             }
 
             if (dto.UserId == null && dto.FleetingUser == null) throw new ArgumentException("Either UserId or FleetingUser must be provided.");
+
+            // Check Blacklist Status if User is logged in
+            if (dto.UserId.HasValue)
+            {
+                if (!await _blacklistService.CanCustomerOrderAsync(dto.UserId.Value, dto.CompanyId))
+                {
+                    throw new InvalidOperationException("You cannot place an order from this company due to restrictions.");
+                }
+            }
 
             // Check for existing pending orders for logged-in users
             if (dto.UserId.HasValue)
@@ -176,6 +187,7 @@ namespace DomusMercatorisDotnetRest.Services
             order.IsPaid = true;
             order.Status = OrderStatus.PaymentApproved;
             order.PaidAt = DateTime.UtcNow;
+
             var track = new CargoTracking
             {
                 TrackingNumber = Guid.NewGuid().ToString("N").Substring(0, 12).ToUpper(),
@@ -318,6 +330,7 @@ namespace DomusMercatorisDotnetRest.Services
             }
 
             ApproveOrder(order);
+
             _db.Orders.Update(order);
             await _db.SaveChangesAsync();
             return order;

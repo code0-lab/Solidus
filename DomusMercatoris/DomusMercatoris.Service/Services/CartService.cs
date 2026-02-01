@@ -11,11 +11,13 @@ namespace DomusMercatoris.Service.Services
     {
         private readonly DomusDbContext _db;
         private readonly ICurrentUserService _currentUserService;
+        private readonly BlacklistService _blacklistService;
 
-        public CartService(DomusDbContext db, ICurrentUserService currentUserService)
+        public CartService(DomusDbContext db, ICurrentUserService currentUserService, BlacklistService blacklistService)
         {
             _db = db;
             _currentUserService = currentUserService;
+            _blacklistService = blacklistService;
         }
 
         public async Task<List<CartItemDto>> GetCartAsync(long userId)
@@ -56,6 +58,12 @@ namespace DomusMercatoris.Service.Services
             if (product == null)
             {
                 throw new ArgumentException("Product not found.", nameof(dto.ProductId));
+            }
+
+            // Check Blacklist Status
+            if (!await _blacklistService.CanCustomerOrderAsync(userId, product.CompanyId))
+            {
+                throw new InvalidOperationException("You cannot add items from this company to your cart due to restrictions.");
             }
 
             var existingItem = await _db.CartItems

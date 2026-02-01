@@ -1,9 +1,8 @@
-import { Component, inject, input, output } from '@angular/core';
+import { Component, inject, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
-import { Company } from '../../models/user.model';
 
 @Component({
   selector: 'app-register',
@@ -16,7 +15,6 @@ export class RegisterComponent {
   authService = inject(AuthService);
   toastService = inject(ToastService);
 
-  companies = input<Company[]>([]);
   switchToLogin = output<void>();
   registrationSuccess = output<string>(); // emits email
 
@@ -24,25 +22,8 @@ export class RegisterComponent {
     firstName: '',
     lastName: '',
     email: '',
-    password: '',
-    companyId: 0
+    password: ''
   };
-
-  ngOnInit() {
-    // Default to first company if available
-    const comps = this.companies();
-    if (comps.length > 0 && this.registerData.companyId === 0) {
-      this.registerData.companyId = comps[0].companyId;
-    }
-  }
-
-  // Update companyId when companies input changes if needed
-  ngOnChanges() {
-    const comps = this.companies();
-    if (comps.length > 0 && this.registerData.companyId === 0) {
-      this.registerData.companyId = comps[0].companyId;
-    }
-  }
 
   register() {
     const data = this.registerData;

@@ -6,6 +6,7 @@ namespace DomusMercatoris.Service.Interfaces
         int? CompanyId { get; }
         bool IsAuthenticated { get; }
         bool IsManager { get; }
+        bool IsInRole(string role);
         Task<bool> HasPermissionAsync(string permission);
     }
 }

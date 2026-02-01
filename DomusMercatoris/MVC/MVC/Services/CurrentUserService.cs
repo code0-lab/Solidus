@@ -45,6 +45,8 @@ namespace DomusMercatorisDotnetMVC.Services
 
         public bool IsManager => _httpContextAccessor.HttpContext?.User?.IsInRole(AppConstants.Roles.Manager) ?? false;
 
+        public bool IsInRole(string role) => _httpContextAccessor.HttpContext?.User?.IsInRole(role) ?? false;
+
         public Task<bool> HasPermissionAsync(string permission)
         {
             var hasPermission = _httpContextAccessor.HttpContext?.User?.HasClaim("Permission", permission) ?? false;

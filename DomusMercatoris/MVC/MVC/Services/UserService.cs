@@ -144,11 +144,20 @@ namespace DomusMercatorisDotnetMVC.Services
 
         public async Task<List<DomusMercatoris.Service.DTOs.UserDto>> GetCustomersByCompanyAsync(int companyId)
         {
-            // Filter by CompanyId and Role "Customer" at database level to prevent over-fetching.
-            // Roles are stored as JSON string (e.g. ["Customer", "User"]), so we use LIKE to find the role.
-            var term = $"%\"{AppConstants.Roles.Customer}\"%";
+            // Get IDs of users who have previously placed an order with this company
+            var userIds = await _dbContext.Orders
+                .Where(o => o.CompanyId == companyId && o.UserId > 0)
+                .Select(o => o.UserId)
+                .Distinct()
+                .ToListAsync();
+
+            if (userIds.Count == 0)
+            {
+                return new List<DomusMercatoris.Service.DTOs.UserDto>();
+            }
+
             return await _dbContext.Users
-                .FromSqlInterpolated($"SELECT * FROM Users WHERE CompanyId = {companyId} AND Roles LIKE {term}")
+                .Where(u => userIds.Contains(u.Id))
                 .AsNoTracking()
                 .OrderBy(u => u.FirstName)
                 .ThenBy(u => u.LastName)

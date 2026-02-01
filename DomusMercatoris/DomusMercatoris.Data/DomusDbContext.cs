@@ -57,6 +57,18 @@ namespace DomusMercatoris.Data
                 l => (l == null ? new List<string>() : l.ToList())
             );
 
+            // Value Converter for List<int> (ServiceProviderCom)
+            var serviceProviderComConverter = new Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<List<int>, string>(
+                v => JsonSerializer.Serialize(v ?? new List<int>(), jsonOptions),
+                v => string.IsNullOrWhiteSpace(v) ? new List<int>() : (JsonSerializer.Deserialize<List<int>>(v, jsonOptions) ?? new List<int>())
+            );
+
+            var serviceProviderComComparer = new ValueComparer<List<int>>(
+                (l1, l2) => (l1 ?? new List<int>()).SequenceEqual(l2 ?? new List<int>()),
+                l => (l ?? new List<int>()).Aggregate(0, (acc, val) => HashCode.Combine(acc, val.GetHashCode())),
+                l => (l == null ? new List<int>() : l.ToList())
+            );
+
             modelBuilder.Entity<CartItem>(entity =>
             {
                 entity.HasIndex(c => new { c.UserId, c.ProductId, c.VariantProductId })
@@ -112,6 +124,8 @@ namespace DomusMercatoris.Data
                 var prop = entity.Property(u => u.Roles)
                     .HasConversion(rolesConverter);
                 prop.Metadata.SetValueComparer(rolesComparer);
+
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                 entity.HasIndex(u => u.CompanyId);
                 entity.HasOne(u => u.Company)

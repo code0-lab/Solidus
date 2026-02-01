@@ -43,6 +43,8 @@ namespace DomusMercatorisDotnetRest.Services
 
         public bool IsManager => _httpContextAccessor.HttpContext?.User?.IsInRole(AppConstants.Roles.Manager) ?? false;
 
+        public bool IsInRole(string role) => _httpContextAccessor.HttpContext?.User?.IsInRole(role) ?? false;
+
         public Task<bool> HasPermissionAsync(string permission)
         {
             // Simple implementation for now, checking if user has a claim with type "Permission" and value equal to the permission name

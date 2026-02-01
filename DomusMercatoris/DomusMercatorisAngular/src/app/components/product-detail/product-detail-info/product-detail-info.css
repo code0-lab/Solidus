@@ -92,6 +92,18 @@ h1 {
   transform: translate(2px, 2px);
 }
 
+.add-to-cart-btn.blocked {
+  background: black !important;
+  color: white !important;
+  cursor: not-allowed !important;
+  border-color: black;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 10px;

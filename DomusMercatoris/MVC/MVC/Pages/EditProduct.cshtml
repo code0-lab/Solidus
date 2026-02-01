@@ -16,13 +16,13 @@
         }
     </div>
 
-    @if (Model.Existing?.Images != null && Model.Existing.Images.Count > 0)
-    {
-        <div class="mb-3">
-            <div class="d-flex align-items-center justify-content-between">
-                <div class="fw-bold">Existing Images</div>
-            </div>
-            <div class="row g-3 mt-1" id="existingImages">
+    <div class="mb-3">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="fw-bold">Product Images</div>
+        </div>
+        <div class="row g-3 mt-1" id="existingImages">
+            @if (Model.Existing?.Images != null)
+            {
                 @for (var i = 0; i < Model.Existing.Images.Count; i++)
                 {
                     var img = Model.Existing.Images[i];
@@ -35,9 +35,9 @@
                         </div>
                     </div>
                 }
-            </div>
+            }
         </div>
-    }
+    </div>
 
     @if (ModelState.IsValid == false)
     {

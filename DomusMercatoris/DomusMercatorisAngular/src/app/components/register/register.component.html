@@ -16,14 +16,6 @@
   <label>Password</label>
   <input type="password" [(ngModel)]="registerData.password">
 </div>
-<div class="form-group">
-  <label>Company</label>
-  <select [(ngModel)]="registerData.companyId" class="form-control">
-    @for (company of companies(); track company.companyId) {
-      <option [value]="company.companyId">{{company.name}}</option>
-    }
-  </select>
-</div>
 <button class="submit-btn" (click)="register()">Sign Up</button>
 
 <div class="auth-switch">

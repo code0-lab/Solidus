@@ -1,7 +1,6 @@
-import { Component, inject, signal, OnInit, ViewChild } from '@angular/core';
+import { Component, inject, signal, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
-import { Company } from '../../models/user.model';
 import { LoginComponent } from '../login/login.component';
 import { RegisterComponent } from '../register/register.component';
 
@@ -12,21 +11,11 @@ import { RegisterComponent } from '../register/register.component';
   templateUrl: './auth-modal.component.html',
   styleUrl: './auth-modal.component.css'
 })
-export class AuthModalComponent implements OnInit {
+export class AuthModalComponent {
   authService = inject(AuthService);
-  companies: Company[] = [];
 
   // ViewChild to access child components if needed, or just rely on state
   @ViewChild(LoginComponent) loginComponent?: LoginComponent;
-
-  ngOnInit() {
-    this.authService.getCompanies().subscribe({
-      next: (data) => {
-        this.companies = data;
-      },
-      error: (err) => console.error('Failed to load companies', err)
-    });
-  }
 
   close() {
     this.authService.closeLogin();

@@ -138,50 +138,29 @@
       @if (activeTab() === 'companies') {
       <div class="tab-content fade-in">
         <h3>My Companies</h3>
-        
-        <div class="companies-section">
-            <div class="field-group">
-                <label>Search Companies</label>
-                <input type="text" placeholder="Search for companies to join..." (input)="onSearch($event)">
-            </div>
+        <p class="section-description">
+            Companies you have purchased from. You can block companies to hide their products.
+        </p>
 
-            @if (searchResults().length > 0) {
-                <div class="search-results">
-                    <h4>Search Results</h4>
-                    <div class="company-list">
-                        @for (company of searchResults(); track company.id) {
-                            <div class="company-item">
-                                <span>{{ company.name }}</span>
-                                @if (company.isMember) {
-                                    <span class="badge member">Member</span>
-                                } @else {
-                                    <button class="join-btn" (click)="joinCompany(company)">Join</button>
-                                }
-                            </div>
-                        }
-                    </div>
-                </div>
-            }
-
-            <div class="my-memberships">
-                <h4>Joined Companies</h4>
-                @if (memberships().length === 0) {
-                    <p class="empty-state">You haven't joined any companies yet.</p>
-                } @else {
-                    <div class="company-list">
-                        @for (membership of memberships(); track membership.id) {
-                            <div class="company-item">
-                                <span>{{ membership.companyName }}</span>
-                                <div class="actions">
-                                    <span class="joined-date">Joined: {{ membership.joinedAt | date }}</span>
-                                    <button class="leave-btn" (click)="leaveCompany(membership.companyId)">Leave</button>
-                                </div>
-                            </div>
-                        }
+        @if (myCompanies().length === 0) {
+            <p class="empty-state">You haven't purchased from any companies yet.</p>
+        } @else {
+            <div class="company-list">
+                @for (company of myCompanies(); track company.id) {
+                    <div class="company-item">
+                        <span class="company-name">{{ company.name }}</span>
+                        <div class="actions">
+                             @if (company.isBlockedByMe) {
+                                <span class="badge blocked">Blocked</span>
+                                <button class="unblock-btn" (click)="toggleBlock(company)">Unblock</button>
+                            } @else {
+                                <button class="block-btn" (click)="toggleBlock(company)">Block</button>
+                            }
+                        </div>
                     </div>
                 }
             </div>
-        </div>
+        }
       </div>
       }
 

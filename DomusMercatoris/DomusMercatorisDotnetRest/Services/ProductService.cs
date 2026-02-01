@@ -28,10 +28,20 @@ namespace DomusMercatorisDotnetRest.Services
 
         private int? GetEffectiveCompanyId(int? requestedCompanyId)
         {
-            if (_currentUserService.CompanyId.HasValue)
+            // If specific company is requested, use it
+            if (requestedCompanyId.HasValue)
+            {
+                return requestedCompanyId.Value;
+            }
+
+            // If API Key user (CompanyApi role), STRICTLY enforce their company scope
+            if (_currentUserService.IsInRole("CompanyApi") && _currentUserService.CompanyId.HasValue)
             {
                 return _currentUserService.CompanyId.Value;
             }
+
+            // For Human users (JWT), if they want All (null), give them All (null).
+            // This allows logged-in users to see all products in the shop.
             return requestedCompanyId;
         }
         
@@ -60,7 +70,9 @@ namespace DomusMercatorisDotnetRest.Services
             var query = ApplyCompanyFilter(BaseProductQuery(), companyId);
             query = ApplyBrandFilter(query, brandId);
             query = await ApplyBlacklistFilterAsync(query);
-            return await ProductQueryHelper.PaginateAndMapAsync(query, pageNumber, pageSize, _mapper);
+            var result = await ProductQueryHelper.PaginateAndMapAsync(query, pageNumber, pageSize, _mapper);
+            await SetBlacklistFlags(result);
+            return result;
         }
 
         public async Task<ProductDto?> GetByIdAsync(long id)
@@ -87,7 +99,21 @@ namespace DomusMercatorisDotnetRest.Services
             // For GetById, we return it, and let frontend handle UI.
 
             var product = await query.FirstOrDefaultAsync(p => p.Id == id);
-            return product is null ? null : _mapper.Map<ProductDto>(product);
+            if (product == null) return null;
+
+            var dto = _mapper.Map<ProductDto>(product);
+
+            if (_currentUserService.UserId.HasValue)
+            {
+                 // Check if Company blocked Customer
+                 // We need to check if user is blocked by the company (CompanyBlockedCustomer)
+                 if (!await _blacklistService.CanCustomerOrderAsync(_currentUserService.UserId.Value, product.CompanyId))
+                 {
+                     dto.IsBlockedByCompany = true;
+                 }
+            }
+
+            return dto;
         }
 
         public async Task<PaginatedResult<ProductDto>> GetByCategoryAsync(int categoryId, int pageNumber, int pageSize, int? companyId, int? brandId = null)
@@ -96,7 +122,9 @@ namespace DomusMercatorisDotnetRest.Services
             var query = ApplyCompanyFilter(BaseProductQuery().Where(p => p.Categories.Any(c => c.Id == categoryId)), companyId);
             query = ApplyBrandFilter(query, brandId);
             query = await ApplyBlacklistFilterAsync(query);
-            return await ProductQueryHelper.PaginateAndMapAsync(query, pageNumber, pageSize, _mapper);
+            var result = await ProductQueryHelper.PaginateAndMapAsync(query, pageNumber, pageSize, _mapper);
+            await SetBlacklistFlags(result);
+            return result;
         }
 
         public async Task<PaginatedResult<ProductDto>> GetByClusterAsync(int clusterId, int pageNumber, int pageSize, int? companyId, int? brandId = null, List<long>? prioritizedIds = null)
@@ -174,6 +202,9 @@ namespace DomusMercatorisDotnetRest.Services
             
             // Prioritize name matches (Name contains query) -> then Description
             // Remove SKU from search
+            
+            // Prioritize name matches (Name contains query) -> then Description
+            // Remove SKU from search
             query = query.Where(p =>
                 ((p.Name ?? string.Empty).ToLower().Contains(q)) ||
                 ((p.Description ?? string.Empty).ToLower().Contains(q))
@@ -185,7 +216,25 @@ namespace DomusMercatorisDotnetRest.Services
             query = query.OrderByDescending(p => (p.Name ?? string.Empty).ToLower().Contains(q))
                          .ThenByDescending(p => p.Id);
 
-            return await ProductQueryHelper.PaginateAndMapAsync(query, pageNumber, pageSize, _mapper);
+            var result = await ProductQueryHelper.PaginateAndMapAsync(query, pageNumber, pageSize, _mapper);
+            await SetBlacklistFlags(result);
+            return result;
+        }
+
+        private async Task SetBlacklistFlags(PaginatedResult<ProductDto> result)
+        {
+            if (!_currentUserService.UserId.HasValue) return;
+
+            var blockingCompanyIds = await _blacklistService.GetCompaniesBlockingCustomerAsync(_currentUserService.UserId.Value);
+            if (!blockingCompanyIds.Any()) return;
+
+            foreach (var item in result.Items)
+            {
+                if (blockingCompanyIds.Contains(item.CompanyId))
+                {
+                    item.IsBlockedByCompany = true;
+                }
+            }
         }
     }
 }

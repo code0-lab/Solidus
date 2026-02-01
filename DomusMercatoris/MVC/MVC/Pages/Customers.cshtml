@@ -17,6 +17,7 @@
                     <th>Last Name</th>
                     <th>Email</th>
                     <th>Roles</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -27,6 +28,24 @@
                         <td>@c.LastName</td>
                         <td>@c.Email</td>
                         <td>@string.Join(", ", c.Roles ?? new List<string>())</td>
+                        <td>
+                            @if (Model.BlockedCustomerIds.Contains(c.Id))
+                            {
+                                <form method="post" asp-page-handler="Unblock" asp-route-customerId="@c.Id" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <i class="bi bi-slash-circle"></i> Unblock
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form method="post" asp-page-handler="Block" asp-route-customerId="@c.Id" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-warning">
+                                        <i class="bi bi-ban"></i> Block
+                                    </button>
+                                </form>
+                            }
+                        </td>
                     </tr>
                 }
             </tbody>

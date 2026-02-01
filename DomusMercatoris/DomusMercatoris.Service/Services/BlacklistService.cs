@@ -133,6 +133,15 @@ namespace DomusMercatoris.Service.Services
                 .ToListAsync();
         }
 
+        public async Task<List<int>> GetCompaniesBlockingCustomerAsync(long customerId)
+        {
+            return await _context.CompanyCustomerBlacklists
+                .AsNoTracking()
+                .Where(b => b.CustomerId == customerId && (b.Status & BlacklistStatus.CompanyBlockedCustomer) == BlacklistStatus.CompanyBlockedCustomer)
+                .Select(b => b.CompanyId)
+                .ToListAsync();
+        }
+
         public async Task<List<long>> GetCustomersBlockedByCompanyAsync(int companyId)
         {
             // (Status & 2) == 2 covers 2 (2) and 3 (1|2)

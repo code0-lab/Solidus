@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter, inject, ViewChild, ElementRef, 
 import { CommonModule } from '@angular/common';
 import { Product } from '../../models/product.model';
 import { CartService } from '../../services/cart.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-product-list',
@@ -17,6 +18,7 @@ export class ProductListComponent implements AfterViewInit, OnDestroy {
   @Output() loadMore = new EventEmitter<void>();
 
   cartService = inject(CartService);
+  authService = inject(AuthService);
   
   private intersectionObserver: IntersectionObserver | null = null;
   
@@ -45,5 +47,14 @@ export class ProductListComponent implements AfterViewInit, OnDestroy {
   addToCart(event: Event, product: Product) {
     event.stopPropagation();
     this.cartService.add(product);
+  }
+
+  isBlocked(product: Product): boolean {
+    if (product.isBlockedByCompany) return true;
+    
+    const user = this.authService.currentUser();
+    if (!user || !user.blockedByCompanyIds) return false;
+    
+    return user.blockedByCompanyIds.includes(product.companyId);
   }
 }

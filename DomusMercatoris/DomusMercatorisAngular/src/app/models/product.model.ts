@@ -10,6 +10,7 @@ export interface Product {
     bg?: string;
     description?: string;
     variants?: VariantProduct[];
+    isBlockedByCompany?: boolean;
 }
 
 export interface VariantProduct {
