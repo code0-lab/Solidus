@@ -84,7 +84,7 @@
             <small class="text-muted">Key features and details.</small>
         </div>
 
-        @if (Model.SuggestedAutoCategory != null || Model.Product.AutoCategoryId.HasValue)
+        @if (Model.SuggestedAutoCategory != null || Model.Product.AutoCategoryId.HasValue || Model.IsNewClusterNoCategory)
         {
             <div class="card mb-3 border-info">
                 <div class="card-header bg-info text-dark">
@@ -113,6 +113,16 @@
                                 <span class="badge bg-warning text-dark mt-1">Suggestion</span>
                             </div>
                             <button type="button" class="btn btn-success" onclick="acceptAutoCategory(this, @Model.SuggestedAutoCategory.Id)">Accept Suggestion</button>
+                        </div>
+                    }
+                    else if (Model.IsNewClusterNoCategory)
+                    {
+                         <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <h5 class="card-title text-danger">Not found no simillar category</h5>
+                                <p class="card-text text-muted mb-0">Similarity score was below 0.60. A new cluster has been created for this product.</p>
+                                <span class="badge bg-secondary mt-1">New Cluster</span>
+                            </div>
                         </div>
                     }
                 </div>

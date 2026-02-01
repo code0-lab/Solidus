@@ -142,7 +142,14 @@ namespace DomusMercatorisDotnetMVC.Services
             if (!clusters.Any()) return null;
 
             ProductCluster? bestCluster = null;
-            double minDistance = double.MaxValue;
+            double maxSimilarity = -1.0;
+
+            // Calculate magnitude of input vector once
+            double vecMag = 0;
+            for (int i = 0; i < featureVector.Count; i++) vecMag += featureVector[i] * featureVector[i];
+            vecMag = Math.Sqrt(vecMag);
+
+            if (vecMag == 0) return null; // Zero vector cannot have similarity
 
             foreach (var cluster in clusters)
             {
@@ -153,19 +160,33 @@ namespace DomusMercatorisDotnetMVC.Services
 
                 if (centroid == null || centroid.Count != featureVector.Count) continue;
 
-                double dist = 0;
+                double dotProduct = 0;
+                double cenMag = 0;
+
                 for (int i = 0; i < featureVector.Count; i++)
                 {
-                    double diff = featureVector[i] - centroid[i];
-                    dist += diff * diff;
+                    dotProduct += featureVector[i] * centroid[i];
+                    cenMag += centroid[i] * centroid[i];
                 }
+                cenMag = Math.Sqrt(cenMag);
 
-                if (dist < minDistance)
+                if (cenMag == 0) continue;
+
+                double similarity = dotProduct / (vecMag * cenMag);
+
+                if (similarity > maxSimilarity)
                 {
-                    minDistance = dist;
+                    maxSimilarity = similarity;
                     bestCluster = cluster;
                 }
             }
+
+            // Threshold check: 0.60
+            if (maxSimilarity < 0.60)
+            {
+                return null;
+            }
+
             return bestCluster;
         }
 
@@ -190,6 +211,35 @@ namespace DomusMercatorisDotnetMVC.Services
                         });
                         await _context.SaveChangesAsync();
                     }
+                }
+                else
+                {
+                    // No similar cluster found (or no clusters exist). Create a new one.
+                    var maxVersion = await _context.ProductClusters.MaxAsync(c => (int?)c.Version) ?? 0;
+                    // If no clusters exist, start version 1. If exist, keep version.
+                    if (maxVersion == 0) maxVersion = 1;
+
+                    // We need a name. Let's name it "New Cluster {Date}" or similar.
+                    // Or count existing clusters in this version to give it a number?
+                    var count = await _context.ProductClusters.CountAsync(c => c.Version == maxVersion);
+                    
+                    var newCluster = new ProductCluster
+                    {
+                        Version = maxVersion,
+                        Name = $"Cluster {count + 1} (Auto-Created)",
+                        CentroidJson = JsonSerializer.Serialize(featureVector),
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    _context.ProductClusters.Add(newCluster);
+                    await _context.SaveChangesAsync(); // Save to get Id
+
+                    _context.ProductClusterMembers.Add(new ProductClusterMember
+                    {
+                        ProductId = productId,
+                        ProductClusterId = newCluster.Id
+                    });
+                    await _context.SaveChangesAsync();
                 }
             }
             catch (Exception ex)

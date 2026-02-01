@@ -36,6 +36,7 @@ namespace DomusMercatorisDotnetMVC.Pages
         public List<Category> Categories { get; set; } = new();
         public List<BrandDto> Brands { get; set; } = new();
         public AutoCategory? SuggestedAutoCategory { get; set; }
+        public bool IsNewClusterNoCategory { get; set; }
 
         [BindProperty]
         public ProductUpdateDto Product { get; set; } = new();
@@ -68,9 +69,16 @@ namespace DomusMercatorisDotnetMVC.Pages
 
             var member = await _clusteringService.GetClusterMemberByProductIdAsync(id);
             
-            if (member != null && member.ProductCluster.AutoCategories.Any())
+            if (member != null)
             {
-                SuggestedAutoCategory = member.ProductCluster.AutoCategories.First();
+                if (member.ProductCluster.AutoCategories.Any())
+                {
+                    SuggestedAutoCategory = member.ProductCluster.AutoCategories.First();
+                }
+                else
+                {
+                    IsNewClusterNoCategory = true;
+                }
             }
 
             var ids = new List<int>();
