@@ -90,7 +90,7 @@ namespace DomusMercatorisDotnetMVC.Services
         public async Task<User?> UserLoginAsync(string Email, string Password)
         {
             var user = await _dbContext.Users.Include(u => u.Ban).SingleOrDefaultAsync(u => u.Email == Email);
-            if (user == null || !BCrypt.Net.BCrypt.Verify(Password, user.Password))
+            if (user == null || user.Password != HashSha256(Password))
             {
                 return null;
             }
@@ -100,7 +100,7 @@ namespace DomusMercatorisDotnetMVC.Services
         public async Task<User> UserRegisterAsync(UserRegisterDto userRegisterDto)
         {
             var userEntity = _mapper.Map<User>(userRegisterDto);
-            userEntity.Password = BCrypt.Net.BCrypt.HashPassword(userRegisterDto.Password);
+            userEntity.Password = HashSha256(userRegisterDto.Password);
             userEntity.Roles = new List<string> { AppConstants.Roles.Manager, AppConstants.Roles.User, AppConstants.Roles.Customer };
 
             var companyName = (userRegisterDto.CompanyName ?? string.Empty).Trim();
@@ -117,12 +117,21 @@ namespace DomusMercatorisDotnetMVC.Services
         public async Task<User> RegisterWorkerAsync(UserRegisterDto userRegisterDto, int companyId)
         {
             var userEntity = _mapper.Map<User>(userRegisterDto);
-            userEntity.Password = BCrypt.Net.BCrypt.HashPassword(userRegisterDto.Password);
+            userEntity.Password = HashSha256(userRegisterDto.Password);
             userEntity.Roles = new List<string> { AppConstants.Roles.User };
             userEntity.CompanyId = companyId;
             _dbContext.Users.Add(userEntity);
             await _dbContext.SaveChangesAsync();
             return userEntity;
+        }
+
+        private static string HashSha256(string input)
+        {
+            using var sha256 = System.Security.Cryptography.SHA256.Create();
+            var bytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(input));
+            var builder = new System.Text.StringBuilder();
+            foreach (var b in bytes) builder.Append(b.ToString("x2"));
+            return builder.ToString();
         }
 
         public async Task<User?> GetByIdAsync(long id)
@@ -332,12 +341,12 @@ namespace DomusMercatorisDotnetMVC.Services
             var user = await _dbContext.Users.SingleOrDefaultAsync(u => u.Id == userId);
             if (user == null) return false;
 
-            if (!BCrypt.Net.BCrypt.Verify(currentPassword, user.Password))
+            if (user.Password != HashSha256(currentPassword))
             {
                 return false;
             }
 
-            user.Password = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            user.Password = HashSha256(newPassword);
             await _dbContext.SaveChangesAsync();
             return true;
         }
@@ -347,7 +356,7 @@ namespace DomusMercatorisDotnetMVC.Services
             var user = await _dbContext.Users.SingleOrDefaultAsync(u => u.Id == userId);
             if (user == null) return false;
 
-            if (!BCrypt.Net.BCrypt.Verify(password, user.Password))
+            if (user.Password != HashSha256(password))
             {
                 return false;
             }

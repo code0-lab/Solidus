@@ -303,16 +303,21 @@
                 <form method="post" class="d-flex flex-column">
                     @Html.AntiForgeryToken()
                     
-                    <input name="Email" type="email" class="brutalist-input" placeholder="Your email">
+                    <input name="Email" id="loginEmail" type="email" class="brutalist-input" placeholder="Your email">
                     
                     <div class="position-relative">
-                    <input name="Password" type="password" class="brutalist-input" placeholder="Your password" id="userPassword" style="padding-right: 40px;">
+                    <input name="Password" id="loginPassword" type="password" class="brutalist-input" placeholder="Your password" style="padding-right: 40px;">
                     <i class="bi bi-eye position-absolute top-50 end-0 translate-middle-y me-3" id="toggleUserPassword" style="cursor: pointer; z-index: 10; color: #fff;"></i>
                 </div>
 
                 <script>
+                    function fillLogin(email, password) {
+                        document.getElementById('loginEmail').value = email;
+                        document.getElementById('loginPassword').value = password;
+                    }
+
                     document.getElementById('toggleUserPassword').addEventListener('click', function () {
-                        const passwordInput = document.getElementById('userPassword');
+                        const passwordInput = document.getElementById('loginPassword');
                         const icon = this;
                         if (passwordInput.type === 'password') {
                             passwordInput.type = 'text';
@@ -348,37 +353,35 @@
                 <i class="bi bi-key-fill me-2"></i>Credentials
             </h6>
             
-            <div class="mb-3">
+            <div class="mb-2 cursor-pointer" onclick="window.location.href='/Moderator/Login?role=Rex'" style="cursor: pointer;">
                 <div class="d-flex justify-content-between align-items-center">
                     <span class="badge bg-danger">Rex</span>
                 </div>
-                <div class="small text-muted mt-1">User: <span class="text-white user-select-all">rex@domus.com</span></div>
-                <div class="small text-muted">Pass: <span class="text-white user-select-all">RexPassword1!</span></div>
+                <div class="small text-muted mt-1">rex@domus.com</div>
             </div>
             
-            <div class="mb-3">
+            <div class="mb-2 cursor-pointer" onclick="window.location.href='/Moderator/Login?role=Moderator'" style="cursor: pointer;">
                 <div class="d-flex justify-content-between align-items-center">
                     <span class="badge bg-info text-dark">Moderator</span>
                 </div>
-                <div class="small text-muted mt-1">User: <span class="text-white user-select-all">moderator@domus.com</span></div>
-                <div class="small text-muted">Pass: <span class="text-white user-select-all">ModeratorPassword1!</span></div>
+                <div class="small text-muted mt-1">moderator@domus.com</div>
             </div>
             
-            <div class="mb-3">
+            <div class="mb-2 cursor-pointer" onclick="fillLogin('manager@domus.com', 'ManagerPassword1!')" style="cursor: pointer;">
                 <div class="d-flex justify-content-between align-items-center">
                     <span class="badge bg-warning text-dark">Manager</span>
                 </div>
-                <div class="small text-muted mt-1">User: <span class="text-white user-select-all">manager@domus.com</span></div>
-                <div class="small text-muted">Pass: <span class="text-white user-select-all">ManagerPassword1!</span></div>
+                <div class="small text-muted mt-1">manager@domus.com</div>
             </div>
 
-            <div>
+            <div class="mb-2 cursor-pointer" onclick="fillLogin('worker@domus.com', 'WorkerPassword1!')" style="cursor: pointer;">
                 <div class="d-flex justify-content-between align-items-center">
-                    <span class="badge bg-secondary">User</span>
+                    <span class="badge bg-success">Worker</span>
                 </div>
-                <div class="small text-muted mt-1">User: <span class="text-white user-select-all">test@domus.com</span></div>
-                <div class="small text-muted">Pass: <span class="text-white user-select-all">TestUserPassword1!</span></div>
+                <div class="small text-muted mt-1">worker@domus.com</div>
             </div>
+
+
         </div>
     </div>
 </div>

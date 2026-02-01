@@ -261,13 +261,29 @@
                 }
 
                 <form method="post">
-                    <input type="email" asp-for="Email" class="brutalist-input" placeholder="MODERATOR EMAIL" required autocomplete="email" />
+                    <input type="email" asp-for="Email" id="modEmail" class="brutalist-input" placeholder="MODERATOR EMAIL" required autocomplete="email" />
                     <div class="position-relative">
                         <input type="password" asp-for="Password" class="brutalist-input" placeholder="PASSWORD" required autocomplete="current-password" id="modPassword" style="padding-right: 40px;" />
                         <i class="bi bi-eye position-absolute top-50 end-0 translate-middle-y me-3" id="toggleModPassword" style="cursor: pointer; z-index: 10; color: #fff;"></i>
                     </div>
 
                     <script>
+                        function fillLogin(email, password) {
+                            document.getElementById('modEmail').value = email;
+                            document.getElementById('modPassword').value = password;
+                        }
+
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const urlParams = new URLSearchParams(window.location.search);
+                            const role = urlParams.get('role');
+                            
+                            if (role === 'Rex') {
+                                fillLogin('rex@domus.com', 'RexPassword1!');
+                            } else if (role === 'Moderator') {
+                                fillLogin('moderator@domus.com', 'ModeratorPassword1!');
+                            }
+                        });
+
                         document.getElementById('toggleModPassword').addEventListener('click', function () {
                             const passwordInput = document.getElementById('modPassword');
                             const icon = this;
@@ -303,37 +319,35 @@
                 <i class="bi bi-key-fill me-2"></i>Credentials
             </h6>
             
-            <div class="mb-3">
+            <div class="mb-2 cursor-pointer" onclick="fillLogin('rex@domus.com', 'RexPassword1!')" style="cursor: pointer;">
                 <div class="d-flex justify-content-between align-items-center">
                     <span class="badge bg-danger">Rex</span>
                 </div>
-                <div class="small text-muted mt-1">User: <span class="text-white user-select-all">rex@domus.com</span></div>
-                <div class="small text-muted">Pass: <span class="text-white user-select-all">RexPassword1!</span></div>
+                <div class="small text-muted mt-1">rex@domus.com</div>
             </div>
             
-            <div class="mb-3">
+            <div class="mb-2 cursor-pointer" onclick="fillLogin('moderator@domus.com', 'ModeratorPassword1!')" style="cursor: pointer;">
                 <div class="d-flex justify-content-between align-items-center">
                     <span class="badge bg-info text-dark">Moderator</span>
                 </div>
-                <div class="small text-muted mt-1">User: <span class="text-white user-select-all">moderator@domus.com</span></div>
-                <div class="small text-muted">Pass: <span class="text-white user-select-all">ModeratorPassword1!</span></div>
+                <div class="small text-muted mt-1">moderator@domus.com</div>
             </div>
             
-            <div class="mb-3">
+            <div class="mb-2 cursor-pointer" onclick="fillLogin('manager@domus.com', 'ManagerPassword1!')" style="cursor: pointer;">
                 <div class="d-flex justify-content-between align-items-center">
                     <span class="badge bg-warning text-dark">Manager</span>
                 </div>
-                <div class="small text-muted mt-1">User: <span class="text-white user-select-all">manager@domus.com</span></div>
-                <div class="small text-muted">Pass: <span class="text-white user-select-all">ManagerPassword1!</span></div>
+                <div class="small text-muted mt-1">manager@domus.com</div>
             </div>
 
-            <div>
+            <div class="mb-2 cursor-pointer" onclick="fillLogin('worker@domus.com', 'WorkerPassword1!')" style="cursor: pointer;">
                 <div class="d-flex justify-content-between align-items-center">
-                    <span class="badge bg-secondary">User</span>
+                    <span class="badge bg-success">Worker</span>
                 </div>
-                <div class="small text-muted mt-1">User: <span class="text-white user-select-all">test@domus.com</span></div>
-                <div class="small text-muted">Pass: <span class="text-white user-select-all">TestUserPassword1!</span></div>
+                <div class="small text-muted mt-1">worker@domus.com</div>
             </div>
+
+
         </div>
     </div>
 </div>

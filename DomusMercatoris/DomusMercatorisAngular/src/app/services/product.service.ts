@@ -27,14 +27,14 @@ export class ProductService {
   selectedCompany = signal<number | null>(null);
   queryImageUrl = signal<string | null>(null);
 
-  classifyImage(file: File): Observable<{ clusterId: number; clusterName?: string; version: number }> {
+  classifyImage(file: File): Observable<{ clusterId: number; clusterName?: string; version: number; similarProductIds?: number[] }> {
     const formData = new FormData();
     formData.append('file', file);
     try {
       const url = URL.createObjectURL(file);
       this.queryImageUrl.set(url);
     } catch {}
-    return this.http.post<{ clusterId: number; clusterName?: string; version: number }>(`${this.apiUrl}/clustering/classify`, formData);
+    return this.http.post<{ clusterId: number; clusterName?: string; version: number; similarProductIds?: number[] }>(`${this.apiUrl}/clustering/classify`, formData);
   }
 
   getProductById(id: number): Observable<Product> {
@@ -52,7 +52,7 @@ export class ProductService {
     );
   }
 
-  fetchProductsByCluster(clusterId: number, pageNumber: number = 1, pageSize: number = 9, companyId?: number | null, brandId?: number | null): void {
+  fetchProductsByCluster(clusterId: number, pageNumber: number = 1, pageSize: number = 9, companyId?: number | null, brandId?: number | null, prioritizedIds?: number[]): void {
     const url = `${this.apiUrl}/products/by-cluster/${clusterId}`;
     let params = new HttpParams()
       .set('pageNumber', pageNumber)
@@ -62,6 +62,11 @@ export class ProductService {
     }
     if (brandId) {
       params = params.set('brandId', brandId);
+    }
+    if (prioritizedIds && prioritizedIds.length > 0) {
+      prioritizedIds.forEach(id => {
+        params = params.append('prioritizedIds', id);
+      });
     }
     this.http.get<PaginatedResult<Product>>(url, { params })
       .subscribe((data) => {

@@ -235,10 +235,42 @@ namespace DomusMercatorisDotnetMVC.Services
                 if (!testUser.Roles.Contains("Customer")) testUser.Roles.Add("Customer");
                 db.SaveChanges();
             }
+
+            // Banned User Seed
+            var bannedUserEmail = "banned@domus.com";
+            var bannedUser = db.Users.FirstOrDefault(u => u.Email == bannedUserEmail);
+            var bannedUserPasswordHash = HashSha256("BannedUserPassword1!");
+            if (bannedUser == null)
+            {
+                bannedUser = new User
+                {
+                    Email = bannedUserEmail,
+                    FirstName = "Banned",
+                    LastName = "User",
+                    Password = bannedUserPasswordHash,
+                    CompanyId = null,
+                    Roles = new List<string> { "Baned" },
+                    CreatedAt = DateTime.Now,
+                    Address = "Banned Address",
+                    Phone = "555-BAN"
+                };
+                db.Users.Add(bannedUser);
+                db.SaveChanges();
+            }
+            else
+            {
+                bannedUser.Password = bannedUserPasswordHash;
+                if (!bannedUser.Roles.Contains("Baned")) bannedUser.Roles.Add("Baned");
+                db.SaveChanges();
+            }
         }
         private static string HashSha256(string input)
         {
-            return BCrypt.Net.BCrypt.HashPassword(input);
+            using var sha256 = System.Security.Cryptography.SHA256.Create();
+            var bytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(input));
+            var builder = new System.Text.StringBuilder();
+            foreach (var b in bytes) builder.Append(b.ToString("x2"));
+            return builder.ToString();
         }
     }
 }

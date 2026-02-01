@@ -21,9 +21,8 @@ namespace DomusMercatorisDotnetMVC.Dto.UserDto
         public string Email { get; set; } = string.Empty;
 
         [Required]
-        [MaxLength(12)]
-        [MinLength(5)]
-        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$")]
+        [MinLength(8)]
+        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$", ErrorMessage = "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.")]
         public string Password { get; set; } = string.Empty; 
 
         [MaxLength(150)]

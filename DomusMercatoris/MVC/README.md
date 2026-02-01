@@ -66,5 +66,14 @@ This is the server-side rendered **ASP.NET Core MVC** application that serves as
 *   `Middleware/`: Custom middleware (BanEnforcement, ExceptionLogging).
 *   `wwwroot/`: Static assets (CSS, JS, Images).
 
+## 📷 Screenshots
+
+![Screenshot 1](assets/screenshot_1.png)
+![Screenshot 2](assets/screenshot_2.png)
+![Screenshot 3](assets/screenshot_3.png)
+![Screenshot 4](assets/screenshot_4.png)
+![Screenshot 5](assets/screenshot_5.png)
+
+
 ---
 © 2026 Solidus. All rights reserved.

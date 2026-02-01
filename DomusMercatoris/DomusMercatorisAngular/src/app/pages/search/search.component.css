@@ -378,8 +378,9 @@
 /* Grid Results */
 .vs-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  padding-bottom: 20px;
 }
 
 .vs-item-card {
@@ -418,11 +419,15 @@
 }
 
 .vs-item-name {
-  font-size: 12px;
+  font-size: 11px;
   margin-bottom: 4px;
-  white-space: nowrap;
+  white-space: normal; /* Allow text wrapping */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.2;
+  height: 2.4em; /* Fixed height for 2 lines */
 }
 
 .vs-item-price {
@@ -432,6 +437,13 @@
 
 /* Responsive for Mobile */
 @media (max-width: 768px) {
+  .vs-window {
+    height: 100%; /* Full height on mobile */
+    max-height: none;
+    width: 100%;
+    border: none;
+  }
+
   .vs-split-layout {
     flex-direction: column;
   }
@@ -443,19 +455,45 @@
     padding: 10px;
     border-right: none;
     border-bottom: 1px solid black;
-    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
   }
 
   .vs-query-box {
     width: 60px;
     height: 60px;
     box-shadow: 1px 1px 0 black;
+    flex-shrink: 0;
   }
 
   .vs-info-box {
     width: auto;
     border: none;
-    text-align: right;
+    text-align: left;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 10px;
+  }
+  
+  .info-label {
+    margin-bottom: 0;
+  }
+  
+  .info-value {
+    font-size: 12px;
+  }
+
+  /* Adjust Undo button on mobile */
+  .vs-sidebar .sys-button-small {
+    position: static;
+    width: auto;
+    padding: 4px 8px;
+    height: auto;
+    transform: none;
+    margin-top: 0 !important;
+    font-size: 10px;
   }
 
   .filter-sidebar.open {
