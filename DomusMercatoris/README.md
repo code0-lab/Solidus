@@ -58,13 +58,8 @@ graph TD
     AIService -->|Inference| ResNet
 ```
 
-## 📷 Screenshots
 
-<div align="center">
-  <img src="assets/mvc_admin_panel.png" alt="MVC Admin Panel" width="90%">
-  <br>
-  <em>MVC Admin Panel - User Management View (Role: Rex)</em>
-</div>
+
 <br>
 
 ## � The "Golden Ratio" Image Processing Pipeline
@@ -161,7 +156,7 @@ The application automatically seeds the following accounts for testing/developme
 ## 📸 Screenshots
 
 ### MVC Admin Panel
-> *Place your screenshots here (e.g. Dashboard, Product Edit)*
+![MVC Admin Panel - User Management](assets/mvc_admin_user_management.png)
 
 ### Angular Frontend
 > *Place your screenshots here (e.g. Home, Visual Search Modal)*
