@@ -8,6 +8,7 @@ namespace DomusMercatoris.Core.Models
         PaymentFailed = 3,
         Preparing = 4,
         Shipped = 5,
-        Delivered = 6
+        Delivered = 6,
+        Refunded = 7
     }
 }

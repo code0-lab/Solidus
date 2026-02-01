@@ -43,8 +43,6 @@ namespace DomusMercatoris.Service.Mappings
             // Variant Product Mapping
             CreateMap<VariantProduct, VariantProductDto>()
                 .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product.Name))
-                .ForMember(dest => dest.BrandName, opt => opt.MapFrom(src => src.Product.Brand != null ? src.Product.Brand.Name : null))
-                .ForMember(dest => dest.CategoryNames, opt => opt.MapFrom(src => src.Product.Categories.Select(c => c.Name).ToList()))
                 .ForMember(dest => dest.Quantity, opt => opt.MapFrom(src => src.Product.Quantity))
                 .ForMember(dest => dest.Images, opt => opt.MapFrom(src => src.Product.Images));
             CreateMap<CreateVariantProductDto, VariantProduct>();

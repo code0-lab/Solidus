@@ -1,30 +1,46 @@
-<div class="container py-3">
-  <h3>My Refund Requests</h3>
+<div class="refunds-container fade-in">
+  @if (isLoading()) {
+  <div class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading refunds...</p>
+  </div>
+  } @else {
+  @if (refunds().length === 0) {
+  <div class="empty-state">
+    <p>You have no refund requests.</p>
+  </div>
+  } @else {
+  <div class="refunds-list">
+    @for (refund of refunds(); track refund.id) {
+    <div class="refund-card">
+      <div class="refund-header">
+        <span class="refund-id">Request #{{ refund.id }}</span>
+        <span class="refund-date">{{ refund.createdAt | date:'mediumDate' }}</span>
+      </div>
 
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>Product</th>
-        <th>Quantity</th>
-        <th>Amount</th>
-        <th>Status</th>
-        <th>Reason</th>
-        <th>Rejection Reason</th>
-        <th>Requested</th>
-      </tr>
-    </thead>
-    <tbody>
-      @for (item of refunds(); track item.id) {
-        <tr>
-          <td>{{ item.productName }}</td>
-          <td>{{ item.quantity }}</td>
-          <td>{{ item.refundAmount | currency }}</td>
-          <td><span [class]="statusClass(item.status)">{{ item.status }}</span></td>
-          <td>{{ item.reason }}</td>
-          <td>{{ item.rejectionReason || '-' }}</td>
-          <td>{{ item.createdAt | date: 'short' }}</td>
-        </tr>
-      }
-    </tbody>
-  </table>
+      <div class="refund-body">
+        <div class="item-info">
+          <span class="item-name">{{ refund.productName }}</span>
+          <span class="item-qty">Qty: {{ refund.quantity }}</span>
+        </div>
+
+        <div class="refund-reason">
+          <strong>Reason:</strong> {{ refund.reason }}
+        </div>
+
+        <div class="refund-status" [ngClass]="getStatusClass(refund.status)">
+          {{ refund.status }}
+        </div>
+
+        @if (refund.status === 'Rejected' && refund.rejectionReason) {
+        <div class="rejection-reason">
+          <strong>Admin Note:</strong> {{ refund.rejectionReason }}
+        </div>
+        }
+      </div>
+    </div>
+    }
+  </div>
+  }
+  }
 </div>

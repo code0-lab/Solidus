@@ -11,6 +11,11 @@ export interface Product {
     description?: string;
     variants?: VariantProduct[];
     isBlockedByCompany?: boolean;
+    brandId?: number;
+    categoryId?: number;
+    subCategoryId?: number;
+    autoCategoryId?: number;
+    categories?: Category[];
 }
 
 export interface VariantProduct {

@@ -19,6 +19,18 @@ export class LoginComponent {
 
   email = '';
   password = '';
+  
+  showTestMenu = false;
+
+  toggleTestMenu() {
+    this.showTestMenu = !this.showTestMenu;
+  }
+
+  fillCredentials(email: string, pass: string) {
+    this.email = email;
+    this.password = pass;
+    this.login();
+  }
 
   login() {
     if (!this.email || !this.password) {

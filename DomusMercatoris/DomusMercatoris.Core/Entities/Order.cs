@@ -16,7 +16,6 @@ namespace DomusMercatoris.Core.Entities
         public bool IsPaid { get; set; } = false;
         public DateTime? PaidAt { get; set; } = null;
         public string? PaymentMethod { get; set; } = null;
-        public bool IsRefunded { get; set; } = false;
         public int CompanyId { get; set; }
         public Company? Company { get; set; }
         public int? CargoTrackingId { get; set; }

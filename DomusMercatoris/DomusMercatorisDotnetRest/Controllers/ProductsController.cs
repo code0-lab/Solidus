@@ -28,6 +28,14 @@ namespace DomusMercatorisDotnetRest.Controllers
         private IQueryable<Product> ApplyCompanyFilter(IQueryable<Product> query, int? companyId) => ProductQueryHelper.ApplyCompanyFilter(query, companyId);
         private Task<PaginatedResult<ProductDto>> PaginateAndMapAsync(IQueryable<Product> query, int pageNumber, int pageSize) => ProductQueryHelper.PaginateAndMapAsync(query, pageNumber, pageSize, _mapper);
 
+        /// <summary>
+        /// Retrieves a paginated list of all products with optional filtering.
+        /// </summary>
+        /// <param name="pageNumber">Page number (default 1)</param>
+        /// <param name="pageSize">Page size (default 9)</param>
+        /// <param name="companyId">Optional Company ID filter</param>
+        /// <param name="brandId">Optional Brand ID filter</param>
+        /// <returns>Paginated list of products</returns>
         [HttpGet]
         public async Task<ActionResult<PaginatedResult<ProductDto>>> GetAll([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 9, [FromQuery] int? companyId = null, [FromQuery] int? brandId = null)
         {
@@ -35,6 +43,11 @@ namespace DomusMercatorisDotnetRest.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Retrieves a single product by its unique identifier.
+        /// </summary>
+        /// <param name="id">The unique identifier of the product</param>
+        /// <returns>Product details if found</returns>
         [HttpGet("{id:long}")]
         public async Task<ActionResult<ProductDto>> GetById(long id)
         {
@@ -43,6 +56,15 @@ namespace DomusMercatorisDotnetRest.Controllers
             return Ok(dto);
         }
 
+        /// <summary>
+        /// Get products by category ID with optional filtering.
+        /// </summary>
+        /// <param name="categoryId">The Category ID to filter by (required)</param>
+        /// <param name="pageNumber">Page number (default 1)</param>
+        /// <param name="pageSize">Page size (default 9)</param>
+        /// <param name="companyId">Optional Company ID filter</param>
+        /// <param name="brandId">Optional Brand ID filter</param>
+        /// <returns>Paginated list of products</returns>
         [HttpGet("by-category/{categoryId:int}")]
         public async Task<ActionResult<PaginatedResult<ProductDto>>> GetByCategory(int categoryId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 9, [FromQuery] int? companyId = null, [FromQuery] int? brandId = null)
         {
@@ -50,6 +72,16 @@ namespace DomusMercatorisDotnetRest.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Retrieves products belonging to a specific cluster (AI grouping).
+        /// </summary>
+        /// <param name="clusterId">The Cluster ID to filter by</param>
+        /// <param name="pageNumber">Page number (default 1)</param>
+        /// <param name="pageSize">Page size (default 9)</param>
+        /// <param name="companyId">Optional Company ID filter</param>
+        /// <param name="brandId">Optional Brand ID filter</param>
+        /// <param name="prioritizedIds">Optional list of product IDs to prioritize in ordering</param>
+        /// <returns>Paginated list of products</returns>
         [HttpGet("by-cluster/{clusterId:int}")]
         public async Task<ActionResult<PaginatedResult<ProductDto>>> GetByCluster(
             int clusterId, 

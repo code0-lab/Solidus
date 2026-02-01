@@ -151,6 +151,9 @@ namespace DomusMercatoris.Service.Services
                 {
                     product.Quantity += request.Quantity;
                 }
+
+                // Mark order as refunded
+                request.OrderItem.Order.Status = OrderStatus.Refunded;
             }
             else
             {

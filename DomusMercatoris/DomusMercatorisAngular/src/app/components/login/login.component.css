@@ -50,3 +50,43 @@
   color: white;
   text-decoration: none;
 }
+
+.test-users-section {
+  margin-top: 20px;
+  text-align: center;
+  position: relative;
+}
+
+.test-menu-btn {
+  background: none;
+  border: 1px solid #ccc;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.test-users-menu {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border: 1px solid #eee;
+  padding: 10px;
+  border-radius: 4px;
+  background: #f9f9f9;
+}
+
+.test-users-menu button {
+  background: #eee;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  text-align: left;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.test-users-menu button:hover {
+  background: #ddd;
+}

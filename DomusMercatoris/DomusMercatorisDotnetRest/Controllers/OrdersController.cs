@@ -88,9 +88,9 @@ namespace DomusMercatorisDotnetRest.Controllers
         }
 
         [HttpGet("{id:long}/tracking")]
-        [ProducesResponseType(typeof(CargoTracking), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(CargoTrackingDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<CargoTracking>> GetTracking(long id)
+        public async Task<ActionResult<CargoTrackingDto>> GetTracking(long id)
         {
             var tr = await _ordersService.GetTrackingAsync(id);
             return Ok(tr);

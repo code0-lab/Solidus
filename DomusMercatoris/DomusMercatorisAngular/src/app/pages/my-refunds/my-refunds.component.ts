@@ -1,12 +1,11 @@
-import { Component, ChangeDetectionStrategy, OnInit, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RefundsService, RefundResponse } from '../../services/refunds.service';
-import { Router } from '@angular/router';
-import { AuthService } from '../../services/auth.service';
+import { ProductService } from '../../services/product.service';
 
 @Component({
-  standalone: true,
   selector: 'app-my-refunds',
+  standalone: true,
   imports: [CommonModule],
   templateUrl: './my-refunds.component.html',
   styleUrl: './my-refunds.component.css',
@@ -14,27 +13,37 @@ import { AuthService } from '../../services/auth.service';
 })
 export class MyRefundsComponent implements OnInit {
   refundsService = inject(RefundsService);
-  router = inject(Router);
-  authService = inject(AuthService);
-  refunds = signal<RefundResponse[]>([]);
+  productService = inject(ProductService);
 
-  ngOnInit(): void {
-    if (!this.authService.currentUser()) {
-      this.router.navigate(['/']);
-      return;
-    }
+  refunds = signal<RefundResponse[]>([]);
+  isLoading = signal(false);
+
+  ngOnInit() {
     this.loadRefunds();
   }
 
   loadRefunds() {
-    this.refundsService.getMyRefunds().subscribe((list) => this.refunds.set(list));
+    this.isLoading.set(true);
+    this.refundsService.getMyRefunds().subscribe({
+      next: (data) => {
+        this.refunds.set(data);
+        this.isLoading.set(false);
+      },
+      error: () => {
+        this.isLoading.set(false);
+      }
+    });
   }
 
-  statusClass(status: RefundResponse['status']): string {
+  getStatusClass(status: string): string {
     switch (status) {
-      case 'Pending': return 'badge bg-warning';
-      case 'Approved': return 'badge bg-success';
-      case 'Rejected': return 'badge bg-danger';
+      case 'Approved': return 'status-approved';
+      case 'Rejected': return 'status-rejected';
+      default: return 'status-pending';
     }
+  }
+
+  getAbsoluteImageUrl(url?: string): string {
+    return this.productService.toAbsoluteImageUrl(url);
   }
 }

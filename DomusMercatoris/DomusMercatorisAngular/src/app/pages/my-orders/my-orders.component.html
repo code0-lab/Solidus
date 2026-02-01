@@ -6,240 +6,255 @@
       Orders
     </button>
     <button [class.active]="activeTab() === 'failed-orders'" (click)="setActiveTab('failed-orders')">
-      Failed Orders @if(activeTab() === 'failed-orders' && totalItems() > 0) { <span class="badge">{{ totalItems() }}</span> }
+      Failed Orders @if(activeTab() === 'failed-orders' && totalItems() > 0) { <span class="badge">{{ totalItems()
+        }}</span> }
+    </button>
+    <button [class.active]="activeTab() === 'refunds'" (click)="setActiveTab('refunds')">
+      Refunds
     </button>
   </div>
 
   <div class="tab-content fade-in">
     @if (isLoading()) {
-      <div class="loading-state">
-        <div class="spinner"></div>
-        <p>Loading orders...</p>
-      </div>
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading orders...</p>
+    </div>
     } @else {
-      <!-- Active/Past Orders Tab -->
-      @if (activeTab() === 'orders') {
-        @if (orders().length === 0) {
-        <div class="empty-state">
-          <p>You haven't placed any orders yet.</p>
-        </div>
-      } @else {
-        <div class="orders-list">
-          @for (order of orders(); track order.id) {
-            <div class="order-card" [class.expanded]="isExpanded(order.id)">
-              <!-- Clickable Header -->
-              <div class="order-header" (click)="toggleOrder(order.id)">
-                <div class="header-main">
-                   <div class="header-left">
-                     <span class="order-id">Order #{{ order.id }}</span>
-                     <span class="order-date">{{ order.createdAt | date:'mediumDate' }}</span>
-                   </div>
-                   
-                   <!-- Thumbnails (Visible only when collapsed) -->
-                   @if (!isExpanded(order.id)) {
-                     <div class="thumbnails-preview">
-                       @for (item of order.orderItems.slice(0, 4); track item.productId) {
-                         <img [src]="getProductImage(item.productId)" class="preview-img" alt="Product">
-                       }
-                       @if (order.orderItems.length > 4) {
-                         <span class="more-count">+{{ order.orderItems.length - 4 }}</span>
-                       }
-                     </div>
-                   }
+    <!-- Active/Past Orders Tab -->
+    @if (activeTab() === 'orders') {
+    @if (orders().length === 0) {
+    <div class="empty-state">
+      <p>You haven't placed any orders yet.</p>
+    </div>
+    } @else {
+    <div class="orders-list">
+      @for (order of orders(); track order.id) {
+      <div class="order-card" [class.expanded]="isExpanded(order.id)">
+        <!-- Clickable Header -->
+        <div class="order-header" (click)="toggleOrder(order.id)">
+          <div class="header-main">
+            <div class="header-left">
+              <span class="order-id">Order #{{ order.id }}</span>
+              <span class="order-date">{{ order.createdAt | date:'mediumDate' }}</span>
+            </div>
 
-                   <div class="header-right">
-                     <span class="order-status" [ngClass]="getStatusClass(order.status)">
-                       {{ getOrderStatusText(order.status) }}
-                     </span>
-                     <span class="total-price">{{ order.totalPrice | currency }}</span>
-                   </div>
-                </div>
-                <div class="expand-indicator">
-                  {{ isExpanded(order.id) ? '▲' : '▼' }}
-                </div>
-              </div>
-              
-              <!-- Expanded Content -->
-              @if (isExpanded(order.id)) {
-                <div class="order-details-expanded fade-in">
-                  
-                  <!-- Cargo Truck Animation -->
-                  @if (order.status !== 'PaymentFailed') {
-                    <div class="progress-container">
-                      <div class="progress-track">
-                        <div class="progress-fill" [style.width.%]="getProgressPercentage(order.status)"></div>
-                        <div class="truck-icon" [style.left.%]="getProgressPercentage(order.status)">
-                          <i class="bi bi-truck"></i>
-                        </div>
-                      </div>
-                      <div class="progress-labels">
-                        <span>Ordered</span>
-                        <span>Preparing</span>
-                        <span>Shipped</span>
-                        <span>Delivered</span>
-                      </div>
-                    </div>
-                  }
-
-                  @if (order.cargoTrackingNumber) {
-                    <div class="shipping-info">
-                      <span class="shipping-label">Tracking Number:</span>
-                      <span class="tracking-number">{{ order.cargoTrackingNumber }}</span>
-                      <span class="shipping-status">Your order has been shipped!</span>
-                    </div>
-                  }
-                  
-                  <div class="order-items">
-                    @for (item of order.orderItems; track item.productId) {
-                      <div class="order-item-detailed">
-                        <img [src]="getProductImage(item.productId)" class="item-img-large" alt="Product">
-                        <div class="item-info">
-                          <span class="item-name">{{ item.productName || 'Product #' + item.productId }}</span>
-                          @if (item.variantName) {
-                            <span class="item-variant">({{ item.variantName }})</span>
-                          }
-                          <div class="item-pricing">
-                            <span class="item-qty">Qty: {{ item.quantity }}</span>
-                            @if (item.unitPrice) {
-                              <span class="item-price">{{ item.unitPrice | currency }}</span>
-                            }
-                          </div>
-                        </div>
-                        <div class="item-total">
-                           <div class="price-text">{{ (item.unitPrice || 0) * item.quantity | currency }}</div>
-                           @if (['PaymentApproved', 'Preparing', 'Shipped', 'Delivered'].includes(order.status)) {
-                             <button class="refund-btn" (click)="handleRefundRequest(order, item)">
-                               {{ order.status === 'Delivered' ? 'Refund' : 'Cancel/Refund' }}
-                             </button>
-                           }
-                        </div>
-                      </div>
-                    }
-                  </div>
-                </div>
+            <!-- Thumbnails (Visible only when collapsed) -->
+            @if (!isExpanded(order.id)) {
+            <div class="thumbnails-preview">
+              @for (item of order.orderItems; track item.productId) {
+              <img [src]="getProductImage(item.productId)" class="preview-img" alt="Product">
               }
             </div>
-          }
+            }
+
+            <div class="header-right">
+              <span class="order-status" [ngClass]="getStatusClass(order.status)">
+                {{ getOrderStatusText(order.status) }}
+              </span>
+              <span class="total-price">{{ order.totalPrice | currency }}</span>
+            </div>
+          </div>
+          <div class="expand-indicator">
+            {{ isExpanded(order.id) ? '▲' : '▼' }}
+          </div>
         </div>
+
+        <!-- Expanded Content -->
+        @if (isExpanded(order.id)) {
+        <div class="order-details-expanded fade-in">
+
+          <!-- Cargo Truck Animation -->
+          @if (order.status !== 'PaymentFailed') {
+          <div class="progress-container">
+            <div class="progress-track">
+              <div class="progress-fill" [style.width.%]="getProgressPercentage(order.status)"></div>
+              <div class="truck-icon" [style.left.%]="getProgressPercentage(order.status)">
+                <i class="bi bi-truck"></i>
+              </div>
+            </div>
+            <div class="progress-labels">
+              <span>Ordered</span>
+              <span>Preparing</span>
+              <span>Shipped</span>
+              <span>Delivered</span>
+            </div>
+          </div>
+          }
+
+          @if (order.cargoTrackingNumber) {
+          <div class="shipping-info">
+            <span class="shipping-label">Tracking Number:</span>
+            <span class="tracking-number">{{ order.cargoTrackingNumber }}</span>
+            <span class="shipping-status">Your order has been shipped!</span>
+          </div>
+          }
+
+          <div class="order-items">
+            @for (item of order.orderItems; track item.productId) {
+            <div class="order-item-detailed">
+              <img [src]="getProductImage(item.productId)" class="item-img-large" alt="Product">
+              <div class="item-info">
+                <span class="item-name">{{ item.productName || 'Product #' + item.productId }}</span>
+                @if (item.variantName) {
+                <span class="item-variant">({{ item.variantName }})</span>
+                }
+                <div class="item-pricing">
+                  <span class="item-qty">Qty: {{ item.quantity }}</span>
+                  @if (item.unitPrice) {
+                  <span class="item-price">{{ item.unitPrice | currency }}</span>
+                  }
+                </div>
+              </div>
+              <div class="item-total">
+                <div class="price-text">{{ (item.unitPrice || 0) * item.quantity | currency }}</div>
+                @if (['PaymentApproved', 'Preparing', 'Shipped', 'Delivered'].includes(order.status)) {
+                <button class="refund-btn" (click)="handleRefundRequest(order, item)">
+                  {{ order.status === 'Delivered' ? 'Refund' : 'Cancel/Refund' }}
+                </button>
+                }
+              </div>
+            </div>
+            }
+          </div>
+        </div>
+        }
+      </div>
       }
+    </div>
+    }
     }
 
     <!-- Failed Orders Tab -->
     @if (activeTab() === 'failed-orders') {
-      @if (orders().length === 0) {
-        <div class="empty-state">
-          <p>No failed orders found.</p>
-        </div>
-      } @else {
-        <div class="orders-list">
-          @for (order of orders(); track order.id) {
-            <div class="order-card failed-card" [class.expanded]="isExpanded(order.id)">
-               <div class="order-header" (click)="toggleOrder(order.id)">
-                <div class="header-main">
-                   <div class="header-left">
-                     <span class="order-id">Order #{{ order.id }}</span>
-                     <span class="order-date">{{ order.createdAt | date:'mediumDate' }}</span>
-                   </div>
-                   
-                   @if (!isExpanded(order.id)) {
-                     <div class="thumbnails-preview">
-                       @for (item of order.orderItems.slice(0, 4); track item.productId) {
-                         <img [src]="getProductImage(item.productId)" class="preview-img" alt="Product">
-                       }
-                       @if (order.orderItems.length > 4) {
-                         <span class="more-count">+{{ order.orderItems.length - 4 }}</span>
-                       }
-                     </div>
-                   }
+    @if (orders().length === 0) {
+    <div class="empty-state">
+      <p>No failed orders found.</p>
+    </div>
+    } @else {
+    <div class="orders-list">
+      @for (order of orders(); track order.id) {
+      <div class="order-card failed-card" [class.expanded]="isExpanded(order.id)">
+        <div class="order-header" (click)="toggleOrder(order.id)">
+          <div class="header-main">
+            <div class="header-left">
+              <span class="order-id">Order #{{ order.id }}</span>
+              <span class="order-date">{{ order.createdAt | date:'mediumDate' }}</span>
+            </div>
 
-                   <div class="header-right">
-                     <span class="order-status status-failed">
-                       Payment Failed
-                     </span>
-                     <span class="total-price">{{ order.totalPrice | currency }}</span>
-                   </div>
-                </div>
-                <div class="expand-indicator">
-                  {{ isExpanded(order.id) ? '▲' : '▼' }}
-                </div>
-              </div>
-              
-              @if (isExpanded(order.id)) {
-                <div class="order-details-expanded fade-in">
-                  <div class="order-items">
-                    @for (item of order.orderItems; track item.productId) {
-                      <div class="order-item-detailed">
-                        <img [src]="getProductImage(item.productId)" class="item-img-large" alt="Product">
-                        <div class="item-info">
-                          <span class="item-name">{{ item.productName || 'Product #' + item.productId }}</span>
-                          @if (item.variantName) {
-                            <span class="item-variant">({{ item.variantName }})</span>
-                          }
-                          <div class="item-pricing">
-                            <span class="item-qty">Qty: {{ item.quantity }}</span>
-                            @if (item.unitPrice) {
-                              <span class="item-price">{{ item.unitPrice | currency }}</span>
-                            }
-                          </div>
-                        </div>
-                        <div class="item-total">
-                           {{ (item.unitPrice || 0) * item.quantity | currency }}
-                        </div>
-                      </div>
-                    }
-                  </div>
-
-                  <div class="order-actions">
-                    <span class="error-message">Payment could not be processed.</span>
-                    <button class="retry-btn" (click)="retryOrder(order)">Retry Payment</button>
-                  </div>
-                </div>
+            @if (!isExpanded(order.id)) {
+            <div class="thumbnails-preview">
+              @for (item of order.orderItems.slice(0, 4); track item.productId) {
+              <img [src]="getProductImage(item.productId)" class="preview-img" alt="Product">
+              }
+              @if (order.orderItems.length > 4) {
+              <span class="more-count">+{{ order.orderItems.length - 4 }}</span>
               }
             </div>
-          }
+            }
+
+            <div class="header-right">
+              <span class="order-status status-failed">
+                Payment Failed
+              </span>
+              <span class="total-price">{{ order.totalPrice | currency }}</span>
+            </div>
+          </div>
+          <div class="expand-indicator">
+            {{ isExpanded(order.id) ? '▲' : '▼' }}
+          </div>
         </div>
-      }
-    }
-    
-    <!-- Pagination Controls -->
-    @if (totalPages() > 1) {
-      <div class="pagination-controls">
-        <button class="page-btn" (click)="onPageChange(currentPage() - 1)" [disabled]="currentPage() === 1">
-          Previous
-        </button>
-        <span class="page-info">
-          Page {{ currentPage() }} of {{ totalPages() }}
-        </span>
-        <button class="page-btn" (click)="onPageChange(currentPage() + 1)" [disabled]="currentPage() === totalPages()">
-          Next
-        </button>
+
+        @if (isExpanded(order.id)) {
+        <div class="order-details-expanded fade-in">
+          <div class="order-items">
+            @for (item of order.orderItems; track item.productId) {
+            <div class="order-item-detailed">
+              <img [src]="getProductImage(item.productId)" class="item-img-large" alt="Product">
+              <div class="item-info">
+                <span class="item-name">{{ item.productName || 'Product #' + item.productId }}</span>
+                @if (item.variantName) {
+                <span class="item-variant">({{ item.variantName }})</span>
+                }
+                <div class="item-pricing">
+                  <span class="item-qty">Qty: {{ item.quantity }}</span>
+                  @if (item.unitPrice) {
+                  <span class="item-price">{{ item.unitPrice | currency }}</span>
+                  }
+                </div>
+              </div>
+              <div class="item-total">
+                {{ (item.unitPrice || 0) * item.quantity | currency }}
+              </div>
+            </div>
+            }
+          </div>
+
+          <div class="order-actions">
+            <span class="error-message">Payment could not be processed.</span>
+            <button class="retry-btn" (click)="retryOrder(order)">Retry Payment</button>
+          </div>
+        </div>
+        }
       </div>
+      }
+    </div>
     }
-  }
+    }
+
+    <!-- Refunds Tab (Lazy Loaded) -->
+    @if (activeTab() === 'refunds') {
+    @defer (on timer(100ms)) {
+    <app-my-refunds></app-my-refunds>
+    } @placeholder {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading refunds...</p>
+    </div>
+    }
+    }
+
+    <!-- Pagination Controls -->
+    @if (totalPages() > 1 && activeTab() !== 'refunds') {
+    <div class="pagination-controls">
+      <button class="page-btn" (click)="onPageChange(currentPage() - 1)" [disabled]="currentPage() === 1">
+        Previous
+      </button>
+      <span class="page-info">
+        Page {{ currentPage() }} of {{ totalPages() }}
+      </span>
+      <button class="page-btn" (click)="onPageChange(currentPage() + 1)" [disabled]="currentPage() === totalPages()">
+        Next
+      </button>
+    </div>
+    }
+    }
   </div>
 </div>
 
 <!-- Refund Modal -->
 @if (refundModalOpen()) {
-  <div class="modal-backdrop" (click)="closeRefundModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <h3>Request Refund</h3>
-      <p class="modal-subtitle">Item: <strong>{{ refundItem()?.name }}</strong></p>
-      
-      <div class="form-group">
-        <label>Quantity (Max: {{ refundItem()?.maxQty }})</label>
-        <input type="number" [ngModel]="refundQuantity()" (ngModelChange)="refundQuantity.set($event)" min="1" [max]="refundItem()?.maxQty || 1" class="form-control">
-      </div>
-      
-      <div class="form-group">
-        <label>Reason</label>
-        <textarea [ngModel]="refundReason()" (ngModelChange)="refundReason.set($event)" rows="3" placeholder="Why do you want to return this item?" class="form-control"></textarea>
-      </div>
+<div class="modal-backdrop" (click)="closeRefundModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <h3>Request Refund</h3>
+    <p class="modal-subtitle">Item: <strong>{{ refundItem()?.name }}</strong></p>
 
-      <div class="modal-actions">
-        <button class="btn-cancel" (click)="closeRefundModal()">Cancel</button>
-        <button class="btn-submit" (click)="submitRefundRequest()">Submit Request</button>
-      </div>
+    <div class="form-group">
+      <label>Quantity (Max: {{ refundItem()?.maxQty }})</label>
+      <input type="number" [ngModel]="refundQuantity()" (ngModelChange)="refundQuantity.set($event)" min="1"
+        [max]="refundItem()?.maxQty || 1" class="form-control">
+    </div>
+
+    <div class="form-group">
+      <label>Reason</label>
+      <textarea [ngModel]="refundReason()" (ngModelChange)="refundReason.set($event)" rows="3"
+        placeholder="Why do you want to return this item?" class="form-control"></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="closeRefundModal()">Cancel</button>
+      <button class="btn-submit" (click)="submitRefundRequest()">Submit Request</button>
     </div>
   </div>
+</div>
 }

@@ -22,10 +22,10 @@
                     <div class="card-header">
                         <div class="d-flex justify-content-between align-items-center">
                             <h4 class="mb-0 fw-bold">Order #@Model.Order.Id</h4>
-                            @if (Model.Order.IsRefunded)
-                            {
-                                <span class="badge bg-danger fs-6 rounded-0">Refunded</span>
-                            }
+                            @if (Model.Order.Status == DomusMercatoris.Core.Models.OrderStatus.Refunded)
+                {
+                    <span class="badge bg-danger fs-6 rounded-0">Refunded</span>
+                }
                             else if (Model.Order.IsPaid)
                             {
                                 <span class="badge bg-success fs-6 rounded-0">Paid</span>

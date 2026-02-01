@@ -38,7 +38,7 @@ namespace DomusMercatorisDotnetRest.Controllers
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var res = await _usersService.LoginAsync(dto);
-            if (res == null) return Unauthorized(new { message = "Geçersiz email veya şifre" });
+            if (res == null) return Unauthorized(new { message = "Invalid email or password" });
             return Ok(res);
         }
 
@@ -48,7 +48,7 @@ namespace DomusMercatorisDotnetRest.Controllers
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var userDto = await _usersService.RegisterAsync(dto);
-            if (userDto == null) return Conflict(new { message = "Email zaten kayıtlı veya geçersiz CompanyId" });
+            if (userDto == null) return Conflict(new { message = "Email already exists or invalid CompanyId" });
             return CreatedAtAction(nameof(GetById), new { id = userDto.Id }, userDto);
         }
 
@@ -120,10 +120,10 @@ namespace DomusMercatorisDotnetRest.Controllers
             if (userId == null) return Unauthorized();
 
             if (file == null || file.Length == 0)
-                return BadRequest("Dosya yüklenmedi.");
+                return BadRequest("File not uploaded.");
 
             var updated = await _usersService.UploadProfilePictureAsync(userId.Value, file);
-            if (updated is null) return BadRequest("Geçersiz dosya formatı veya kullanıcı bulunamadı.");
+            if (updated is null) return BadRequest("Invalid file format or user not found.");
 
             return Ok(updated);
         }
@@ -151,9 +151,9 @@ namespace DomusMercatorisDotnetRest.Controllers
             if (userId == null) return Unauthorized();
 
             var success = await _usersService.ChangePasswordAsync(userId.Value, dto);
-            if (!success) return BadRequest(new { message = "Şifre değiştirilemedi. Mevcut şifrenizi kontrol edin." });
+            if (!success) return BadRequest(new { message = "Could not change password. Check your current password." });
 
-            return Ok(new { message = "Şifre başarıyla güncellendi." });
+            return Ok(new { message = "Password successfully updated." });
         }
 
         /// <summary>
@@ -177,9 +177,9 @@ namespace DomusMercatorisDotnetRest.Controllers
             if (userId == null) return Unauthorized();
 
             var success = await _usersService.ChangeEmailAsync(userId.Value, dto);
-            if (!success) return BadRequest(new { message = "Email değiştirilemedi. Şifrenizi kontrol edin veya email kullanımda." });
+            if (!success) return BadRequest(new { message = "Could not change email. Check your password or email is already in use." });
 
-            return Ok(new { message = "Email başarıyla güncellendi." });
+            return Ok(new { message = "Email successfully updated." });
         }
     }
 }

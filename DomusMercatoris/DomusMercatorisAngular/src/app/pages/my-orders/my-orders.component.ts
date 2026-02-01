@@ -10,11 +10,12 @@ import { AuthService } from '../../services/auth.service';
 import { ProductService } from '../../services/product.service';
 import { forkJoin, of } from 'rxjs';
 import { map, catchError, finalize } from 'rxjs/operators';
+import { MyRefundsComponent } from '../my-refunds/my-refunds.component';
 
 @Component({
   selector: 'app-my-orders',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MyRefundsComponent],
   templateUrl: './my-orders.component.html',
   styleUrl: './my-orders.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -29,7 +30,7 @@ export class MyOrdersComponent implements OnInit {
   destroyRef = inject(DestroyRef);
   productService = inject(ProductService);
 
-  activeTab = signal<'orders' | 'failed-orders'>('orders');
+  activeTab = signal<'orders' | 'failed-orders' | 'refunds'>('orders');
   orders = signal<OrderResponse[]>([]);
   expandedOrderIds = signal<Set<number>>(new Set());
   productImages = signal<Map<number, string>>(new Map());
@@ -45,10 +46,10 @@ export class MyOrdersComponent implements OnInit {
   refundItem = signal<{ id: number; name: string; maxQty: number } | null>(null);
   refundReason = signal('');
   refundQuantity = signal(1);
-  
+
   // Loading State
   isLoading = signal(false);
-  
+
   // Since backend filters by tab, orders() contains the correct list for the current tab
   currentTabOrders = computed(() => this.orders());
 
@@ -62,36 +63,48 @@ export class MyOrdersComponent implements OnInit {
     this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       if (params['tab']) {
         const tab = params['tab'];
-        if (['orders', 'failed-orders'].includes(tab)) {
-           // Only update if different to avoid loop if we navigate programmatically
-           if (this.activeTab() !== tab) {
-               this.activeTab.set(tab as 'orders' | 'failed-orders');
-               this.currentPage.set(1); // Reset page on tab change
-               this.loadOrders();
-           }
+        if (['orders', 'failed-orders', 'refunds'].includes(tab)) {
+          // Only update if different to avoid loop if we navigate programmatically
+          if (this.activeTab() !== tab) {
+            this.activeTab.set(tab as 'orders' | 'failed-orders' | 'refunds');
+            if (tab !== 'refunds') {
+              this.currentPage.set(1); // Reset page on tab change for orders
+              this.loadOrders();
+            }
+          }
         }
       }
     });
 
-    this.loadOrders();
+    if (this.activeTab() !== 'refunds') {
+      this.loadOrders();
+    }
   }
 
-  setActiveTab(tab: 'orders' | 'failed-orders') {
-      if (this.activeTab() === tab) return;
-      this.activeTab.set(tab);
+  setActiveTab(tab: 'orders' | 'failed-orders' | 'refunds') {
+    if (this.activeTab() === tab) return;
+    this.activeTab.set(tab);
+
+    const url = this.router.createUrlTree([], { relativeTo: this.route, queryParams: { tab } }).toString();
+    this.router.navigateByUrl(url);
+
+    if (tab !== 'refunds') {
       this.currentPage.set(1);
       this.orders.set([]); // Clear data to prevent flash of incorrect content
       this.loadOrders();
-      
-      // Optional: Update URL without reload
-      const url = this.router.createUrlTree([], { relativeTo: this.route, queryParams: { tab } }).toString();
-      this.router.navigateByUrl(url);
+    }
   }
 
   loadOrders() {
     this.isLoading.set(true);
-    
-    const request$ = this.activeTab() === 'orders' 
+
+    // Safety check - if on refunds tab, don't load orders
+    if (this.activeTab() === 'refunds') {
+      this.isLoading.set(false);
+      return;
+    }
+
+    const request$ = this.activeTab() === 'orders'
       ? this.ordersService.getSuccessfulOrders(this.currentPage(), this.pageSize())
       : this.ordersService.getFailedOrders(this.currentPage(), this.pageSize());
 
@@ -106,10 +119,10 @@ export class MyOrdersComponent implements OnInit {
   }
 
   onPageChange(page: number) {
-      if (page < 1 || page > this.totalPages()) return;
-      this.currentPage.set(page);
-      this.loadOrders();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (page < 1 || page > this.totalPages()) return;
+    this.currentPage.set(page);
+    this.loadOrders();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   fetchMissingImages(orders: OrderResponse[]) {
@@ -123,7 +136,7 @@ export class MyOrdersComponent implements OnInit {
 
     if (missingIds.length === 0) return;
 
-    const requests = missingIds.map(id => 
+    const requests = missingIds.map(id =>
       this.productService.getProductById(id).pipe(
         map(p => ({ id, url: p.imageUrl })),
         catchError(() => of({ id, url: this.productService.toAbsoluteImageUrl(undefined) }))
@@ -197,22 +210,22 @@ export class MyOrdersComponent implements OnInit {
 
   retryOrder(order: OrderResponse) {
     if (!order.companyId) {
-        this.toastService.error('Order data invalid');
-        return;
+      this.toastService.error('Order data invalid');
+      return;
     }
-    
+
     const payload: CheckoutPayload = {
-        companyId: order.companyId,
-        userId: order.userId,
-        items: order.orderItems.map(i => ({
-            productId: i.productId,
-            variantProductId: i.variantProductId,
-            quantity: i.quantity
-        }))
+      companyId: order.companyId,
+      userId: order.userId,
+      items: order.orderItems.map(i => ({
+        productId: i.productId,
+        variantProductId: i.variantProductId,
+        quantity: i.quantity
+      }))
     };
 
     this.ordersService.checkout(payload).subscribe((res) => {
-        this.router.navigate(['/payment-waiting', res.id]);
+      this.router.navigate(['/payment-waiting', res.id]);
     });
   }
 
@@ -222,7 +235,7 @@ export class MyOrdersComponent implements OnInit {
       this.toastService.show('Order cannot be canceled during shipping process', 'error');
       return;
     }
-    
+
     this.openRefundModal(item);
   }
 
@@ -260,8 +273,8 @@ export class MyOrdersComponent implements OnInit {
       quantity: this.refundQuantity(),
       reason: this.refundReason()
     }).subscribe(() => {
-        this.toastService.show('Refund request submitted successfully.', 'success');
-        this.closeRefundModal();
+      this.toastService.show('Refund request submitted successfully.', 'success');
+      this.closeRefundModal();
     });
   }
 }

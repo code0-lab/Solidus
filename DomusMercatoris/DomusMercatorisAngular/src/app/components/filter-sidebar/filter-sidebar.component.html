@@ -1,6 +1,7 @@
 <div class="filter-sidebar" [class.open]="isOpen()">
     <div class="filter-content">
         <h3>Filter Results</h3>
+        <button class="clear-filters-btn" (click)="clearFilters()">Clear Filters</button>
 
         <div class="filter-group">
             <label>Price Range</label>
@@ -16,6 +17,42 @@
                     <input type="number" placeholder="Max" [ngModel]="maxPrice()"
                         (ngModelChange)="maxPrice.set($event)">
                 </div>
+            </div>
+        </div>
+
+        <div class="filter-group">
+            <label>Seller</label>
+            <div class="select-wrap">
+                <select [ngModel]="selectedCompanyId()" (ngModelChange)="selectedCompanyId.set($event)">
+                    <option [ngValue]="null">All Sellers</option>
+                    @for (company of productService.companies(); track company.companyId) {
+                    <option [ngValue]="company.companyId">{{ company.name }}</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="filter-group">
+            <label>Category</label>
+            <div class="select-wrap">
+                <select [ngModel]="selectedCategoryId()" (ngModelChange)="selectedCategoryId.set($event)">
+                    <option [ngValue]="null">All Categories</option>
+                    @for (cat of productService.categories(); track cat.id) {
+                    <option [ngValue]="cat.id">{{ cat.name }}</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="filter-group">
+            <label>Brand</label>
+            <div class="select-wrap">
+                <select [ngModel]="selectedBrandId()" (ngModelChange)="selectedBrandId.set($event)">
+                    <option [ngValue]="null">All Brands</option>
+                    @for (brand of productService.brands(); track brand.id) {
+                    <option [ngValue]="brand.id">{{ brand.name }}</option>
+                    }
+                </select>
             </div>
         </div>
     </div>

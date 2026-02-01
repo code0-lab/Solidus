@@ -88,10 +88,10 @@
                                 <div class="mb-3">
                                     <label class="small text-muted fw-bold text-uppercase">Status</label>
                                     <div>
-                                        @if (order.IsRefunded)
-                                        {
-                                            <span class="badge bg-danger rounded-0 border border-dark text-white">Refunded</span>
-                                        }
+                                        @if (order.Status == DomusMercatoris.Core.Models.OrderStatus.Refunded)
+                            {
+                                <span class="badge bg-danger rounded-0 border border-dark text-white">Refunded</span>
+                            }
                                         else if (order.IsPaid)
                                         {
                                             <span class="badge bg-success rounded-0 border border-dark text-white">Paid</span>

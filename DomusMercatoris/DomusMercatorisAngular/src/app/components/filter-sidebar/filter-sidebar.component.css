@@ -89,3 +89,49 @@
         /* Full width filter on mobile */
     }
 }
+
+.clear-filters-btn {
+    width: 100%;
+    background: white;
+    border: 1px solid black;
+    padding: 8px;
+    margin-bottom: 20px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    text-transform: uppercase;
+    font-weight: bold;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.select-wrap select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid black;
+    font-family: inherit;
+    font-size: 14px;
+    appearance: none;
+    -webkit-appearance: none;
+    background: white;
+    cursor: pointer;
+}
+
+.select-wrap {
+    position: relative;
+}
+
+.select-wrap::after {
+    content: '↕';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    font-size: 12px;
+}
+
+.clear-filters-btn:hover {
+    background: black;
+    color: white;
+}

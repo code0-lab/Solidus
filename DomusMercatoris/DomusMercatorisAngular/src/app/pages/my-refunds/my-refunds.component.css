@@ -1,3 +1,145 @@
-.badge {
-  font-size: 0.85rem;
+.refunds-container {
+  width: 100%;
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px;
+  gap: 15px;
+  color: #666;
+}
+
+.spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid black;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  background: #f9f9f9;
+  font-style: italic;
+  color: #666;
+  border: 1px dashed #ccc;
+}
+
+.refunds-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.refund-card {
+  border: 1px solid #ccc;
+  background: white;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.refund-header {
+  background: #f0f0f0;
+  padding: 10px 15px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  border-bottom: 1px solid #eee;
+}
+
+.refund-id {
+  font-weight: bold;
+}
+
+.refund-date {
+  color: #666;
+}
+
+.refund-body {
+  padding: 15px;
+}
+
+.item-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.item-qty {
+  color: #666;
+  font-size: 13px;
+}
+
+.refund-reason {
+  font-size: 13px;
+  color: #444;
+  margin-bottom: 15px;
+  background: #fff8e1;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.refund-status {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.status-pending {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.status-approved {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-rejected {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.rejection-reason {
+  margin-top: 10px;
+  padding: 10px;
+  background: #ffebee;
+  color: #c62828;
+  font-size: 13px;
+  border-radius: 4px;
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

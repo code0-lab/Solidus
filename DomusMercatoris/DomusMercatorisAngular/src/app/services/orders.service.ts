@@ -60,7 +60,7 @@ export interface PaginatedResult<T> {
 @Injectable({ providedIn: 'root' })
 export class OrdersService {
   private http = inject(HttpClient);
-  
+
   private get apiUrl(): string {
     return environment.apiUrl;
   }

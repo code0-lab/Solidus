@@ -13,12 +13,14 @@ namespace DomusMercatorisDotnetRest.Services
         private readonly DomusDbContext _db;
         private readonly ICurrentUserService _currentUserService;
         private readonly DomusMercatoris.Service.Services.BlacklistService _blacklistService;
+        private readonly AutoMapper.IMapper _mapper;
 
-        public OrdersService(DomusDbContext db, ICurrentUserService currentUserService, DomusMercatoris.Service.Services.BlacklistService blacklistService)
+        public OrdersService(DomusDbContext db, ICurrentUserService currentUserService, DomusMercatoris.Service.Services.BlacklistService blacklistService, AutoMapper.IMapper mapper)
         {
             _db = db;
             _currentUserService = currentUserService;
             _blacklistService = blacklistService;
+            _mapper = mapper;
         }
 
         public async Task<OrderDto> CheckoutAsync(OrderCreateDto dto)
@@ -220,7 +222,7 @@ namespace DomusMercatorisDotnetRest.Services
             return MapToDto(order);
         }
 
-        public async Task<CargoTracking> GetTrackingAsync(long orderId)
+        public async Task<CargoTrackingDto> GetTrackingAsync(long orderId)
         {
             var order = await _db.Orders.FindAsync(orderId);
             if (order == null || order.CargoTrackingId == null) throw new NotFoundException($"Tracking for order {orderId} not found.");
@@ -230,9 +232,14 @@ namespace DomusMercatorisDotnetRest.Services
                 throw new NotFoundException($"Tracking for order {orderId} not found.");
             }
 
-            var tracking = await _db.CargoTrackings.FindAsync(order.CargoTrackingId);
+            var tracking = await _db.CargoTrackings
+                .AsNoTracking()
+                .Include(t => t.User)
+                .FirstOrDefaultAsync(t => t.Id == order.CargoTrackingId);
+
             if (tracking == null) throw new NotFoundException($"Tracking entry {order.CargoTrackingId} not found.");
-            return tracking;
+            
+            return _mapper.Map<CargoTrackingDto>(tracking);
         }
 
         public async Task<PaginatedResult<OrderDto>> GetByUserIdAsync(long userId, int pageNumber = 1, int pageSize = 10, string? tab = null)
@@ -247,7 +254,7 @@ namespace DomusMercatorisDotnetRest.Services
             }
             else if (tab == "orders")
             {
-                query = query.Where(o => o.Status != OrderStatus.PaymentFailed);
+                query = query.Where(o => o.Status != OrderStatus.PaymentFailed && o.Status != OrderStatus.Refunded);
             }
 
             var totalCount = await query.CountAsync();
@@ -265,7 +272,7 @@ namespace DomusMercatorisDotnetRest.Services
 
             return new PaginatedResult<OrderDto>
             {
-                Items = orders.Select(MapToDto).ToList(),
+                Items = orders.Select(o => MapToDto(o)).ToList(),
                 PageNumber = pageNumber,
                 PageSize = pageSize,
                 TotalCount = totalCount

@@ -76,14 +76,18 @@
 
     <div class="search-body">
       <!-- Side Filter Menu -->
-      <app-filter-sidebar [isOpen]="isFilterOpen()" [(minPrice)]="minPrice"
-        [(maxPrice)]="maxPrice"></app-filter-sidebar>
+      <app-filter-sidebar [isOpen]="isFilterOpen()" 
+        [(minPrice)]="minPrice"
+        [(maxPrice)]="maxPrice"
+        [(selectedCategoryId)]="selectedCategoryId"
+        [(selectedBrandId)]="selectedBrandId"
+        [(selectedCompanyId)]="selectedCompanyId"></app-filter-sidebar>
 
       <div class="standard-search-content">
         @if (filteredProducts().length === 0 && productService.products().length > 0) {
         <div class="no-filter-results">
           <p>No items match your filters.</p>
-          <button class="sys-button-small" (click)="minPrice.set(null); maxPrice.set(null)">Clear Filters</button>
+          <button class="sys-button-small" (click)="minPrice.set(null); maxPrice.set(null); selectedCategoryId.set(null); selectedBrandId.set(null); selectedCompanyId.set(null)">Clear Filters</button>
         </div>
         } @else if (productService.products().length === 0) {
         <div class="retro-empty-state">

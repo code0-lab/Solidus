@@ -33,34 +33,15 @@ export class SearchComponent {
   isFilterOpen = signal(false);
   minPrice = signal<number | null>(null);
   maxPrice = signal<number | null>(null);
-
-  // Computed filtered products
-  filteredProducts = computed(() => {
-    const products = this.productService.products();
-    const min = this.minPrice();
-    const max = this.maxPrice();
-
-    if (min === null && max === null) return products;
-
-    return products.filter(p => {
-      let valid = true;
-      if (min !== null) valid = valid && p.price >= min;
-      if (max !== null) valid = valid && p.price <= max;
-      return valid;
-    });
-  });
-
-  toggleFilter() {
-    this.isFilterOpen.update(v => !v);
-  }
-
-  // Cropper state
-  imageFile: File | undefined = undefined;
-  croppedImageBlob: Blob | null = null;
-  showCropper = signal(false);
-  isVisualSearchMode = signal(false);
+  selectedCategoryId = signal<number | null>(null);
+  selectedBrandId = signal<number | null>(null);
+  selectedCompanyId = signal<number | null>(null);
 
   constructor() {
+    this.productService.fetchCategories();
+    this.productService.fetchBrands();
+    this.productService.fetchCompanies();
+
     effect(() => {
       const pendingFile = this.searchService.pendingImageFile();
       if (pendingFile) {
@@ -84,6 +65,38 @@ export class SearchComponent {
       });
     });
   }
+
+  // Computed filtered products
+  filteredProducts = computed(() => {
+    const products = this.productService.products();
+    const min = this.minPrice();
+    const max = this.maxPrice();
+    const catId = this.selectedCategoryId();
+    const brandId = this.selectedBrandId();
+    const companyId = this.selectedCompanyId();
+
+    if (min === null && max === null && catId === null && brandId === null && companyId === null) return products;
+
+    return products.filter(p => {
+      let valid = true;
+      if (min !== null) valid = valid && p.price >= min;
+      if (max !== null) valid = valid && p.price <= max;
+      if (catId !== null) valid = valid && p.categoryId === catId;
+      if (brandId !== null) valid = valid && p.brandId === brandId;
+      if (companyId !== null) valid = valid && p.companyId === companyId;
+      return valid;
+    });
+  });
+
+  toggleFilter() {
+    this.isFilterOpen.update(v => !v);
+  }
+
+  // Cropper state
+  imageFile: File | undefined = undefined;
+  croppedImageBlob: Blob | null = null;
+  showCropper = signal(false);
+  isVisualSearchMode = signal(false);
 
   onSelectProduct(p: Product) {
     this.selectedProduct.set(p);

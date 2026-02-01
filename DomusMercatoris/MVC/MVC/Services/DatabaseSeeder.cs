@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using BCrypt.Net;
 using DomusMercatoris.Core.Entities;
 using DomusMercatoris.Data;
 
@@ -25,7 +24,7 @@ namespace DomusMercatorisDotnetMVC.Services
 
             var rexEmail = "rex@domus.com";
             var rexUser = db.Users.FirstOrDefault(u => u.Email == rexEmail);
-            var rexPasswordHash = BCrypt.Net.BCrypt.HashPassword("rex123");
+            var rexPasswordHash = HashSha256("Rex123");
 
             if (rexUser == null)
             {
@@ -59,7 +58,7 @@ namespace DomusMercatorisDotnetMVC.Services
 
             var moderatorEmail = "moderator@domus.com";
             var moderatorUser = db.Users.FirstOrDefault(u => u.Email == moderatorEmail);
-            var moderatorPasswordHash = BCrypt.Net.BCrypt.HashPassword("moderator123");
+            var moderatorPasswordHash = HashSha256("Moderator123");
             
             if (moderatorUser == null)
             {
@@ -93,7 +92,7 @@ namespace DomusMercatorisDotnetMVC.Services
 
             var managerEmail = "manager@domus.com";
             var managerUser = db.Users.FirstOrDefault(u => u.Email == managerEmail);
-            var managerPasswordHash = BCrypt.Net.BCrypt.HashPassword("manager123");
+            var managerPasswordHash = HashSha256("Manager123");
             if (managerUser == null)
             {
                 managerUser = new User
@@ -119,7 +118,7 @@ namespace DomusMercatorisDotnetMVC.Services
 
             var workerEmail = "worker@domus.com";
             var workerUser = db.Users.FirstOrDefault(u => u.Email == workerEmail);
-            var workerPasswordHash = BCrypt.Net.BCrypt.HashPassword("worker123");
+            var workerPasswordHash = HashSha256("Worker123");
             if (workerUser == null)
             {
                 workerUser = new User
@@ -157,7 +156,7 @@ namespace DomusMercatorisDotnetMVC.Services
 
             var testManagerEmail = "auto.manager@example.com";
             var testManager = db.Users.FirstOrDefault(u => u.Email == testManagerEmail);
-            var testManagerPasswordHash = BCrypt.Net.BCrypt.HashPassword("Password1A");
+            var testManagerPasswordHash = HashSha256("Password1A");
             if (testManager == null)
             {
                 testManager = new User
@@ -186,7 +185,7 @@ namespace DomusMercatorisDotnetMVC.Services
 
             var testWorkerEmail = "auto.worker@example.com";
             var testWorker = db.Users.FirstOrDefault(u => u.Email == testWorkerEmail);
-            var testWorkerPasswordHash = BCrypt.Net.BCrypt.HashPassword("Password1A");
+            var testWorkerPasswordHash = HashSha256("Password1A");
             if (testWorker == null)
             {
                 testWorker = new User
@@ -208,6 +207,42 @@ namespace DomusMercatorisDotnetMVC.Services
                 testWorker.Password = testWorkerPasswordHash;
             }
             db.SaveChanges();
+
+            // Test User Seed
+            var testUserEmail = "test@domus.com";
+            var testUser = db.Users.FirstOrDefault(u => u.Email == testUserEmail);
+            var testUserPasswordHash = HashSha256("Test1234");
+            if (testUser == null)
+            {
+                testUser = new User
+                {
+                    Email = testUserEmail,
+                    FirstName = "Test",
+                    LastName = "User",
+                    Password = testUserPasswordHash,
+                    CompanyId = null, // Regular customer
+                    Roles = new List<string> { "Customer" },
+                    CreatedAt = DateTime.Now,
+                    Address = "Test Address",
+                    Phone = "555-TEST"
+                };
+                db.Users.Add(testUser);
+                db.SaveChanges();
+            }
+            else
+            {
+                testUser.Password = testUserPasswordHash;
+                if (!testUser.Roles.Contains("Customer")) testUser.Roles.Add("Customer");
+                db.SaveChanges();
+            }
+        }
+        private static string HashSha256(string input)
+        {
+            using var sha256 = System.Security.Cryptography.SHA256.Create();
+            var bytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(input));
+            var builder = new System.Text.StringBuilder();
+            foreach (var b in bytes) builder.Append(b.ToString("x2"));
+            return builder.ToString();
         }
     }
 }

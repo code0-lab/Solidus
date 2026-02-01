@@ -11,3 +11,12 @@
 <div class="auth-switch">
   Don't have an account? <a (click)="onSwitchToRegister()">Sign Up</a>
 </div>
+
+<div class="test-users-section">
+  <button type="button" class="test-menu-btn" (click)="toggleTestMenu()">Test Users ▼</button>
+  <div class="test-users-menu" *ngIf="showTestMenu">
+    <button type="button" (click)="fillCredentials('test@domus.com', 'Test1234')">Test User (Customer)</button>
+    <button type="button" (click)="fillCredentials('manager@domus.com', 'Manager123')">Manager</button>
+    <button type="button" (click)="fillCredentials('worker@domus.com', 'Worker123')">Worker</button>
+  </div>
+</div>

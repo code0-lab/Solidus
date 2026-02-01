@@ -33,17 +33,17 @@ namespace DomusMercatoris.Service.Services
 
             var activeCount = await _db.Orders
                 .AsNoTracking()
-                .Where(o => o.CompanyId == companyId && o.IsPaid && !o.IsRefunded && o.Status != OrderStatus.Shipped && o.Status != OrderStatus.Delivered)
+                .Where(o => o.CompanyId == companyId && o.IsPaid && o.Status != OrderStatus.Refunded && o.Status != OrderStatus.Shipped && o.Status != OrderStatus.Delivered)
                 .CountAsync();
 
             var completedCount = await _db.Orders
                 .AsNoTracking()
-                .Where(o => o.CompanyId == companyId && o.IsPaid && !o.IsRefunded && (o.Status == OrderStatus.Shipped || o.Status == OrderStatus.Delivered))
+                .Where(o => o.CompanyId == companyId && o.IsPaid && o.Status != OrderStatus.Refunded && (o.Status == OrderStatus.Shipped || o.Status == OrderStatus.Delivered))
                 .CountAsync();
 
             var refundedCount = await _db.Orders
                 .AsNoTracking()
-                .Where(o => o.CompanyId == companyId && o.IsRefunded)
+                .Where(o => o.CompanyId == companyId && o.Status == OrderStatus.Refunded)
                 .CountAsync();
 
             return (activeCount, completedCount, refundedCount);
@@ -62,12 +62,12 @@ namespace DomusMercatoris.Service.Services
 
             if (tab == "refunded")
             {
-                query = query.Where(o => o.IsRefunded);
+                query = query.Where(o => o.Status == OrderStatus.Refunded);
             }
             else
             {
                 // Ensure we only show paid orders in active/completed tabs, and exclude refunded ones
-                query = query.Where(o => o.IsPaid && !o.IsRefunded);
+                query = query.Where(o => o.IsPaid && o.Status != OrderStatus.Refunded);
 
                 if (tab == "completed")
                 {

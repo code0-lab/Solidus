@@ -136,8 +136,8 @@
                                     <td>
                                         <small>
                                             Stock: @variant.Quantity<br/>
-                                            Brand: @variant.BrandName<br/>
-                                            Cats: @string.Join(", ", variant.CategoryNames)
+                                            Brand: @(Model.Product?.Brand?.Name ?? "N/A")<br/>
+                                            Cats: @(Model.Product?.Categories != null ? string.Join(", ", Model.Product.Categories.Select(c => c.Name)) : "None")
                                         </small>
                                     </td>
                                     <td>
