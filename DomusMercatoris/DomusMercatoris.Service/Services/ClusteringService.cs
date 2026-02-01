@@ -144,7 +144,7 @@ namespace DomusMercatoris.Service.Services
             return null;
         }
 
-        public async Task<ProductCluster?> FindNearestClusterAsync(List<float> featureVector)
+        public async Task<ProductCluster?> FindNearestClusterAsync(List<float> featureVector, double minSimilarity = 0.60)
         {
             var maxVersion = await _context.ProductClusters.MaxAsync(c => (int?)c.Version);
             if (!maxVersion.HasValue) return null;
@@ -197,8 +197,8 @@ namespace DomusMercatoris.Service.Services
             }
 
             // CRITICAL: Threshold check for similarity
-            // Using 0.60 as the minimum cosine similarity
-            if (maxSimilarity < 0.60)
+            // Using parameter minSimilarity (default 0.60)
+            if (maxSimilarity < minSimilarity)
             {
                 return null;
             }

@@ -16,8 +16,21 @@ Solidus is the Angular-based client application for the **DomusMercatoris** proj
 - **Bold and Clear:** Thick black borders, high contrast, and monospaced typography.
 - **Minimalist Animations:** Functional transitions stripped of unnecessary decorations.
 
-### 🔍 Advanced Visual Search (ResNet Integration)
+### � Responsive Mobile Profile
+The profile page features a dedicated mobile view optimized for smaller screens with large touch targets and simplified navigation:
+
+<div align="center">
+  <img src="src/assets/docs/profile-mobile-view.png" alt="Mobile Profile View" width="30%">
+  <img src="src/assets/docs/mobile-transaction-warning.png" alt="Mobile Transaction Warning" width="30%">
+  <img src="src/assets/docs/profile-desktop-view.png" alt="Desktop Profile View" width="30%">
+</div>
+
+### �🔍 Advanced Visual Search (ResNet Integration)
 This project uses a "Golden Ratio" image processing pipeline for high-accuracy product search:
+
+<div align="center">
+  <img src="src/assets/docs/mobile-image-search.png" alt="Visual Search Crop" width="45%">
+</div>
 
 1.  **Image Upload & Cropping:**
     -   Integrated **`ngx-image-cropper`**.

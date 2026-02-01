@@ -44,3 +44,17 @@
   font-size: 12px;
   text-align: center;
 }
+
+@media (max-width: 768px) {
+  .footer-grid {
+    grid-template-columns: 1fr;
+    text-align: center;
+    gap: 30px;
+  }
+
+  .footer-title {
+    display: inline-block;
+    width: auto;
+    margin-bottom: 10px;
+  }
+}

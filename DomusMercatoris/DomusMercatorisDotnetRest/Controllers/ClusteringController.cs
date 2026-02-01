@@ -61,7 +61,8 @@ namespace DomusMercatorisDotnetRest.Controllers
             }
 
             // Find Nearest Cluster (Now uses Cosine Similarity logic & Threshold from Service)
-            var bestCluster = await _clusteringService.FindNearestClusterAsync(vector);
+            // REST API: Disable threshold (0.0) to always return a result if possible
+            var bestCluster = await _clusteringService.FindNearestClusterAsync(vector, minSimilarity: 0.0);
 
             if (bestCluster == null)
             {

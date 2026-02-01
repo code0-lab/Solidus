@@ -4,6 +4,19 @@
   padding: 0 20px;
 }
 
+/* 
+   ---------------------------
+   DESKTOP VIEW STYLES 
+   ---------------------------
+*/
+.desktop-view {
+  display: block;
+}
+
+.mobile-view {
+  display: none;
+}
+
 h2 {
   font-size: 24px;
   font-weight: bold;
@@ -74,7 +87,6 @@ h3 {
   border: 3px solid black;
   box-shadow: 4px 4px 0 black;
   position: relative;
-  background: white;
   background: white;
   margin: 0 auto 20px auto;
 }
@@ -235,16 +247,6 @@ h3 {
   to { opacity: 1; transform: translateY(0); }
 }
 
-@media (max-width: 768px) {
-  .profile-layout {
-    flex-direction: column;
-  }
-  
-  .profile-sidebar {
-    width: 100%;
-  }
-}
-
 /* Companies Section */
 .companies-section {
     display: flex;
@@ -265,119 +267,318 @@ h3 {
 }
 
 .company-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    border: 1px solid #ccc;
-    background: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border: 1px solid #ddd;
+  background: #f9f9f9;
 }
 
-.company-item:hover {
-    border-color: black;
-    box-shadow: 2px 2px 0 black;
-}
-
-.join-btn {
-    background: black;
-    color: white;
-    border: 1px solid black;
-    padding: 5px 15px;
-    cursor: pointer;
-    font-size: 12px;
-    text-transform: uppercase;
-}
-
-.join-btn:hover {
-    background: white;
-    color: black;
-}
-
-.leave-btn {
-    background: white;
-    color: red;
-    border: 1px solid red;
-    padding: 5px 15px;
-    cursor: pointer;
-    font-size: 12px;
-    text-transform: uppercase;
-}
-
-.leave-btn:hover {
-    background: red;
-    color: white;
-}
-
-.badge {
-    padding: 5px 10px;
-    font-size: 12px;
-    font-weight: bold;
-    text-transform: uppercase;
-    border: 1px solid black;
-}
-
-.badge.member {
-    background: #e0e0e0;
-    color: black;
-}
-
-.joined-date {
-    font-size: 12px;
-    color: #666;
-    margin-right: 15px;
-}
-
-.empty-state {
-    color: #666;
-    font-style: italic;
-    text-align: center;
-    padding: 20px;
+.company-name {
+  font-weight: bold;
 }
 
 .actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
 
 .badge.blocked {
-  background: #d32f2f;
+  background: #000;
   color: white;
-  border-color: #d32f2f;
+  padding: 4px 8px;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.block-btn, .unblock-btn {
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  border: 1px solid black;
+  text-transform: uppercase;
+  font-weight: bold;
 }
 
 .block-btn {
-    background: white;
-    color: #d32f2f;
-    border: 1px solid #d32f2f;
-    padding: 5px 15px;
-    cursor: pointer;
-    font-size: 12px;
-    text-transform: uppercase;
+  background: white;
+  color: black;
 }
 
 .block-btn:hover {
-    background: #d32f2f;
-    color: white;
+  background: #eee;
 }
 
 .unblock-btn {
-    background: #666;
+  background: black;
+  color: white;
+}
+
+/* 
+   ---------------------------
+   MOBILE VIEW STYLES 
+   ---------------------------
+*/
+@media (max-width: 768px) {
+  .desktop-view {
+    display: none !important;
+  }
+
+  .mobile-view {
+    display: block !important;
+  }
+
+  .profile-container {
+    margin: 0;
+    padding: 0;
+    max-width: 100%;
+  }
+
+  .mobile-header {
+    background: black;
     color: white;
-    border: 1px solid #666;
-    padding: 5px 15px;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .mobile-header h2 {
+    margin: 0;
+    font-size: 18px;
+    border: none;
+    color: white;
+    padding: 0;
+  }
+
+  .mobile-logout-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
     cursor: pointer;
-    font-size: 12px;
-    text-transform: uppercase;
-}
+  }
 
-.unblock-btn:hover {
-    background: #333;
-}
+  /* Mobile User Card */
+  .mobile-user-card {
+    background: #f5f5f5;
+    padding: 30px 20px;
+    text-align: center;
+    border-bottom: 2px solid black;
+  }
 
-.section-description {
+  .mobile-avatar {
+    margin: 0 auto 15px auto;
+    width: 80px;
+    height: 80px;
+    border-width: 2px;
+    box-shadow: 3px 3px 0 rgba(0,0,0,0.2);
+    position: relative;
+  }
+  
+  .mobile-avatar-edit-btn {
+    position: absolute;
+    bottom: -5px;
+    right: -5px;
+    background: black;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: 2px solid white;
+  }
+
+  .mobile-user-info h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 800;
+  }
+
+  .mobile-user-info p {
+    margin: 5px 0 0;
     font-size: 14px;
     color: #666;
-    margin-bottom: 20px;
-    line-height: 1.5;
+  }
+
+  /* Mobile Tabs (Segmented Control) */
+  .mobile-tabs {
+    display: flex;
+    padding: 15px 20px;
+    gap: 10px;
+    background: white;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-bottom: 1px solid #eee;
+  }
+
+  .mobile-tabs button {
+    flex: 1;
+    padding: 10px 0;
+    background: white;
+    border: 1px solid #ccc;
+    font-size: 13px;
+    font-weight: bold;
+    text-transform: uppercase;
+    border-radius: 4px;
+  }
+
+  .mobile-tabs button.active {
+    background: black;
+    color: white;
+    border-color: black;
+    box-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+  }
+
+  /* Mobile Content */
+  .mobile-content {
+    padding: 20px;
+    padding-bottom: 80px; /* Space for fixed button if needed, though we use inline now */
+  }
+
+  .mobile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .mobile-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .mobile-field label {
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #333;
+  }
+
+  .mobile-field input, 
+  .mobile-field textarea {
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px; /* Prevent zoom on iOS */
+    width: 100%;
+    box-sizing: border-box;
+    background: #fff;
+  }
+
+  .mobile-field input:focus, 
+  .mobile-field textarea:focus {
+    border-color: black;
+    outline: none;
+  }
+
+  .mobile-field.highlight {
+    background: #fff3cd;
+    padding: 15px;
+    border: 1px solid #ffeeba;
+    border-radius: 4px;
+  }
+
+  .password-input-wrapper {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .mobile-gen-btn {
+    background: #eee;
+    border: 1px solid #ccc;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 0 10px;
+    cursor: pointer;
+  }
+
+  .mobile-save-btn {
+    background: black;
+    color: white;
+    border: none;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 800;
+    text-transform: uppercase;
+    margin-top: 20px;
+    border-radius: 4px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    width: 100%;
+  }
+
+  .mobile-save-btn:disabled {
+    background: #999;
+    box-shadow: none;
+  }
+
+  /* Mobile Companies */
+  .mobile-companies {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .mobile-company-card {
+    border: 1px solid #eee;
+    padding: 15px;
+    border-radius: 8px;
+    background: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .company-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .company-info .name {
+    font-weight: bold;
+    font-size: 16px;
+  }
+
+  .company-info .status {
+    font-size: 12px;
+    color: green;
+  }
+
+  .company-info .status.blocked {
+    color: red;
+    font-weight: bold;
+  }
+
+  .btn-block, .btn-unblock {
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 12px;
+    border: none;
+    cursor: pointer;
+  }
+
+  .btn-block {
+    background: #eee;
+    color: black;
+  }
+
+  .btn-unblock {
+    background: black;
+    color: white;
+  }
+
+  .mobile-empty-state {
+    text-align: center;
+    color: #999;
+    padding: 40px 0;
+    font-style: italic;
+  }
 }
