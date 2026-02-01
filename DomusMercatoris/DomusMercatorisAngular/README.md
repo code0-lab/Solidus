@@ -20,9 +20,10 @@ Solidus is the Angular-based client application for the **DomusMercatoris** proj
 The profile page features a dedicated mobile view optimized for smaller screens with large touch targets and simplified navigation:
 
 <div align="center">
-  <img src="src/assets/docs/profile-mobile-view.png" alt="Mobile Profile View" width="30%">
-  <img src="src/assets/docs/mobile-transaction-warning.png" alt="Mobile Transaction Warning" width="30%">
-  <img src="src/assets/docs/profile-desktop-view.png" alt="Desktop Profile View" width="30%">
+  <img src="src/assets/docs/profile-desktop-view.png" alt="Desktop Profile View" width="90%">
+  <br><br>
+  <img src="src/assets/docs/profile-mobile-view.png" alt="Mobile Profile View" width="45%">
+  <img src="src/assets/docs/mobile-transaction-warning.png" alt="Mobile Transaction Warning" width="45%">
 </div>
 
 ### �🔍 Advanced Visual Search (ResNet Integration)
