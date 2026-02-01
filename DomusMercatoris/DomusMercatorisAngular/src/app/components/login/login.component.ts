@@ -26,15 +26,10 @@ export class LoginComponent {
       return;
     }
 
-    this.authService.login({ email: this.email, password: this.password }).subscribe({
-      next: () => {
-        this.toastService.success('Login successful!');
-        this.email = '';
-        this.password = '';
-      },
-      error: (err) => {
-        this.toastService.error('Login failed: ' + (err.error?.message || 'Unknown error'));
-      }
+    this.authService.login({ email: this.email, password: this.password }).subscribe(() => {
+      this.toastService.success('Login successful!');
+      this.email = '';
+      this.password = '';
     });
   }
 

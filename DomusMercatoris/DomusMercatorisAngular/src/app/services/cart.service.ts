@@ -129,12 +129,9 @@ export class CartService {
   }
 
   fetchCart() {
-    this.http.get<CartItemDto[]>(this.apiUrl).subscribe({
-      next: (dtos) => {
+    this.http.get<CartItemDto[]>(this.apiUrl).subscribe(dtos => {
         const mappedItems = dtos.map(dto => this.mapDtoToItem(dto));
         this.items.set(mappedItems);
-      },
-      error: (err) => console.error('Failed to fetch cart', err)
     });
   }
 

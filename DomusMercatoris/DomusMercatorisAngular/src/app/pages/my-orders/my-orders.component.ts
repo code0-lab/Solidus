@@ -9,7 +9,7 @@ import { ToastService } from '../../services/toast.service';
 import { AuthService } from '../../services/auth.service';
 import { ProductService } from '../../services/product.service';
 import { forkJoin, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { map, catchError, finalize } from 'rxjs/operators';
 
 @Component({
   selector: 'app-my-orders',
@@ -95,18 +95,13 @@ export class MyOrdersComponent implements OnInit {
       ? this.ordersService.getSuccessfulOrders(this.currentPage(), this.pageSize())
       : this.ordersService.getFailedOrders(this.currentPage(), this.pageSize());
 
-    request$.subscribe({
-      next: (data) => {
-        this.orders.set(data.items);
-        this.totalItems.set(data.totalCount);
-        this.totalPages.set(data.totalPages);
-        this.fetchMissingImages(data.items);
-        this.isLoading.set(false);
-      },
-      error: (err) => {
-        console.error('Failed to load orders', err);
-        this.isLoading.set(false);
-      }
+    request$.pipe(
+      finalize(() => this.isLoading.set(false))
+    ).subscribe((data) => {
+      this.orders.set(data.items);
+      this.totalItems.set(data.totalCount);
+      this.totalPages.set(data.totalPages);
+      this.fetchMissingImages(data.items);
     });
   }
 
@@ -216,13 +211,8 @@ export class MyOrdersComponent implements OnInit {
         }))
     };
 
-    this.ordersService.checkout(payload).subscribe({
-        next: (res) => {
-             this.router.navigate(['/payment-waiting', res.id]);
-        },
-        error: (err) => {
-             this.toastService.error('Failed to retry order');
-        }
+    this.ordersService.checkout(payload).subscribe((res) => {
+        this.router.navigate(['/payment-waiting', res.id]);
     });
   }
 
@@ -269,15 +259,9 @@ export class MyOrdersComponent implements OnInit {
       orderItemId: item.id,
       quantity: this.refundQuantity(),
       reason: this.refundReason()
-    }).subscribe({
-      next: () => {
+    }).subscribe(() => {
         this.toastService.show('Refund request submitted successfully.', 'success');
         this.closeRefundModal();
-      },
-      error: (err) => {
-        console.error(err);
-        this.toastService.show('Failed to submit refund request.', 'error');
-      }
     });
   }
 }

@@ -17,10 +17,7 @@ export class CommentService {
 
   fetchComments(productId: number): void {
     this.http.get<Comment[]>(`${this.apiUrl}/product/${productId}`)
-      .subscribe({
-        next: (data) => this.comments.set(data),
-        error: (err) => console.error('Failed to fetch comments', err)
-      });
+      .subscribe((data) => this.comments.set(data));
   }
 
   createComment(dto: CreateCommentDto): Observable<Comment> {

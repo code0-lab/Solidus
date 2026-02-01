@@ -81,15 +81,9 @@ export class ProductCommentsComponent implements OnChanges {
       return;
     }
 
-    this.commentService.updateComment(comment.id, text, this.productId).subscribe({
-      next: () => {
-        this.toastService.success('Comment updated successfully');
-        this.cancelEdit();
-      },
-      error: (err) => {
-        console.error(err);
-        this.toastService.error('Failed to update comment');
-      }
+    this.commentService.updateComment(comment.id, text, this.productId).subscribe(() => {
+      this.toastService.success('Comment updated successfully');
+      this.cancelEdit();
     });
   }
 }

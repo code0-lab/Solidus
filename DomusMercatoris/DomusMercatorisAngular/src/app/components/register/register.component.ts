@@ -32,14 +32,9 @@ export class RegisterComponent {
       return;
     }
 
-    this.authService.register(data).subscribe({
-      next: () => {
-        this.toastService.success('Registration successful! You can now log in.');
-        this.registrationSuccess.emit(data.email);
-      },
-      error: (err) => {
-        this.toastService.error('Registration failed: ' + (err.error?.message || 'Unknown error'));
-      }
+    this.authService.register(data).subscribe(() => {
+      this.toastService.success('Registration successful! You can now log in.');
+      this.registrationSuccess.emit(data.email);
     });
   }
 

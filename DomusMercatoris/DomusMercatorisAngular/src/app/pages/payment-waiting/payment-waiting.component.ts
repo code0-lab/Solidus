@@ -92,14 +92,11 @@ export class PaymentWaitingComponent implements OnInit, OnDestroy {
   }
 
   fetchOrderDetails() {
-    this.ordersService.getOrderById(+this.orderId()).subscribe({
-      next: (data) => {
+    this.ordersService.getOrderById(+this.orderId()).subscribe((data) => {
         this.orderDetails.set(data);
         if (data.paymentCode && data.status === 'PaymentPending') {
             this.paymentService.activePaymentCode.set(data.paymentCode);
         }
-      },
-      error: (err) => console.error('Failed to fetch order details', err)
     });
   }
 
@@ -138,10 +135,9 @@ export class PaymentWaitingComponent implements OnInit, OnDestroy {
         localStorage.removeItem('active_checkout_id'); // Clear active checkout lock
 
         // Automatically reject payment on timeout
-        this.paymentService.rejectPayment(this.orderId()).subscribe({
-          next: () => console.log('Payment rejected due to timeout'),
-          error: (err) => console.error('Failed to reject payment on timeout', err)
-        });
+        this.paymentService.rejectPayment(this.orderId()).subscribe(() => 
+          console.log('Payment rejected due to timeout')
+        );
       }
     }
   }
@@ -149,13 +145,8 @@ export class PaymentWaitingComponent implements OnInit, OnDestroy {
   verifyCode() {
     if (!this.confirmationCode()) return;
     this.paymentService.verifyCode(+this.orderId(), this.confirmationCode())
-      .subscribe({
-        next: () => {
+      .subscribe(() => {
           // Success handled by SignalR
-        },
-        error: (err) => {
-          this.alertService.showAlert('Invalid Code or Error verifying.');
-        }
       });
   }
 
@@ -165,14 +156,8 @@ export class PaymentWaitingComponent implements OnInit, OnDestroy {
 
   confirmReject() {
     this.showRejectModal.set(false);
-    this.paymentService.rejectPayment(this.orderId()).subscribe({
-      next: () => {
+    this.paymentService.rejectPayment(this.orderId()).subscribe(() => {
         // Handled by SignalR (PaymentFailed status)
-      },
-      error: (err) => {
-        console.error(err);
-        this.alertService.showAlert('Failed to reject payment.');
-      }
     });
   }
 

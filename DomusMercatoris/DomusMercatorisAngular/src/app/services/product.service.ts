@@ -62,8 +62,7 @@ export class ProductService {
       params = params.set('brandId', brandId);
     }
     this.http.get<PaginatedResult<Product>>(url, { params })
-      .subscribe({
-        next: (data) => {
+      .subscribe((data) => {
           const processed = data.items.map(p => ({
             ...p,
             imageUrl: this.toAbsoluteImageUrl(p.images && p.images.length > 0 ? p.images[0] : undefined),
@@ -83,20 +82,12 @@ export class ProductService {
           }));
           this.products.set(processed);
           this.totalCount.set(data.totalCount);
-        },
-        error: () => {
-          this.products.set([]);
-          this.totalCount.set(0);
-        }
       });
   }
 
   fetchCategories(): void {
     this.http.get<Category[]>(`${this.apiUrl}/categories`)
-      .subscribe({
-        next: (data) => this.categories.set(data),
-        error: () => console.error('Failed to fetch categories')
-      });
+      .subscribe((data) => this.categories.set(data));
   }
 
   fetchBrands(companyId?: number | null): void {
@@ -105,18 +96,12 @@ export class ProductService {
       params = params.set('companyId', companyId);
     }
     this.http.get<Brand[]>(`${this.apiUrl}/brands`, { params })
-      .subscribe({
-        next: (data) => this.brands.set(data),
-        error: () => console.error('Failed to fetch brands')
-      });
+      .subscribe((data) => this.brands.set(data));
   }
 
   fetchCompanies(): void {
     this.http.get<Company[]>(`${this.apiUrl}/companies`)
-      .subscribe({
-        next: (data) => this.companies.set(data),
-        error: () => console.error('Failed to fetch companies')
-      });
+      .subscribe((data) => this.companies.set(data));
   }
 
   fetchProducts(categoryId?: number | null, pageNumber: number = 1, pageSize: number = 9, companyId?: number | null, brandId?: number | null, append: boolean = false): void {
@@ -139,14 +124,8 @@ export class ProductService {
     this.loading.set(true);
     this.http.get<PaginatedResult<Product>>(url, { params })
       .pipe(finalize(() => this.loading.set(false)))
-      .subscribe({
-        next: (data) => {
+      .subscribe((data) => {
           this.applyProductPage(data, append);
-        },
-        error: () => {
-          this.products.set([]);
-          this.totalCount.set(0);
-        }
       });
   }
  

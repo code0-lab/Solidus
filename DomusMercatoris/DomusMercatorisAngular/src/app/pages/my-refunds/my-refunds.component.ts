@@ -27,10 +27,7 @@ export class MyRefundsComponent implements OnInit {
   }
 
   loadRefunds() {
-    this.refundsService.getMyRefunds().subscribe({
-      next: (list) => this.refunds.set(list),
-      error: () => { /* ignore for now */ }
-    });
+    this.refundsService.getMyRefunds().subscribe((list) => this.refunds.set(list));
   }
 
   statusClass(status: RefundResponse['status']): string {

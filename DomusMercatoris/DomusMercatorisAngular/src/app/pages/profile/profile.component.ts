@@ -86,33 +86,24 @@ export class ProfileComponent implements OnInit {
   }
 
   loadMyCompanies() {
-    this.userService.getMyCompanies().subscribe({
-      next: data => {
-        this.myCompanies.set(data);
-      },
-      error: () => this.toastService.error('Failed to load companies')
+    this.userService.getMyCompanies().subscribe(data => {
+      this.myCompanies.set(data);
     });
   }
 
   toggleBlock(company: MyCompanyDto) {
     if (company.isBlockedByMe) {
-        this.blacklistService.unblockCompany(company.id).subscribe({
-            next: () => {
-                this.toastService.show('Company unblocked', 'success');
-                this.loadMyCompanies();
-            },
-            error: () => this.toastService.show('Failed to unblock', 'error')
+        this.blacklistService.unblockCompany(company.id).subscribe(() => {
+            this.toastService.show('Company unblocked', 'success');
+            this.loadMyCompanies();
         });
     } else {
         this.alertService.showConfirm(
             `Are you sure you want to block ${company.name}? You will no longer see products from this company.`,
             () => {
-                this.blacklistService.blockCompany(company.id).subscribe({
-                    next: () => {
-                        this.toastService.show('Company blocked', 'success');
-                        this.loadMyCompanies();
-                    },
-                    error: () => this.toastService.show('Failed to block', 'error')
+                this.blacklistService.blockCompany(company.id).subscribe(() => {
+                    this.toastService.show('Company blocked', 'success');
+                    this.loadMyCompanies();
                 });
             }
         );
@@ -168,8 +159,7 @@ export class ProfileComponent implements OnInit {
 
     this.authService.updateProfile(payload)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: profile => {
+      .subscribe((profile) => {
           // Update form with new values (clearing password)
           this.profileForm.patchValue({
             currentPassword: ''
@@ -177,11 +167,6 @@ export class ProfileComponent implements OnInit {
           // Update initial state signals handled by auth service
           this.isSaving.set(false);
           this.toastService.success('Profile updated successfully.');
-        },
-        error: (err) => {
-          this.isSaving.set(false);
-          this.toastService.error(err.error?.message || 'Failed to update profile.');
-        }
       });
   }
 
