@@ -58,7 +58,16 @@ graph TD
     AIService -->|Inference| ResNet
 ```
 
-## 🖼 The "Golden Ratio" Image Processing Pipeline
+## � Admin Panel Preview
+
+<div align="center">
+  <img src="assets/mvc_admin_panel.png" alt="MVC Admin Panel" width="90%">
+  <br>
+  <em>MVC Admin Panel - User Management View (Role: Rex)</em>
+</div>
+<br>
+
+## �🖼 The "Golden Ratio" Image Processing Pipeline
 
 To ensure the highest accuracy for visual search (ResNet-50), we implement a specific processing pipeline:
 
