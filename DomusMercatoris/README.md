@@ -159,7 +159,7 @@ The application automatically seeds the following accounts for testing/developme
 ![MVC Admin Panel - User Management](assets/mvc_admin_user_management.png)
 
 ### Angular Frontend
-> *Place your screenshots here (e.g. Home, Visual Search Modal)*
+![Angular Frontend - Visual Search](assets/angular_frontend_visual_search.png)
 
 ## 📚 Postman Collection / OpenAPI
 
