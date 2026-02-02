@@ -187,9 +187,9 @@ A full OpenAPI (Swagger) definition is available, which contains **all** API end
 
 ## 📂 Repository Structure
 
-*   `AI/` - Python FastAPI service for AI operations.
-*   `DomusMercatorisAngular/` - Angular Frontend application.
-*   `DomusMercatorisDotnetRest/` - Main ASP.NET Core REST API.
+*   `AI/` - Python FastAPI service for AI operations. ([Read Me](DomusMercatoris/AI/README.md))
+*   `DomusMercatorisAngular/` - Angular Frontend application. ([Read Me](DomusMercatoris/DomusMercatorisAngular/README.md))
+*   `DomusMercatorisDotnetRest/` - Main ASP.NET Core REST API. ([Read Me](DomusMercatoris/DomusMercatorisDotnetRest/README.md))
 *   `DomusMercatoris.Core/` - Shared Domain Entities and Interfaces.
 *   `DomusMercatoris.Data/` - Database Context and Infrastructure.
 *   `DomusMercatoris.Service/` - Business Logic Services.
