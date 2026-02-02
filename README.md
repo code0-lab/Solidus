@@ -190,6 +190,7 @@ A full OpenAPI (Swagger) definition is available, which contains **all** API end
 *   `AI/` - Python FastAPI service for AI operations. ([Read Me](DomusMercatoris/AI/README.md))
 *   `DomusMercatorisAngular/` - Angular Frontend application. ([Read Me](DomusMercatoris/DomusMercatorisAngular/README.md))
 *   `DomusMercatorisDotnetRest/` - Main ASP.NET Core REST API. ([Read Me](DomusMercatoris/DomusMercatorisDotnetRest/README.md))
+*   `MVC/` - ASP.NET Core MVC Admin Panel. ([Read Me](DomusMercatoris/MVC/README.md))
 *   `DomusMercatoris.Core/` - Shared Domain Entities and Interfaces.
 *   `DomusMercatoris.Data/` - Database Context and Infrastructure.
 *   `DomusMercatoris.Service/` - Business Logic Services.

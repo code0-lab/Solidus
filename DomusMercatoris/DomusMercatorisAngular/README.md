@@ -7,7 +7,8 @@ Modern, performance-oriented Angular e-commerce frontend application with a brut
 ![Brutalist Design](https://img.shields.io/badge/Design-Brutalist-black?style=for-the-badge)
 
 <div align="center">
-  <img src="src/assets/img/homepage-screenshot.png" alt="Solidus Homepage" width="100%">
+  <img src="src/assets/img/homepage-screenshot.png" alt="Solidus Homepage" width="75%">
+  <img src="src/assets/img/mobile-homepage-screenshot.png" alt="Solidus Mobile Homepage" width="23%">
 </div>
 
 ## 🚀 About The Project
