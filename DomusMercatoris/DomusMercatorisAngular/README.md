@@ -6,6 +6,10 @@ Modern, performance-oriented Angular e-commerce frontend application with a brut
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
 ![Brutalist Design](https://img.shields.io/badge/Design-Brutalist-black?style=for-the-badge)
 
+<div align="center">
+  <img src="src/assets/img/homepage-screenshot.png" alt="Solidus Homepage" width="100%">
+</div>
+
 ## 🚀 About The Project
 
 Solidus is the Angular-based client application for the **DomusMercatoris** project. It delivers a unique user experience by adopting "Brutalist" design principles (thick borders, monospace fonts, sharp corners). It is developed using Angular's latest features (Standalone Components, Signals, Control Flow Syntax).
