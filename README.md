@@ -173,16 +173,16 @@ The application automatically seeds the following accounts for testing/developme
 ## 📸 Screenshots
 
 ### MVC Admin Panel
-![MVC Admin Panel - User Management](assets/mvc_admin_user_management.png)
+![MVC Admin Panel - User Management](DomusMercatoris/assets/mvc_admin_user_management.png)
 
 ### Angular Frontend
-![Angular Frontend - Visual Search](assets/angular_frontend_visual_search.png)
+![Angular Frontend - Visual Search](DomusMercatoris/assets/angular_frontend_visual_search.png)
 
 ## 📚 Postman Collection / OpenAPI
 
 A full OpenAPI (Swagger) definition is available, which contains **all** API endpoints. You can import this file directly into Postman.
 
-*   [Download OpenAPI Definition](./DomusMercatoris.openapi.json)
+*   [Download OpenAPI Definition](DomusMercatoris/DomusMercatoris.openapi.json)
 *   *Alternatively, import URL in Postman:* `http://localhost:5280/swagger/v1/swagger.json`
 
 ## 📂 Repository Structure
