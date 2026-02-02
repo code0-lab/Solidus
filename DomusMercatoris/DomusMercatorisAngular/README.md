@@ -35,7 +35,7 @@ The profile page features a dedicated mobile view optimized for smaller screens 
 This project uses a "Golden Ratio" image processing pipeline for high-accuracy product search:
 
 <div align="center">
-  <img src="src/assets/docs/mobile-image-search.png" alt="Visual Search Crop" width="45%">
+  <img src="src/assets/img/visual-search-results.png" alt="Visual Search Results" width="45%">
 </div>
 
 1.  **Image Upload & Cropping:**

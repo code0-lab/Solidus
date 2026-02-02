@@ -176,7 +176,7 @@ The application automatically seeds the following accounts for testing/developme
 ![MVC Admin Panel - User Management](DomusMercatoris/assets/mvc_admin_user_management.png)
 
 ### Angular Frontend
-![Angular Frontend - Visual Search](DomusMercatoris/assets/angular_frontend_visual_search.png)
+![Angular Frontend - Visual Search](DomusMercatoris/DomusMercatorisAngular/src/assets/img/visual-search-results.png)
 
 ## 📚 Postman Collection / OpenAPI
 
