@@ -98,14 +98,16 @@ graph LR
 
 1.  **AI Service:**
     *   Navigate to the root directory.
-    *   Set up the virtual environment: `python3.11 -m venv venv`
+    *   Set up the virtual environment: `python3 -m venv venv` (Python 3.9+ recommended)
     *   Activate and install requirements: `source venv/bin/activate && pip install -r AI/requirements.txt`
+    *   **Note for Mac Users:** If you encounter `onnxruntime` errors, ensure you have installed `rembg[cpu]` (the requirements file handles this).
     *   The .NET application will attempt to start this service automatically, or you can run it manually.
 
 2.  **Backend API:**
     *   Navigate to `DomusMercatorisDotnetRest`.
-    *   Run `dotnet run`.
-    *   The API usually listens on `http://localhost:5200`.
+107→    *   Run `dotnet run`.
+108→    *   The API usually listens on `http://localhost:5280`.
+109→        > **Note:** If port 5280 is in use, the application might choose a different port. Check the console output to confirm the active URL (e.g., `Now listening on: http://localhost:5xxx`).
 
 3.  **Frontend:**
     *   Navigate to `DomusMercatorisAngular`.

@@ -10,7 +10,7 @@ from PIL import Image
 import os
 from datetime import datetime
 import asyncio
-# from rembg import remove
+from rembg import remove
 
 ENABLE_DEBUG_LOGGING = False
 

@@ -79,6 +79,10 @@ Follow these steps to run the project locally:
    ```
    This command starts the application. Check the terminal output for the correct local URL (usually `http://localhost:4200`). API forwarding is handled via `proxy.conf.json`.
 
+   > **Note:** You may see a warning: *"This is a simple server for use in testing or debugging... Binding this server to an open connection can result in compromising your application"*.
+   >
+   > This is **normal and expected**. We use `--host 0.0.0.0` to allow you to test the application on other devices (like your phone) connected to the same network. It is safe for development.
+
 ## 🧪 Tests
 
 The application uses the **Vitest** test runner.

@@ -31,7 +31,7 @@ graph LR
 
 ## 🛠 Prerequisites
 
-*   **Python 3.11** (Strict requirement for `rembg` compatibility).
+*   **Python 3.9+** (Tested with Python 3.9 - 3.11).
 *   **macOS / Linux** (Recommended environment).
 
 ## 📦 Installation
@@ -39,7 +39,7 @@ graph LR
 1.  **Create a Virtual Environment:**
     From the repository root (`DomusMercatoris`):
     ```bash
-    python3.11 -m venv venv
+    python3 -m venv venv
     ```
 
 2.  **Install Dependencies:**
@@ -49,6 +49,11 @@ graph LR
     pip install -r AI/requirements.txt
     ```
     *Dependencies include: `fastapi`, `uvicorn`, `torch`, `torchvision`, `rembg`, `pillow`, `pillow-heif` (HEIC support), `numpy`, `scikit-learn`.*
+
+    > **Note for Mac Users:** If you encounter `onnxruntime` or backend errors with `rembg`, run:
+    > ```bash
+    > pip install "rembg[cpu]"
+    > ```
 
 ## 🚀 Running the Service
 

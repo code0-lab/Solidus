@@ -29,10 +29,18 @@ namespace DomusMercatoris.Service.Services
             _httpClient = httpClient;
             _pythonApiUrl = configuration.GetValue<string>("PythonApiUrl") ?? "http://localhost:5001";
             
-            // In a Service logic, WebRootPath might be tricky. 
-            // We'll try to get it from config or constant, or handle it via absolute paths passed in.
-            // For now, let's assume it's passed in configuration or we use a fallback.
-            _webRootPath = configuration.GetValue<string>("WebRootPath") ?? Directory.GetCurrentDirectory(); 
+            var configWebRoot = configuration.GetValue<string>("WebRootPath");
+            if (!string.IsNullOrEmpty(configWebRoot))
+            {
+                // Ensure we have an absolute path
+                _webRootPath = Path.IsPathRooted(configWebRoot) 
+                    ? configWebRoot 
+                    : Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), configWebRoot));
+            }
+            else
+            {
+                _webRootPath = Directory.GetCurrentDirectory();
+            }
         }
 
         public async Task ProcessAllProductsFeaturesAsync()
