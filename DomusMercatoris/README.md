@@ -83,9 +83,24 @@ graph LR
 1.  **User Selection (Angular):** The user uploads an image and **crops** the relevant area using the client-side cropper (`ngx-image-cropper`). This ensures only the object of interest is sent.
 2.  **Background Removal (Python):** The cropped image is sent to the AI service, where **`rembg`** removes the background, isolating the product.
 3.  **Smart Preprocessing (Python):** The transparent image is composited over a **white background** and resized to **224x224** while preserving the aspect ratio (padding with white).
-4.  **Feature Extraction (Python):** The processed image is fed into ResNet-50 to generate a feature vector.
-
-## 🚀 Getting Started
+4.86→4.  **Feature Extraction (Python):** The processed image is fed into ResNet-50 to generate a feature vector.
+87→
+88→## 🤖 AI Auto-Categorization & Clustering
+89→
+90→The system features an **"Auto Category"** suggestion engine that uses Unsupervised Learning (K-Means Clustering).
+91→
+92→### ⚠️ Important: Training Requirement
+93→
+94→This feature is **not pre-trained** on generic data. It learns from **your** product catalog. For it to work:
+95→
+96→1.  **Manual Moderation is Required First:** A Moderator must log in to the **MVC Admin Panel** and manually categorize initial products.
+97→2.  **Data Density:** The AI groups products based on visual similarity. If there are too few products (e.g., < 10-20 per category), the clustering will not form meaningful groups.
+98→3.  **Process:**
+99→    *   Upload products -> Moderator assigns categories manually.
+100→    *   AI extracts features and learns "What does a 'Chair' look like?" based on your manual inputs.
+101→    *   **Then**, new products can be auto-categorized based on their visual similarity to existing clusters.
+102→
+103→## 🚀 Getting Started
 
 ### Prerequisites
 
